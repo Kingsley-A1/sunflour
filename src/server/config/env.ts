@@ -28,6 +28,22 @@ const envSchema = z
     AUTH_GOOGLE_ID: z.string().min(1).optional(),
     AUTH_GOOGLE_SECRET: z.string().min(1).optional(),
     ADMIN_ALLOWLIST_EMAILS: z.string().optional().default(""),
+    RESEND_API_KEY: z.string().min(1).optional(),
+    EMAIL_FROM_ADDRESS: z.string().email().optional(),
+    EMAIL_FROM_NAME: z.string().min(1).default("Sunflour Bakery"),
+    EMAIL_SENDING_ENABLED: z
+      .enum(["true", "false"])
+      .optional()
+      .default("false")
+      .transform((value) => value === "true"),
+    EMAIL_OUTBOX_BATCH_SIZE: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .default(10),
+    EMAIL_CRON_SECRET: z.string().min(16).optional(),
+    ADMIN_ORDER_ALERT_EMAILS: z.string().optional().default(""),
     R2_ACCOUNT_ID: z.string().min(1).optional(),
     R2_ACCESS_KEY_ID: z.string().min(1).optional(),
     R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
@@ -74,6 +90,23 @@ const envSchema = z
         code: "custom",
         path: ["AUTH_GOOGLE_SECRET"],
         message: "AUTH_GOOGLE_SECRET is required in production.",
+      });
+    }
+
+    if (env.EMAIL_SENDING_ENABLED && !env.RESEND_API_KEY) {
+      context.addIssue({
+        code: "custom",
+        path: ["RESEND_API_KEY"],
+        message: "RESEND_API_KEY is required when email sending is enabled.",
+      });
+    }
+
+    if (env.EMAIL_SENDING_ENABLED && !env.EMAIL_FROM_ADDRESS) {
+      context.addIssue({
+        code: "custom",
+        path: ["EMAIL_FROM_ADDRESS"],
+        message:
+          "EMAIL_FROM_ADDRESS is required when email sending is enabled.",
       });
     }
   });

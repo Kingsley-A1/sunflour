@@ -1,6 +1,6 @@
 # Database Schema - Sunflour Bakery
 
-Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, Phase 5 checkout/order, Phase 6 payment workflow, and Phase 7 invoice tables are implemented.
+Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, Phase 5 checkout/order, Phase 6 payment workflow, Phase 7 invoice tables, and Phase 8 email outbox tables are implemented.
 
 ## Source Of Truth
 
@@ -78,6 +78,21 @@ EmailOutboxStatus:
 QUEUED
 SENT
 FAILED
+SKIPPED
+
+EmailTemplateKey:
+ORDER_CONFIRMATION
+PURCHASE_INVOICE
+AUTH_PASSWORD_RESET
+ADMIN_NEW_ORDER_ALERT
+ORDER_STATUS_UPDATE
+APPRECIATION_AFTER_DELIVERY
+
+EmailEventType:
+QUEUED
+SENT
+FAILED
+RETRIED
 SKIPPED
 ```
 
@@ -397,9 +412,30 @@ Invoice rules:
 
 ### Email
 
-- [ ] Email templates support only approved transactional use cases.
-- [ ] Email outbox supports queue, sent, failed, skipped, retry count, and error message.
-- [ ] Email failure does not break order creation.
+- [x] Email templates support only approved transactional use cases.
+- [x] Email outbox supports queue, sent, failed, skipped, retry count, and error message.
+- [x] Email failure does not break order creation.
+- [x] Email events log queued, sent, failed, skipped, and retried actions.
+- [x] Email preferences table exists for authenticated customer controls.
+
+Implemented Phase 8 email tables:
+
+```txt
+email_templates
+email_outbox
+email_events
+email_preferences
+```
+
+Email rules:
+
+```txt
+- Emails are queued through EmailService before any send attempt.
+- Resend API access is isolated to the email module.
+- Disabled templates create SKIPPED outbox records instead of sending.
+- Failed sends record error_message and next_attempt_at for retry.
+- order_id + template_key is unique so duplicate order emails, including appreciation emails, are prevented.
+```
 
 ### Audit
 
@@ -416,7 +452,7 @@ Invoice rules:
 - [x] Index orders by status, payment status, created date, customer phone, and user.
 - [x] Index order items by order and product.
 - [ ] Index reviews by status and product.
-- [ ] Index email outbox by status and next attempt time.
+- [x] Index email outbox by status and next attempt time.
 - [x] Index payment confirmation events by order, status, actor, and creation time.
 - [ ] Index audit logs by actor, action, target, and creation time.
 

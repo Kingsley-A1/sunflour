@@ -1,6 +1,6 @@
 # Order Lifecycle - Sunflour Bakery
 
-Status: active draft. Phase 5 checkout creates initial order records, Phase 6 adds manual payment verification events, and Phase 7 adds invoice creation.
+Status: active draft. Phase 5 checkout creates initial order records, Phase 6 adds manual payment verification events, Phase 7 adds invoice creation, and Phase 8 queues transactional email through an outbox.
 
 ## Source Of Truth
 
@@ -68,7 +68,7 @@ Order created
 - [x] Every order starts as `PENDING_PAYMENT`.
 - [x] Every order starts with payment status `UNPAID`.
 - [x] Payment confirmation is manual.
-- [ ] Email failure does not block order creation.
+- [x] Email failure does not block order creation.
 - [x] Every order status change writes `order_status_events`.
 - [x] Every payment confirmation/rejection writes `payment_confirmation_events`.
 - [x] Every payment confirmation/rejection writes `audit_logs`.
@@ -119,6 +119,17 @@ Checkout now creates:
 ```
 
 Invoice HTML is stored before any email dependency exists. Phase 8 can attach or link the invoice snapshot without regenerating totals.
+
+## Phase 8 Implementation Note
+
+Checkout now attempts to queue:
+
+```txt
+- ORDER_CONFIRMATION email when customer_email_snapshot exists.
+- ADMIN_NEW_ORDER_ALERT email when ADMIN_ORDER_ALERT_EMAILS is configured.
+```
+
+Email queue failures are swallowed after the order commits. Actual delivery is handled later by `email_outbox` processing, which records sent, failed, skipped, and retried events.
 
 ## Phase 6 Implementation Note
 

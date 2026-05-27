@@ -40,6 +40,10 @@ import {
   generateInvoiceNumber,
   renderInvoiceHtml,
 } from "@/server/modules/invoices";
+import {
+  queueAdminNewOrderAlertEmailsForOrder,
+  queueOrderConfirmationEmailForOrder,
+} from "@/server/modules/email";
 import type { CheckoutCreateInput, CheckoutItemInput } from "./checkout-schemas";
 
 const checkoutProductInclude = {
@@ -414,6 +418,13 @@ export async function createCheckoutOrder(
 
     return createdOrder;
   });
+
+  try {
+    await queueOrderConfirmationEmailForOrder(order);
+    await queueAdminNewOrderAlertEmailsForOrder(order);
+  } catch {
+    // Email outbox issues must not block checkout.
+  }
 
   return mapCheckoutOrderResponse(order);
 }

@@ -408,7 +408,7 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [x] Payment confirmation/rejection endpoint.
 - [x] Delivery zone and surcharge rule endpoints.
 - [x] Payment settings endpoint.
-- [ ] Email template/outbox endpoints.
+- [x] Email template/outbox endpoints.
 - [ ] Review moderation endpoints.
 - [ ] Audit log endpoint.
 
@@ -692,6 +692,29 @@ Rules:
 - Admins can access order invoices for operations.
 - Invoice HTML remains stable because it is stored as html_snapshot.
 - Invoice works without email and can later be attached to email.
+```
+
+### Email Admin And Outbox
+
+```txt
+GET  /api/v1/admin/email/templates                  MODERATOR | SUPER_ADMIN
+PATCH /api/v1/admin/email/templates/[key]           SUPER_ADMIN
+GET  /api/v1/admin/email/outbox                     MODERATOR | SUPER_ADMIN
+POST /api/v1/admin/email/outbox/process             SUPER_ADMIN
+POST /api/v1/admin/email/outbox/[id]/retry          SUPER_ADMIN
+POST /api/v1/admin/email/manual                     SUPER_ADMIN
+POST /api/v1/webhooks/cron/email-outbox             EMAIL_CRON_SECRET
+```
+
+Rules:
+
+```txt
+- All emails are queued through EmailService.
+- Admin manual email queues an approved transactional template only.
+- Disabled templates create SKIPPED outbox records.
+- Failed sends are logged and can be retried.
+- Resend failures do not block checkout/order creation.
+- Cron processing requires EMAIL_CRON_SECRET in Authorization Bearer or x-cron-secret.
 ```
 
 ## Auth Routes

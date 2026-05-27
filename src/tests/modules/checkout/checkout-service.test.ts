@@ -31,6 +31,8 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   getDeliveryQuote: vi.fn(),
   getActivePaymentSnapshot: vi.fn(),
+  queueOrderConfirmationEmailForOrder: vi.fn(),
+  queueAdminNewOrderAlertEmailsForOrder: vi.fn(),
 }));
 
 vi.mock("@/server/db/prisma", () => ({
@@ -51,6 +53,13 @@ vi.mock("@/server/modules/delivery/delivery-service", () => ({
 
 vi.mock("@/server/modules/payments/payment-service", () => ({
   getActivePaymentSnapshot: mocks.getActivePaymentSnapshot,
+}));
+
+vi.mock("@/server/modules/email", () => ({
+  queueAdminNewOrderAlertEmailsForOrder:
+    mocks.queueAdminNewOrderAlertEmailsForOrder,
+  queueOrderConfirmationEmailForOrder:
+    mocks.queueOrderConfirmationEmailForOrder,
 }));
 
 vi.mock("@/server/config/env", () => ({
@@ -188,6 +197,8 @@ describe("checkout service", () => {
         "Bank Name: Moniepoint\nAccount Name: Sunflour Bakery\nAccount Number: 1234567890\n\nTransfer to Sunflour test account.",
       proofWhatsappNumberSnapshot: "2348012345678",
     });
+    mocks.queueOrderConfirmationEmailForOrder.mockResolvedValue(null);
+    mocks.queueAdminNewOrderAlertEmailsForOrder.mockResolvedValue([]);
   });
 
   it("creates a guest order with server-calculated product and delivery totals", async () => {
@@ -236,6 +247,17 @@ describe("checkout service", () => {
         }),
       }),
     );
+    expect(mocks.queueOrderConfirmationEmailForOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderNumber: response.orderNumber,
+        customerEmailSnapshot: "ada@example.com",
+      }),
+    );
+    expect(mocks.queueAdminNewOrderAlertEmailsForOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderNumber: response.orderNumber,
+      }),
+    );
   });
 
   it("creates an authenticated order and clears the saved cart", async () => {
@@ -267,6 +289,27 @@ describe("checkout service", () => {
         userId: "user_1",
       },
     });
+  });
+
+  it("does not fail checkout when email queueing fails", async () => {
+    mocks.orderFindUnique.mockResolvedValueOnce(null);
+    mocks.productFindMany.mockResolvedValueOnce([activeProduct()]);
+    mocks.orderCreate.mockImplementationOnce(async (args) =>
+      checkoutOrder({
+        orderNumber: args.data.orderNumber,
+      }),
+    );
+    mocks.queueOrderConfirmationEmailForOrder.mockRejectedValueOnce(
+      new Error("email outbox unavailable"),
+    );
+
+    const response = await createCheckoutOrder(checkoutInput, {
+      idempotencyKey: "checkout-key-3",
+      now,
+    });
+
+    expect(response.orderNumber).toMatch(/^SFB-/);
+    expect(mocks.queueOrderConfirmationEmailForOrder).toHaveBeenCalledTimes(1);
   });
 
   it("returns the existing order for duplicate idempotent requests", async () => {
