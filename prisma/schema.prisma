@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "cockroachdb"
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?  @map("actor_user_id")
+  action      String
+  targetType  String   @map("target_type")
+  targetId    String?  @map("target_id")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([actorUserId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

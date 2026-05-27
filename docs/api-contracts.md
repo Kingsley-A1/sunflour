@@ -1,0 +1,201 @@
+# API Contracts - Sunflour Bakery
+
+Status: placeholder for Phase 0. Complete this document before implementing backend API routes.
+
+## Source Of Truth
+
+Read these files before editing API contracts:
+
+```txt
+AGENTS.md
+backend-implementation.md
+frontend-implimentation.md
+docs/database-schema.md
+docs/order-lifecycle.md
+```
+
+## Contract Shape
+
+All API responses must use the shared envelope:
+
+```ts
+export type ApiSuccess<T> = {
+  ok: true;
+  data: T;
+};
+
+export type ApiError = {
+  ok: false;
+  error: {
+    code: string;
+    message: string;
+    fieldErrors?: Record<string, string[]>;
+  };
+};
+```
+
+Do not expose secrets, stack traces, raw Prisma errors, or unsafe database details.
+
+## Route Namespaces
+
+```txt
+/api/v1/public/*
+/api/v1/customer/*
+/api/v1/admin/*
+/api/v1/webhooks/*
+```
+
+Route handlers must stay thin:
+
+```txt
+Route handler -> validate request -> call service/module -> return typed response
+```
+
+## Contract Checklist
+
+- [ ] Every request body/query/param is validated with Zod.
+- [ ] Every route documents auth requirement: public, customer, moderator, or super_admin.
+- [ ] Every route documents success response shape.
+- [ ] Every route documents expected error codes.
+- [ ] Every route documents side effects.
+- [ ] Every admin-critical mutation documents audit log behavior.
+- [ ] Every order status mutation documents `order_status_events` behavior.
+- [ ] Checkout uses idempotency.
+- [ ] Frontend never submits trusted prices, fees, surcharge, or totals.
+- [ ] Public APIs expose only data needed for the user journey.
+
+## Planned Public API Contracts
+
+### `GET /api/v1/public/menu`
+
+Purpose: Return active categories and orderable public products.
+
+Decisions needed:
+
+- [ ] Product visibility rules for `OUT_OF_STOCK` items.
+- [ ] Pagination or full menu response for v1.
+- [ ] Image payload shape.
+
+### `GET /api/v1/public/products/[slug]`
+
+Purpose: Return public product detail, variants, images, status, and orderability.
+
+Decisions needed:
+
+- [ ] Slug uniqueness policy.
+- [ ] Related products policy.
+
+### `GET /api/v1/public/delivery/zones`
+
+Purpose: Return active delivery zones available for checkout.
+
+Decisions needed:
+
+- [ ] Whether inactive zones are omitted or shown as unavailable.
+
+### `POST /api/v1/public/delivery/quote`
+
+Purpose: Calculate delivery base fee, 6 PM surcharge, and total fee server-side.
+
+Rules:
+
+- Pickup returns NGN 0.
+- Delivery uses selected active zone.
+- Active surcharge applies from 6:00 PM.
+
+Decisions needed:
+
+- [ ] Production timezone source.
+- [ ] Operating hours behavior after close.
+
+### `POST /api/v1/public/checkout`
+
+Purpose: Create guest or authenticated order after server-side recalculation.
+
+Rules:
+
+- Ignore client-submitted prices and totals.
+- Recalculate subtotal, delivery base fee, surcharge, and total.
+- Snapshot product, delivery, and payment instructions.
+- Initial order status is `PENDING_PAYMENT`.
+- Initial payment status is `UNPAID`.
+- Return invoice link and WhatsApp proof handoff link.
+
+Decisions needed:
+
+- [ ] Required customer fields.
+- [ ] Phone number format standard.
+- [ ] Idempotency key header name.
+- [ ] Guest order lookup token strategy.
+
+### `POST /api/v1/public/reviews`
+
+Purpose: Accept public review submissions.
+
+Rules:
+
+- New reviews enter `PENDING`.
+- Public listing must only show approved reviews.
+- Apply rate limiting.
+
+Decisions needed:
+
+- [ ] Whether reviews must be order-linked in v1.
+- [ ] Minimum and maximum comment length.
+
+## Planned Customer API Contracts
+
+- [ ] `GET /api/v1/customer/profile`
+- [ ] `PATCH /api/v1/customer/profile`
+- [ ] `GET /api/v1/customer/orders`
+- [ ] `GET /api/v1/customer/orders/[orderNumber]`
+- [ ] `GET /api/v1/customer/orders/[orderNumber]/invoice`
+
+Decision needed: confirm whether customer auth is Google-only in v1 or also credentials/email reset.
+
+## Planned Admin API Contracts
+
+- [ ] Dashboard metrics endpoint.
+- [ ] Order list/detail/update endpoints.
+- [ ] Payment confirmation/rejection endpoints.
+- [ ] Product/category/variant CRUD endpoints.
+- [ ] Delivery zone and surcharge rule endpoints.
+- [ ] Payment settings endpoint.
+- [ ] Email template/outbox endpoints.
+- [ ] Review moderation endpoints.
+- [ ] Audit log endpoint.
+- [ ] R2 signed upload endpoint.
+
+Admin contracts must document required role and audit behavior.
+
+## Error Code Registry
+
+Add canonical error codes here before implementation.
+
+```txt
+VALIDATION_ERROR
+UNAUTHORIZED
+FORBIDDEN
+NOT_FOUND
+CONFLICT
+RATE_LIMITED
+CHECKOUT_ITEM_UNAVAILABLE
+CHECKOUT_PRICE_RECALCULATED
+DELIVERY_ZONE_UNAVAILABLE
+INVALID_ORDER_STATUS_TRANSITION
+INVALID_PAYMENT_STATUS_TRANSITION
+IDEMPOTENCY_CONFLICT
+INTERNAL_ERROR
+```
+
+## Open Product Decisions
+
+- [ ] Official Sunflour address.
+- [ ] Moniepoint bank details.
+- [ ] WhatsApp proof number.
+- [ ] Admin emails and role assignments.
+- [ ] Delivery zones and base fees.
+- [ ] Surcharge rule enablement and close-of-day behavior.
+- [ ] Pickup operating rules.
+- [ ] Order operating hours.
+- [ ] Email sender domain and sender name.
