@@ -86,6 +86,7 @@ function checkoutResponse(customerType: CustomerTypeValue = CustomerType.GUEST) 
         lineTotal: 500_000,
       },
     ],
+    invoiceNumber: "INV-SFB-20260101-ABC123",
     paymentInstruction: "Transfer to Sunflour test account.",
     invoiceUrl: "/orders/SFB-20260101-ABC123/invoice",
     whatsAppProofUrl: "https://wa.me/?text=proof",

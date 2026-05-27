@@ -1,6 +1,6 @@
 # Database Schema - Sunflour Bakery
 
-Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, Phase 5 checkout/order, and Phase 6 payment workflow tables are implemented.
+Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, Phase 5 checkout/order, Phase 6 payment workflow, and Phase 7 invoice tables are implemented.
 
 ## Source Of Truth
 
@@ -356,9 +356,38 @@ Payment workflow rules:
 
 ### Invoices
 
-- [ ] `invoices` store invoice number and HTML snapshot.
-- [ ] Optional PDF URL can be added after layout is stable.
-- [ ] Invoice records are linked to orders.
+- [x] `invoices` store invoice number and HTML snapshot.
+- [x] Optional PDF URL can be added after layout is stable.
+- [x] Invoice records are linked to orders.
+
+Implemented Phase 7 invoice table:
+
+```txt
+invoices
+```
+
+Implemented Phase 7 invoice fields:
+
+```txt
+invoices.id
+invoices.order_id
+invoices.invoice_number
+invoices.public_access_token
+invoices.html_snapshot
+invoices.pdf_url
+invoices.generated_at
+invoices.created_at
+```
+
+Invoice rules:
+
+```txt
+- invoices.order_id is unique so each order has one invoice.
+- invoices.invoice_number is unique and derived from the order number.
+- invoices.public_access_token gates public access.
+- invoices.html_snapshot stores the full printable invoice HTML.
+- Invoice HTML uses order snapshots and does not change after product, delivery, or payment settings updates.
+```
 
 ### Reviews
 
@@ -383,7 +412,7 @@ Payment workflow rules:
 - [x] Unique product slug.
 - [x] Unique category slug.
 - [x] Unique order number.
-- [ ] Unique invoice number.
+- [x] Unique invoice number.
 - [x] Index orders by status, payment status, created date, customer phone, and user.
 - [x] Index order items by order and product.
 - [ ] Index reviews by status and product.

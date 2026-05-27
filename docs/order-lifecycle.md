@@ -1,6 +1,6 @@
 # Order Lifecycle - Sunflour Bakery
 
-Status: active draft. Phase 5 checkout creates initial order records and Phase 6 adds manual payment verification events.
+Status: active draft. Phase 5 checkout creates initial order records, Phase 6 adds manual payment verification events, and Phase 7 adds invoice creation.
 
 ## Source Of Truth
 
@@ -47,7 +47,7 @@ Checkout submitted
 -> backend recalculates products, variants, subtotal, delivery fee, surcharge, and total
 -> order is created with status PENDING_PAYMENT
 -> payment status is set to UNPAID
--> invoice is generated
+-> invoice is generated from order snapshots
 -> payment instruction snapshot is shown
 -> WhatsApp proof handoff link is generated
 ```
@@ -72,6 +72,7 @@ Order created
 - [x] Every order status change writes `order_status_events`.
 - [x] Every payment confirmation/rejection writes `payment_confirmation_events`.
 - [x] Every payment confirmation/rejection writes `audit_logs`.
+- [x] Checkout creates an invoice snapshot.
 - [ ] Cancelled orders cannot move to delivered without explicit `SUPER_ADMIN` override policy.
 - [ ] Rejected orders cannot continue normal fulfillment.
 - [ ] Customer-facing copy never claims payment is confirmed before admin verification.
@@ -104,7 +105,20 @@ Checkout creates:
 - product, variant, delivery fee, and payment instruction snapshots
 ```
 
-Invoice records and broader admin status transitions remain in later backend phases.
+Broader admin status transitions remain in later backend phases.
+
+## Phase 7 Implementation Note
+
+Checkout now creates:
+
+```txt
+- invoices row linked to the order.
+- unique invoice_number.
+- token-gated public invoice URL.
+- html_snapshot generated from order snapshots.
+```
+
+Invoice HTML is stored before any email dependency exists. Phase 8 can attach or link the invoice snapshot without regenerating totals.
 
 ## Phase 6 Implementation Note
 

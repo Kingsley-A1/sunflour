@@ -365,6 +365,7 @@ model Order {
   items        OrderItem[]
   statusEvents OrderStatusEvent[]
   paymentConfirmationEvents PaymentConfirmationEvent[]
+  invoice      Invoice?
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
@@ -372,6 +373,22 @@ model Order {
   @@index([customerPhoneSnapshot])
   @@index([createdAt])
   @@map("orders")
+}
+
+model Invoice {
+  id                String   @id @default(cuid())
+  orderId           String   @unique @map("order_id")
+  invoiceNumber     String   @unique @map("invoice_number")
+  publicAccessToken String   @unique @map("public_access_token")
+  htmlSnapshot      String   @map("html_snapshot")
+  pdfUrl            String?  @map("pdf_url")
+  generatedAt       DateTime @default(now()) @map("generated_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([generatedAt])
+  @@map("invoices")
 }
 
 model PaymentSetting {

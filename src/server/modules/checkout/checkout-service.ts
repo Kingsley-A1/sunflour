@@ -34,6 +34,12 @@ import {
   buildWhatsAppProofUrl,
 } from "./checkout-payment";
 import { getActivePaymentSnapshot } from "@/server/modules/payments/payment-service";
+import {
+  buildInvoicePublicUrl,
+  generateInvoiceAccessToken,
+  generateInvoiceNumber,
+  renderInvoiceHtml,
+} from "@/server/modules/invoices";
 import type { CheckoutCreateInput, CheckoutItemInput } from "./checkout-schemas";
 
 const checkoutProductInclude = {
@@ -49,6 +55,12 @@ const checkoutOrderInclude = {
   items: {
     orderBy: {
       createdAt: "asc",
+    },
+  },
+  invoice: {
+    select: {
+      invoiceNumber: true,
+      publicAccessToken: true,
     },
   },
 } satisfies Prisma.OrderInclude;
@@ -90,6 +102,7 @@ export interface CheckoutOrderResponse {
     quantity: number;
     lineTotal: number;
   }>;
+  invoiceNumber: string | null;
   paymentInstruction: string;
   invoiceUrl: string;
   whatsAppProofUrl: string;
@@ -185,14 +198,20 @@ export function resolveCheckoutLineItems(
   });
 }
 
-function buildInvoiceUrl(orderNumber: string): string {
+function buildInvoiceUrl(
+  orderNumber: string,
+  publicAccessToken?: string,
+): string {
   const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL;
+  const invoicePath = publicAccessToken
+    ? buildInvoicePublicUrl(orderNumber, publicAccessToken)
+    : `/orders/${orderNumber}/invoice`;
 
   if (!appUrl) {
-    return `/orders/${orderNumber}/invoice`;
+    return invoicePath;
   }
 
-  return `${appUrl.replace(/\/$/, "")}/orders/${orderNumber}/invoice`;
+  return `${appUrl.replace(/\/$/, "")}${invoicePath}`;
 }
 
 function mapCheckoutOrderResponse(order: CheckoutOrder): CheckoutOrderResponse {
@@ -226,8 +245,12 @@ function mapCheckoutOrderResponse(order: CheckoutOrder): CheckoutOrderResponse {
       quantity: item.quantity,
       lineTotal: item.lineTotal,
     })),
+    invoiceNumber: order.invoice?.invoiceNumber ?? null,
     paymentInstruction: order.paymentInstructionSnapshot,
-    invoiceUrl: buildInvoiceUrl(order.orderNumber),
+    invoiceUrl: buildInvoiceUrl(
+      order.orderNumber,
+      order.invoice?.publicAccessToken,
+    ),
     whatsAppProofUrl: buildWhatsAppProofUrl(
       whatsAppProofMessage,
       order.proofWhatsappNumberSnapshot,
@@ -283,7 +306,39 @@ export async function createCheckoutOrder(
     ? CustomerType.AUTHENTICATED
     : CustomerType.GUEST;
   const orderNumber = generateOrderNumber(options.now);
+  const createdAt = options.now ?? new Date();
+  const invoiceNumber = generateInvoiceNumber(orderNumber);
+  const invoiceAccessToken = generateInvoiceAccessToken();
   const paymentSnapshot = await getActivePaymentSnapshot();
+  const invoiceHtmlSnapshot = renderInvoiceHtml({
+    invoiceNumber,
+    generatedAt: createdAt,
+    order: {
+      orderNumber,
+      customerNameSnapshot: input.customer.fullName,
+      customerPhoneSnapshot: input.customer.phone,
+      customerEmailSnapshot: input.customer.email ?? null,
+      deliveryMethod: input.delivery.method,
+      deliveryAddressSnapshot:
+        input.delivery.method === DeliveryMethod.DELIVERY
+          ? input.delivery.address ?? null
+          : null,
+      deliveryZoneNameSnapshot: deliverySnapshot.deliveryZoneNameSnapshot,
+      deliveryBaseFeeSnapshot: deliverySnapshot.deliveryBaseFeeSnapshot,
+      deliverySurchargeSnapshot: deliverySnapshot.deliverySurchargeSnapshot,
+      deliveryTotalFeeSnapshot: deliverySnapshot.deliveryTotalFeeSnapshot,
+      subtotal,
+      total,
+      status: OrderStatus.PENDING_PAYMENT,
+      paymentStatus: PaymentStatus.UNPAID,
+      paymentMethod: PaymentMethod.BANK_TRANSFER,
+      paymentInstructionSnapshot: paymentSnapshot.paymentInstructionSnapshot,
+      proofWhatsappNumberSnapshot:
+        paymentSnapshot.proofWhatsappNumberSnapshot,
+      createdAt,
+      items: lineItems,
+    },
+  });
 
   const order = await prisma.$transaction(async (transaction) => {
     const createdOrder = await transaction.order.create({
@@ -335,6 +390,14 @@ export async function createCheckoutOrder(
             toStatus: OrderStatus.PENDING_PAYMENT,
             changedByUserId: options.user?.id,
             reason: "Order created from checkout.",
+          },
+        },
+        invoice: {
+          create: {
+            invoiceNumber,
+            publicAccessToken: invoiceAccessToken,
+            htmlSnapshot: invoiceHtmlSnapshot,
+            generatedAt: createdAt,
           },
         },
       },

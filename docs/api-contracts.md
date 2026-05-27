@@ -278,6 +278,7 @@ Success:
       quantity: number;
       lineTotal: number;
     }>;
+    invoiceNumber: string | null;
     paymentInstruction: string;
     invoiceUrl: string;
     whatsAppProofUrl: string;
@@ -309,6 +310,61 @@ Payment instructions now come from active admin-managed payment_settings.
 Checkout fails with PAYMENT_SETTINGS_UNAVAILABLE when active payment settings do not exist.
 ```
 
+Phase 7 update:
+
+```txt
+Checkout creates an invoice record and returns a tokenized public invoice API URL.
+```
+
+### `GET /api/v1/public/invoices/[orderNumber]?token=...`
+
+Purpose: Return a stable purchase invoice by order number and public access token.
+
+Status: implemented in Phase 7.
+
+Auth: public with token.
+
+Rules:
+
+```txt
+- Missing or invalid token returns NOT_FOUND.
+- Invoice HTML is a stored snapshot and does not recalculate order prices.
+- Public response does not expose the public access token.
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    id: string;
+    invoiceNumber: string;
+    htmlSnapshot: string;
+    pdfUrl: string | null;
+    generatedAt: string;
+    createdAt: string;
+    order: {
+      orderNumber: string;
+      customerNameSnapshot: string;
+      customerPhoneSnapshot: string;
+      customerEmailSnapshot: string | null;
+      subtotal: number;
+      total: number;
+      status: string;
+      paymentStatus: string;
+    };
+  };
+}
+```
+
+Errors:
+
+```txt
+400 VALIDATION_ERROR
+404 NOT_FOUND
+```
+
 ### `POST /api/v1/public/reviews`
 
 Purpose: Accept public review submissions.
@@ -330,7 +386,7 @@ Decisions needed:
 - [ ] `PATCH /api/v1/customer/profile`
 - [ ] `GET /api/v1/customer/orders`
 - [ ] `GET /api/v1/customer/orders/[orderNumber]`
-- [ ] `GET /api/v1/customer/orders/[orderNumber]/invoice`
+- [x] `GET /api/v1/customer/orders/[orderNumber]/invoice`
 
 Decision needed: confirm whether customer auth is Google-only in v1 or also credentials/email reset.
 
@@ -348,6 +404,7 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [x] R2 signed upload endpoint.
 - [ ] Dashboard metrics endpoint.
 - [ ] Order list/detail/update endpoints.
+- [x] `GET /api/v1/admin/orders/[orderNumber]/invoice`
 - [x] Payment confirmation/rejection endpoint.
 - [x] Delivery zone and surcharge rule endpoints.
 - [x] Payment settings endpoint.
@@ -619,6 +676,22 @@ Side effects:
 - Writes ORDER_PAYMENT_CONFIRMED audit log for confirmation.
 - Writes ORDER_PAYMENT_REJECTED audit log for rejection.
 - Writes ORDER_PAYMENT_STATUS_UPDATE audit log for review/proof states.
+```
+
+### Invoice Admin And Customer Access
+
+```txt
+GET /api/v1/customer/orders/[orderNumber]/invoice     authenticated customer owner
+GET /api/v1/admin/orders/[orderNumber]/invoice        MODERATOR | SUPER_ADMIN
+```
+
+Rules:
+
+```txt
+- Customers can access only invoices for their own authenticated orders.
+- Admins can access order invoices for operations.
+- Invoice HTML remains stable because it is stored as html_snapshot.
+- Invoice works without email and can later be attached to email.
 ```
 
 ## Auth Routes

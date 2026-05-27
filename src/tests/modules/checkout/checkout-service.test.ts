@@ -149,6 +149,10 @@ function checkoutOrder(overrides = {}) {
         createdAt: now,
       },
     ],
+    invoice: {
+      invoiceNumber: "INV-SFB-20260101-ABC123",
+      publicAccessToken: "invoice-token-1",
+    },
     ...overrides,
   };
 }
@@ -220,6 +224,15 @@ describe("checkout service", () => {
           paymentMethod: PaymentMethod.BANK_TRANSFER,
           paymentInstructionSnapshot: expect.stringContaining("Moniepoint"),
           proofWhatsappNumberSnapshot: "2348012345678",
+          invoice: {
+            create: expect.objectContaining({
+              invoiceNumber: expect.stringMatching(
+                /^INV-SFB-\d{8}-[A-Z2-9]{6}$/,
+              ),
+              publicAccessToken: expect.any(String),
+              htmlSnapshot: expect.stringContaining("Chocolate Cake"),
+            }),
+          },
         }),
       }),
     );
