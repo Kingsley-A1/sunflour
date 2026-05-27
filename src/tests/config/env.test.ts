@@ -25,6 +25,19 @@ describe("environment validation", () => {
     );
   });
 
+  it("accepts required production auth and database configuration", () => {
+    const env = getServerEnv({
+      NODE_ENV: "production",
+      DATABASE_URL: "postgresql://user:pass@example.com:26257/sunflour",
+      AUTH_SECRET: "12345678901234567890123456789012",
+      AUTH_GOOGLE_ID: "google-client-id",
+      AUTH_GOOGLE_SECRET: "google-client-secret",
+    });
+
+    expect(env.NODE_ENV).toBe("production");
+    expect(env.AUTH_GOOGLE_ID).toBe("google-client-id");
+  });
+
   it("requires DATABASE_URL for database commands", () => {
     expect(() => requireDatabaseUrl({ NODE_ENV: "development" })).toThrow(
       EnvValidationError,

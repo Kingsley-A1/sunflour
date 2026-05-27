@@ -23,6 +23,11 @@ const envSchema = z
     DATABASE_URL: z.string().url().optional(),
     TEST_DATABASE_URL: z.string().url().optional(),
     SHADOW_DATABASE_URL: z.string().url().optional(),
+    NEXTAUTH_URL: z.string().url().optional(),
+    AUTH_SECRET: z.string().min(32).optional(),
+    AUTH_GOOGLE_ID: z.string().min(1).optional(),
+    AUTH_GOOGLE_SECRET: z.string().min(1).optional(),
+    ADMIN_ALLOWLIST_EMAILS: z.string().optional().default(""),
     RUN_DB_TESTS: z
       .enum(["true", "false"])
       .optional()
@@ -34,6 +39,30 @@ const envSchema = z
         code: "custom",
         path: ["DATABASE_URL"],
         message: "DATABASE_URL is required in production.",
+      });
+    }
+
+    if (env.NODE_ENV === "production" && !env.AUTH_SECRET) {
+      context.addIssue({
+        code: "custom",
+        path: ["AUTH_SECRET"],
+        message: "AUTH_SECRET is required in production.",
+      });
+    }
+
+    if (env.NODE_ENV === "production" && !env.AUTH_GOOGLE_ID) {
+      context.addIssue({
+        code: "custom",
+        path: ["AUTH_GOOGLE_ID"],
+        message: "AUTH_GOOGLE_ID is required in production.",
+      });
+    }
+
+    if (env.NODE_ENV === "production" && !env.AUTH_GOOGLE_SECRET) {
+      context.addIssue({
+        code: "custom",
+        path: ["AUTH_GOOGLE_SECRET"],
+        message: "AUTH_GOOGLE_SECRET is required in production.",
       });
     }
   });

@@ -1,6 +1,6 @@
 # Database Schema - Sunflour Bakery
 
-Status: placeholder for Phase 0. Complete this document before creating Prisma models and migrations.
+Status: active draft. Phase 1 foundation and Phase 2 auth/RBAC tables are implemented.
 
 ## Source Of Truth
 
@@ -136,10 +136,42 @@ Old invoices must not change when products, prices, delivery zones, surcharge ru
 
 ### Users and Roles
 
-- [ ] `users` supports authenticated customer and admin identities.
-- [ ] `users.role` supports `CUSTOMER`, `MODERATOR`, and `SUPER_ADMIN`.
-- [ ] `admin_profiles` can mark admin access active/inactive.
-- [ ] Moderator restrictions are enforceable server-side.
+- [x] `users` supports authenticated customer and admin identities.
+- [x] `users.role` supports `CUSTOMER`, `MODERATOR`, and `SUPER_ADMIN`.
+- [x] `admin_profiles` can mark admin access active/inactive.
+- [x] Moderator restrictions are enforceable server-side.
+
+Implemented Phase 2 auth tables:
+
+```txt
+users
+accounts
+sessions
+verification_tokens
+admin_profiles
+```
+
+Implemented Phase 2 auth fields:
+
+```txt
+users.id
+users.name
+users.email
+users.email_verified
+users.image
+users.phone
+users.role
+users.last_login_at
+users.created_at
+users.updated_at
+
+admin_profiles.id
+admin_profiles.user_id
+admin_profiles.role
+admin_profiles.status
+admin_profiles.created_at
+admin_profiles.updated_at
+```
 
 ### Catalog
 
@@ -193,8 +225,9 @@ Old invoices must not change when products, prices, delivery zones, surcharge ru
 
 ### Audit
 
-- [ ] Admin-critical mutations write `audit_logs`.
-- [ ] Audit logs capture actor, action, target, metadata, and timestamp.
+- [x] Admin-critical mutations can write `audit_logs` through the audit service.
+- [x] Audit logs capture actor, action, target, metadata, and timestamp.
+- [x] `audit_logs.actor_user_id` is linked to `users.id` with `ON DELETE SET NULL`.
 
 ## Index and Constraint Checklist
 

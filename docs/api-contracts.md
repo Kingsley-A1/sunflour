@@ -155,6 +155,9 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 
 ## Planned Admin API Contracts
 
+- [x] `GET /api/v1/admin/health`
+- [x] `GET /api/v1/admin/super-admin/health`
+- [x] `PATCH /api/v1/admin/settings/payment` Phase 2 guard only; full payment settings mutation belongs to Phase 6.
 - [ ] Dashboard metrics endpoint.
 - [ ] Order list/detail/update endpoints.
 - [ ] Payment confirmation/rejection endpoints.
@@ -167,6 +170,108 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [ ] R2 signed upload endpoint.
 
 Admin contracts must document required role and audit behavior.
+
+### `GET /api/v1/admin/health`
+
+Purpose: Verify that the admin API is reachable only by active admin users.
+
+Auth: `MODERATOR` or `SUPER_ADMIN` with active `admin_profiles` row.
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    service: "sunflour-admin-api";
+    status: "ok";
+    role: "MODERATOR" | "SUPER_ADMIN";
+    timestamp: string;
+  };
+}
+```
+
+Errors:
+
+```txt
+401 UNAUTHORIZED
+403 FORBIDDEN
+```
+
+Side effects: none.
+
+### `GET /api/v1/admin/super-admin/health`
+
+Purpose: Verify that super-admin-only route protection works.
+
+Auth: `SUPER_ADMIN` with active `admin_profiles` row.
+
+Errors:
+
+```txt
+401 UNAUTHORIZED
+403 FORBIDDEN
+```
+
+Side effects: none.
+
+### `PATCH /api/v1/admin/settings/payment`
+
+Purpose: Phase 2 authorization guard for future payment settings mutations.
+
+Auth: `SUPER_ADMIN` with active `admin_profiles` row.
+
+Request body:
+
+```ts
+{
+  reason?: string;
+}
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    status: "authorized";
+    role: "SUPER_ADMIN";
+    message: string;
+  };
+}
+```
+
+Errors:
+
+```txt
+400 VALIDATION_ERROR
+401 UNAUTHORIZED
+403 FORBIDDEN
+```
+
+Side effects:
+
+```txt
+Writes audit_logs action PAYMENT_SETTINGS_ACCESS_VERIFIED.
+```
+
+Full Moniepoint/payment setting update fields must be defined in Phase 6 before this route performs real setting mutations.
+
+## Auth Routes
+
+### `GET|POST /api/auth/[...nextauth]`
+
+Purpose: Auth.js/NextAuth Google OAuth session handling.
+
+Rules:
+
+```txt
+- Google OAuth is the v1 login provider.
+- Sessions are database-backed through Prisma.
+- Allowlisted admin emails are promoted to MODERATOR or SUPER_ADMIN on sign-in.
+- Admin API access still requires active admin_profiles server-side.
+```
 
 ## Error Code Registry
 
