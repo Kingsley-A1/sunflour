@@ -82,6 +82,25 @@ export async function requireAuth(
   };
 }
 
+export async function getOptionalAuth(
+  options: AuthCheckOptions = {},
+): Promise<AuthenticatedUser | null> {
+  const getSession = options.getSession ?? getDefaultSession;
+  const session = await getSession();
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    image: session.user.image,
+    role: session.user.role ?? UserRole.CUSTOMER,
+  };
+}
+
 export async function requireRole(
   allowedRoles: readonly Role[],
   options: AuthCheckOptions = {},

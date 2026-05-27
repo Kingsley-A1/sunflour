@@ -1,6 +1,6 @@
 # Database Schema - Sunflour Bakery
 
-Status: active draft. Phase 1 foundation and Phase 2 auth/RBAC tables are implemented.
+Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, and Phase 5 checkout/order tables are implemented.
 
 ## Source Of Truth
 
@@ -210,19 +210,99 @@ PRODUCT_IMAGE
 
 ### Delivery
 
-- [ ] `delivery_zones` are admin-editable.
-- [ ] `delivery_surcharge_rules` can represent the 6 PM NGN 500 surcharge.
-- [ ] Pickup can be represented with zero delivery fee and no surcharge.
-- [ ] Delivery fee snapshots are stored on orders.
+- [x] `delivery_zones` are admin-editable.
+- [x] `delivery_surcharge_rules` can represent the 6 PM NGN 500 surcharge.
+- [x] Pickup can be represented with zero delivery fee and no surcharge.
+- [x] Delivery fee snapshots are stored on orders.
+
+Implemented Phase 4 delivery tables:
+
+```txt
+delivery_zones
+delivery_surcharge_rules
+```
+
+Implemented Phase 4 enum:
+
+```txt
+DeliveryMethod:
+DELIVERY
+PICKUP
+```
+
+Delivery amount rules:
+
+```txt
+- base_fee and surcharge amount are integer minor units in NGN.
+- The default 6 PM surcharge is NGN 500, stored as 50000.
+- Pickup quotes return zero delivery base fee, surcharge, and total.
+- Phase 4 includes the delivery fee snapshot builder; Phase 5 stores those values on orders.
+```
 
 ### Orders
 
-- [ ] `orders` support guest and authenticated checkout.
-- [ ] `orders.order_number` is unique and customer-safe.
-- [ ] `orders.status` uses the approved order lifecycle enum.
-- [ ] `orders.payment_status` is separate from fulfillment status.
-- [ ] `order_items` store product, variant, unit price, quantity, and line total snapshots.
-- [ ] Every status change creates an `order_status_events` row.
+- [x] `orders` support guest and authenticated checkout.
+- [x] `orders.order_number` is unique and customer-safe.
+- [x] `orders.status` uses the approved order lifecycle enum.
+- [x] `orders.payment_status` is separate from fulfillment status.
+- [x] `order_items` store product, variant, unit price, quantity, and line total snapshots.
+- [x] Every status change creates an `order_status_events` row.
+
+Implemented Phase 5 checkout/order tables:
+
+```txt
+carts
+cart_items
+orders
+order_items
+order_status_events
+```
+
+Implemented Phase 5 enums:
+
+```txt
+CustomerType:
+GUEST
+AUTHENTICATED
+
+OrderStatus:
+PENDING_PAYMENT
+PAYMENT_UNDER_REVIEW
+PAYMENT_CONFIRMED
+PREPARING
+READY_FOR_PICKUP
+OUT_FOR_DELIVERY
+DELIVERED
+CANCELLED
+REJECTED
+
+PaymentStatus:
+UNPAID
+PROOF_SENT_ON_WHATSAPP
+UNDER_REVIEW
+CONFIRMED
+REJECTED
+
+PaymentMethod:
+BANK_TRANSFER
+```
+
+Checkout snapshot fields now implemented on `orders`:
+
+```txt
+customer_name_snapshot
+customer_phone_snapshot
+customer_email_snapshot
+delivery_address_snapshot
+delivery_zone_id
+delivery_zone_name_snapshot
+delivery_base_fee_snapshot
+delivery_surcharge_snapshot
+delivery_total_fee_snapshot
+subtotal
+total
+payment_instruction_snapshot
+```
 
 ### Payments
 
@@ -260,10 +340,10 @@ PRODUCT_IMAGE
 
 - [x] Unique product slug.
 - [x] Unique category slug.
-- [ ] Unique order number.
+- [x] Unique order number.
 - [ ] Unique invoice number.
-- [ ] Index orders by status, payment status, created date, customer phone, and user.
-- [ ] Index order items by order and product.
+- [x] Index orders by status, payment status, created date, customer phone, and user.
+- [x] Index order items by order and product.
 - [ ] Index reviews by status and product.
 - [ ] Index email outbox by status and next attempt time.
 - [ ] Index audit logs by actor, action, target, and creation time.

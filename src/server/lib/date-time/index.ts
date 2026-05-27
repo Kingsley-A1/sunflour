@@ -1,5 +1,6 @@
 export {
   getLocalTimeParts,
+  isClockTimeInRange,
   minutesSinceMidnight,
   parseClockTime,
   shouldApplyDeliverySurcharge,

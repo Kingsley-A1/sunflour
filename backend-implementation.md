@@ -1416,6 +1416,7 @@ Implement accurate, admin-editable delivery pricing.
 ## Acceptance criteria
 
 - Delivery quote is calculated server-side.
+- Admin can manage(create/edit) zones and fees without code changes.
 - Admin can edit delivery zones.
 - Admin can edit surcharge rule.
 - Checkout cannot manipulate delivery fee from frontend.

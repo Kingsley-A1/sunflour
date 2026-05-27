@@ -34,6 +34,40 @@ enum MediaUploadPurpose {
   PRODUCT_IMAGE
 }
 
+enum DeliveryMethod {
+  DELIVERY
+  PICKUP
+}
+
+enum CustomerType {
+  GUEST
+  AUTHENTICATED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_UNDER_REVIEW
+  PAYMENT_CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REJECTED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PROOF_SENT_ON_WHATSAPP
+  UNDER_REVIEW
+  CONFIRMED
+  REJECTED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -51,6 +85,9 @@ model User {
   adminProfile AdminProfile?
   auditLogs    AuditLog[]    @relation("AuditActor")
   mediaAssets  MediaAsset[]  @relation("MediaAssetCreator")
+  carts        Cart[]
+  orders       Order[]
+  orderStatusEvents OrderStatusEvent[] @relation("OrderStatusEventActor")
 
   @@map("users")
 }
@@ -156,6 +193,8 @@ model Product {
   category Category         @relation(fields: [categoryId], references: [id])
   variants ProductVariant[]
   images   ProductImage[]
+  cartItems CartItem[]
+  orderItems OrderItem[]
 
   @@index([categoryId])
   @@index([status, sortOrder])
@@ -176,6 +215,8 @@ model ProductVariant {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  orderItems OrderItem[]
 
   @@index([productId, isActive, sortOrder])
   @@index([sku])
@@ -222,6 +263,151 @@ model MediaAsset {
   @@index([uploadPurpose])
   @@index([createdByUserId])
   @@map("media_assets")
+}
+
+model DeliveryZone {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  baseFee     Int      @map("base_fee")
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@index([isActive, sortOrder])
+  @@map("delivery_zones")
+}
+
+model DeliverySurchargeRule {
+  id           String   @id @default(cuid())
+  name         String
+  startsAtTime String   @map("starts_at_time")
+  endsAtTime   String?  @map("ends_at_time")
+  amount       Int
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, startsAtTime])
+  @@map("delivery_surcharge_rules")
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String   @map("cart_id")
+  productId String   @map("product_id")
+  variantId String?  @map("variant_id")
+  quantity  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, productId, variantId])
+  @@index([cartId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("cart_items")
+}
+
+model Order {
+  id                         String         @id @default(cuid())
+  orderNumber                String         @unique @map("order_number")
+  idempotencyKey             String?        @unique @map("idempotency_key")
+  idempotencyRequestHash     String?        @map("idempotency_request_hash")
+  userId                     String?        @map("user_id")
+  customerType               CustomerType   @map("customer_type")
+  customerNameSnapshot       String         @map("customer_name_snapshot")
+  customerPhoneSnapshot      String         @map("customer_phone_snapshot")
+  customerEmailSnapshot      String?        @map("customer_email_snapshot")
+  deliveryMethod             DeliveryMethod @map("delivery_method")
+  deliveryAddressSnapshot    String?        @map("delivery_address_snapshot")
+  deliveryZoneId             String?        @map("delivery_zone_id")
+  deliveryZoneNameSnapshot   String?        @map("delivery_zone_name_snapshot")
+  deliveryBaseFeeSnapshot    Int            @map("delivery_base_fee_snapshot")
+  deliverySurchargeSnapshot  Int            @map("delivery_surcharge_snapshot")
+  deliveryTotalFeeSnapshot   Int            @map("delivery_total_fee_snapshot")
+  subtotal                   Int
+  total                      Int
+  status                     OrderStatus    @default(PENDING_PAYMENT)
+  paymentStatus              PaymentStatus  @default(UNPAID) @map("payment_status")
+  paymentMethod              PaymentMethod  @default(BANK_TRANSFER) @map("payment_method")
+  paymentInstructionSnapshot String         @map("payment_instruction_snapshot")
+  customerNote               String?        @map("customer_note")
+  adminNote                  String?        @map("admin_note")
+  createdAt                  DateTime       @default(now()) @map("created_at")
+  updatedAt                  DateTime       @updatedAt @map("updated_at")
+  cancelledAt                DateTime?      @map("cancelled_at")
+  deliveredAt                DateTime?      @map("delivered_at")
+
+  user         User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deliveryZone DeliveryZone?      @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+  statusEvents OrderStatusEvent[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([paymentStatus, createdAt])
+  @@index([customerPhoneSnapshot])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String   @id @default(cuid())
+  orderId             String   @map("order_id")
+  productId           String?  @map("product_id")
+  variantId           String?  @map("variant_id")
+  productNameSnapshot String   @map("product_name_snapshot")
+  variantNameSnapshot String?  @map("variant_name_snapshot")
+  unitPriceSnapshot   Int      @map("unit_price_snapshot")
+  quantity            Int
+  lineTotal           Int      @map("line_total")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("order_items")
+}
+
+model OrderStatusEvent {
+  id              String       @id @default(cuid())
+  orderId         String       @map("order_id")
+  fromStatus      OrderStatus? @map("from_status")
+  toStatus        OrderStatus  @map("to_status")
+  changedByUserId String?      @map("changed_by_user_id")
+  reason          String?
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  order         Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  changedByUser User? @relation("OrderStatusEventActor", fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([toStatus, createdAt])
+  @@index([changedByUserId])
+  @@map("order_status_events")
 }
 
 model AuditLog {

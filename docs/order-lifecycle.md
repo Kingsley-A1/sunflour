@@ -1,6 +1,6 @@
 # Order Lifecycle - Sunflour Bakery
 
-Status: placeholder for Phase 0. Complete this document before implementing checkout, payment verification, invoices, or admin order operations.
+Status: active draft. Phase 5 checkout now creates initial order records and status events.
 
 ## Source Of Truth
 
@@ -65,11 +65,11 @@ Order created
 
 ## Lifecycle Checklist
 
-- [ ] Every order starts as `PENDING_PAYMENT`.
-- [ ] Every order starts with payment status `UNPAID`.
+- [x] Every order starts as `PENDING_PAYMENT`.
+- [x] Every order starts with payment status `UNPAID`.
 - [ ] Payment confirmation is manual.
 - [ ] Email failure does not block order creation.
-- [ ] Every order status change writes `order_status_events`.
+- [x] Every order status change writes `order_status_events`.
 - [ ] Every payment confirmation/rejection writes `payment_confirmation_events`.
 - [ ] Every payment confirmation/rejection writes `audit_logs`.
 - [ ] Cancelled orders cannot move to delivered without explicit `SUPER_ADMIN` override policy.
@@ -91,6 +91,20 @@ Complete this matrix before implementing status transition validation.
 | `READY_FOR_PICKUP` | `DELIVERED` | Admin | No | delivered timestamp |
 | `OUT_FOR_DELIVERY` | `DELIVERED` | Admin | No | delivered timestamp |
 | any active status | `CANCELLED` | Admin | Yes | audit log |
+
+## Phase 5 Implementation Note
+
+Checkout creates:
+
+```txt
+- orders.status = PENDING_PAYMENT
+- orders.payment_status = UNPAID
+- orders.payment_method = BANK_TRANSFER
+- one order_status_events row from null -> PENDING_PAYMENT
+- product, variant, delivery fee, and payment instruction snapshots
+```
+
+Payment verification, payment confirmation events, invoice records, and admin status transitions remain in later backend phases.
 
 ## Open Decisions
 

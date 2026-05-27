@@ -5,6 +5,7 @@ export interface DeliverySurchargeInput {
   orderedAt: Date;
   timeZone?: string;
   startsAtTime?: string;
+  endsAtTime?: string | null;
   isActive?: boolean;
 }
 
@@ -56,11 +57,36 @@ export function minutesSinceMidnight(parts: LocalTimeParts): number {
   return parts.hour * 60 + parts.minute;
 }
 
+export function isClockTimeInRange(
+  timeMinutes: number,
+  startsAtTime: string,
+  endsAtTime?: string | null,
+): boolean {
+  const startMinutes = parseClockTime(startsAtTime);
+
+  if (!endsAtTime) {
+    return timeMinutes >= startMinutes;
+  }
+
+  const endMinutes = parseClockTime(endsAtTime);
+
+  if (startMinutes === endMinutes) {
+    return true;
+  }
+
+  if (startMinutes < endMinutes) {
+    return timeMinutes >= startMinutes && timeMinutes < endMinutes;
+  }
+
+  return timeMinutes >= startMinutes || timeMinutes < endMinutes;
+}
+
 export function shouldApplyDeliverySurcharge({
   deliveryMethod,
   orderedAt,
   timeZone = DEFAULT_TIME_ZONE,
   startsAtTime = DEFAULT_SURCHARGE_START,
+  endsAtTime,
   isActive = true,
 }: DeliverySurchargeInput): boolean {
   if (!isActive || deliveryMethod === "PICKUP") {
@@ -68,5 +94,9 @@ export function shouldApplyDeliverySurcharge({
   }
 
   const localTime = getLocalTimeParts(orderedAt, timeZone);
-  return minutesSinceMidnight(localTime) >= parseClockTime(startsAtTime);
+  return isClockTimeInRange(
+    minutesSinceMidnight(localTime),
+    startsAtTime,
+    endsAtTime,
+  );
 }

@@ -60,7 +60,7 @@ Route handler -> validate request -> call service/module -> return typed respons
 - [ ] Every route documents side effects.
 - [ ] Every admin-critical mutation documents audit log behavior.
 - [ ] Every order status mutation documents `order_status_events` behavior.
-- [ ] Checkout uses idempotency.
+- [x] Checkout uses idempotency.
 - [ ] Frontend never submits trusted prices, fees, surcharge, or totals.
 - [ ] Public APIs expose only data needed for the user journey.
 
@@ -118,28 +118,94 @@ Rules:
 
 Purpose: Return active delivery zones available for checkout.
 
-Decisions needed:
+Status: implemented in Phase 4.
 
-- [ ] Whether inactive zones are omitted or shown as unavailable.
+Rules:
+
+```txt
+- Only active delivery zones are returned publicly.
+- Delivery fees are returned as integer minor units in NGN.
+- Inactive zones are omitted publicly and rejected by quote/checkout.
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    zones: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      baseFee: number;
+    }>;
+  };
+}
+```
 
 ### `POST /api/v1/public/delivery/quote`
 
 Purpose: Calculate delivery base fee, 6 PM surcharge, and total fee server-side.
 
+Status: implemented in Phase 4.
+
 Rules:
 
 - Pickup returns NGN 0.
 - Delivery uses selected active zone.
-- Active surcharge applies from 6:00 PM.
+- Active surcharge applies from 6:00 PM Africa/Lagos time.
+- The default 6 PM surcharge is NGN 500 stored as `50000` minor units.
+- The request body is strict; client-submitted delivery totals, fees, or surcharge values are rejected.
 
-Decisions needed:
+Request:
 
-- [ ] Production timezone source.
-- [ ] Operating hours behavior after close.
+```ts
+{
+  deliveryMethod: "DELIVERY" | "PICKUP";
+  deliveryZoneId?: string;
+}
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    deliveryMethod: "DELIVERY" | "PICKUP";
+    deliveryZone: {
+      id: string;
+      name: string;
+      slug: string;
+    } | null;
+    baseFee: number;
+    surcharge: number;
+    totalFee: number;
+    appliedSurchargeRules: Array<{
+      id: string;
+      name: string;
+      amount: number;
+      startsAtTime: string;
+      endsAtTime: string | null;
+    }>;
+    quotedAt: string;
+  };
+}
+```
+
+Errors:
+
+```txt
+400 VALIDATION_ERROR
+400 DELIVERY_ZONE_UNAVAILABLE
+```
 
 ### `POST /api/v1/public/checkout`
 
 Purpose: Create guest or authenticated order after server-side recalculation.
+
+Status: implemented in Phase 5.
 
 Rules:
 
@@ -149,13 +215,98 @@ Rules:
 - Initial order status is `PENDING_PAYMENT`.
 - Initial payment status is `UNPAID`.
 - Return invoice link and WhatsApp proof handoff link.
+- Require `Idempotency-Key` header to protect duplicate submissions.
+- Hidden and out-of-stock products cannot be ordered.
+- Pickup creates NGN 0 delivery fee snapshots.
+- Delivery requires delivery zone and delivery address.
+
+Headers:
+
+```txt
+Idempotency-Key: required string, 8-160 characters
+```
+
+Request:
+
+```ts
+{
+  customer: {
+    fullName: string;
+    phone: string;
+    email?: string;
+  };
+  delivery: {
+    method: "DELIVERY" | "PICKUP";
+    zoneId?: string;
+    address?: string;
+  };
+  items: Array<{
+    productId: string;
+    variantId?: string;
+    quantity: number;
+  }>;
+  customerNote?: string;
+}
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    orderNumber: string;
+    customerType: "GUEST" | "AUTHENTICATED";
+    status: "PENDING_PAYMENT";
+    paymentStatus: "UNPAID";
+    paymentMethod: "BANK_TRANSFER";
+    subtotal: number;
+    total: number;
+    delivery: {
+      method: "DELIVERY" | "PICKUP";
+      address: string | null;
+      zoneId: string | null;
+      zoneName: string | null;
+      baseFee: number;
+      surcharge: number;
+      totalFee: number;
+    };
+    items: Array<{
+      productName: string;
+      variantName: string | null;
+      unitPrice: number;
+      quantity: number;
+      lineTotal: number;
+    }>;
+    paymentInstruction: string;
+    invoiceUrl: string;
+    whatsAppProofUrl: string;
+    whatsAppProofMessage: string;
+  };
+}
+```
+
+Errors:
+
+```txt
+400 VALIDATION_ERROR
+400 CHECKOUT_ITEM_UNAVAILABLE
+400 DELIVERY_ZONE_UNAVAILABLE
+409 IDEMPOTENCY_CONFLICT
+```
 
 Decisions needed:
 
-- [ ] Required customer fields.
-- [ ] Phone number format standard.
-- [ ] Idempotency key header name.
+- [x] Required customer fields: full name and phone. Email is optional.
+- [x] Phone number format: normalized to digits with optional leading `+`.
+- [x] Idempotency key header name: `Idempotency-Key`.
 - [ ] Guest order lookup token strategy.
+
+Phase 6 follow-up:
+
+```txt
+Payment instructions currently use the checkout env placeholder until payment settings become admin-managed.
+```
 
 ### `POST /api/v1/public/reviews`
 
@@ -196,7 +347,7 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [ ] Dashboard metrics endpoint.
 - [ ] Order list/detail/update endpoints.
 - [ ] Payment confirmation/rejection endpoints.
-- [ ] Delivery zone and surcharge rule endpoints.
+- [x] Delivery zone and surcharge rule endpoints.
 - [ ] Payment settings endpoint.
 - [ ] Email template/outbox endpoints.
 - [ ] Review moderation endpoints.
@@ -260,6 +411,29 @@ Side effects:
 - Completion marks media_assets status READY.
 - Product image creation attaches READY media assets only.
 - Media upload URL creation and completion write audit logs.
+```
+
+### Delivery Admin
+
+```txt
+GET    /api/v1/admin/delivery/zones                  SUPER_ADMIN
+POST   /api/v1/admin/delivery/zones                  SUPER_ADMIN
+PATCH  /api/v1/admin/delivery/zones/[id]             SUPER_ADMIN
+DELETE /api/v1/admin/delivery/zones/[id]             SUPER_ADMIN, soft-archives with is_active=false
+
+GET    /api/v1/admin/delivery/surcharge-rules        SUPER_ADMIN
+POST   /api/v1/admin/delivery/surcharge-rules        SUPER_ADMIN
+PATCH  /api/v1/admin/delivery/surcharge-rules/[id]   SUPER_ADMIN
+DELETE /api/v1/admin/delivery/surcharge-rules/[id]   SUPER_ADMIN, soft-archives with is_active=false
+```
+
+Rules:
+
+```txt
+- Delivery zones and surcharge rules are admin-editable without code changes.
+- Delivery fee and surcharge amounts are integer minor units in NGN.
+- Delivery fee changes write DELIVERY_FEE_UPDATE audit logs.
+- Surcharge rule changes write SURCHARGE_RULE_UPDATE audit logs.
 ```
 
 ### `GET /api/v1/admin/health`
