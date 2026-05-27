@@ -12,8 +12,6 @@ export {
 export {
   buildWhatsAppProofMessage,
   buildWhatsAppProofUrl,
-  getCheckoutPaymentInstruction,
-  getCheckoutWhatsAppProofUrl,
 } from "./checkout-payment";
 export {
   createCheckoutOrder,

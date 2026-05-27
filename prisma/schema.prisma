@@ -88,6 +88,8 @@ model User {
   carts        Cart[]
   orders       Order[]
   orderStatusEvents OrderStatusEvent[] @relation("OrderStatusEventActor")
+  paymentSettingsUpdated PaymentSetting[] @relation("PaymentSettingUpdater")
+  paymentConfirmationEvents PaymentConfirmationEvent[] @relation("PaymentConfirmationEventActor")
 
   @@map("users")
 }
@@ -350,6 +352,7 @@ model Order {
   paymentStatus              PaymentStatus  @default(UNPAID) @map("payment_status")
   paymentMethod              PaymentMethod  @default(BANK_TRANSFER) @map("payment_method")
   paymentInstructionSnapshot String         @map("payment_instruction_snapshot")
+  proofWhatsappNumberSnapshot String?       @map("proof_whatsapp_number_snapshot")
   customerNote               String?        @map("customer_note")
   adminNote                  String?        @map("admin_note")
   createdAt                  DateTime       @default(now()) @map("created_at")
@@ -361,6 +364,7 @@ model Order {
   deliveryZone DeliveryZone?      @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
   items        OrderItem[]
   statusEvents OrderStatusEvent[]
+  paymentConfirmationEvents PaymentConfirmationEvent[]
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
@@ -368,6 +372,26 @@ model Order {
   @@index([customerPhoneSnapshot])
   @@index([createdAt])
   @@map("orders")
+}
+
+model PaymentSetting {
+  id                  String   @id @default(cuid())
+  settingKey          String   @unique @default("default") @map("setting_key")
+  bankName            String   @map("bank_name")
+  accountName         String   @map("account_name")
+  accountNumber       String   @map("account_number")
+  paymentInstruction  String   @map("payment_instruction")
+  proofWhatsappNumber String   @map("proof_whatsapp_number")
+  isActive            Boolean  @default(true) @map("is_active")
+  updatedByUserId     String?  @map("updated_by_user_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  updatedBy User? @relation("PaymentSettingUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([updatedByUserId])
+  @@map("payment_settings")
 }
 
 model OrderItem {
@@ -408,6 +432,24 @@ model OrderStatusEvent {
   @@index([toStatus, createdAt])
   @@index([changedByUserId])
   @@map("order_status_events")
+}
+
+model PaymentConfirmationEvent {
+  id              String        @id @default(cuid())
+  orderId         String        @map("order_id")
+  fromStatus      PaymentStatus @map("from_status")
+  toStatus        PaymentStatus @map("to_status")
+  changedByUserId String?       @map("changed_by_user_id")
+  reason          String?
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  order         Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  changedByUser User? @relation("PaymentConfirmationEventActor", fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([toStatus, createdAt])
+  @@index([changedByUserId])
+  @@map("payment_confirmation_events")
 }
 
 model AuditLog {

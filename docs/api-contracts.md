@@ -302,10 +302,11 @@ Decisions needed:
 - [x] Idempotency key header name: `Idempotency-Key`.
 - [ ] Guest order lookup token strategy.
 
-Phase 6 follow-up:
+Phase 6 update:
 
 ```txt
-Payment instructions currently use the checkout env placeholder until payment settings become admin-managed.
+Payment instructions now come from active admin-managed payment_settings.
+Checkout fails with PAYMENT_SETTINGS_UNAVAILABLE when active payment settings do not exist.
 ```
 
 ### `POST /api/v1/public/reviews`
@@ -337,7 +338,8 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 
 - [x] `GET /api/v1/admin/health`
 - [x] `GET /api/v1/admin/super-admin/health`
-- [x] `PATCH /api/v1/admin/settings/payment` Phase 2 guard only; full payment settings mutation belongs to Phase 6.
+- [x] `GET /api/v1/admin/settings/payment`
+- [x] `PATCH /api/v1/admin/settings/payment`
 - [x] Category CRUD endpoints.
 - [x] Product CRUD endpoints.
 - [x] Product variant CRUD endpoints.
@@ -346,9 +348,9 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [x] R2 signed upload endpoint.
 - [ ] Dashboard metrics endpoint.
 - [ ] Order list/detail/update endpoints.
-- [ ] Payment confirmation/rejection endpoints.
+- [x] Payment confirmation/rejection endpoint.
 - [x] Delivery zone and surcharge rule endpoints.
-- [ ] Payment settings endpoint.
+- [x] Payment settings endpoint.
 - [ ] Email template/outbox endpoints.
 - [ ] Review moderation endpoints.
 - [ ] Audit log endpoint.
@@ -480,17 +482,25 @@ Errors:
 
 Side effects: none.
 
-### `PATCH /api/v1/admin/settings/payment`
+### Payment Settings Admin
 
-Purpose: Phase 2 authorization guard for future payment settings mutations.
+```txt
+GET   /api/v1/admin/settings/payment       SUPER_ADMIN
+PATCH /api/v1/admin/settings/payment       SUPER_ADMIN
+```
 
-Auth: `SUPER_ADMIN` with active `admin_profiles` row.
+Purpose: Manage active Moniepoint/manual transfer details used by checkout.
 
-Request body:
+PATCH request:
 
 ```ts
 {
-  reason?: string;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  paymentInstruction: string;
+  proofWhatsappNumber: string;
+  isActive?: boolean;
 }
 ```
 
@@ -500,9 +510,17 @@ Success:
 {
   ok: true;
   data: {
-    status: "authorized";
-    role: "SUPER_ADMIN";
-    message: string;
+    id: string;
+    settingKey: "default";
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    paymentInstruction: string;
+    proofWhatsappNumber: string;
+    isActive: boolean;
+    updatedByUserId: string | null;
+    createdAt: string;
+    updatedAt: string;
   };
 }
 ```
@@ -518,10 +536,90 @@ Errors:
 Side effects:
 
 ```txt
-Writes audit_logs action PAYMENT_SETTINGS_ACCESS_VERIFIED.
+PATCH writes audit_logs action PAYMENT_SETTINGS_UPDATE.
 ```
 
-Full Moniepoint/payment setting update fields must be defined in Phase 6 before this route performs real setting mutations.
+Rules:
+
+```txt
+- Moderators cannot view or update payment account settings.
+- Checkout snapshots the active payment settings onto the order.
+- Old orders do not change when payment settings are updated later.
+```
+
+### Payment Status Admin
+
+```txt
+PATCH /api/v1/admin/orders/[orderNumber]/payment-status     MODERATOR | SUPER_ADMIN
+```
+
+Purpose: Manually verify or reject payment after WhatsApp proof review.
+
+Request:
+
+```ts
+{
+  paymentStatus:
+    | "PROOF_SENT_ON_WHATSAPP"
+    | "UNDER_REVIEW"
+    | "CONFIRMED"
+    | "REJECTED";
+  reason?: string;
+}
+```
+
+Rules:
+
+```txt
+- Payment confirmation remains manual; the frontend cannot mark payment confirmed.
+- Rejected payment requires a reason.
+- Valid transitions are enforced server-side.
+- Confirmation moves order status to PAYMENT_CONFIRMED.
+- Rejection moves order status to REJECTED.
+- Payment review states move order status to PAYMENT_UNDER_REVIEW.
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    order: {
+      orderNumber: string;
+      status: string;
+      paymentStatus: string;
+    };
+    event: {
+      id: string;
+      fromStatus: string;
+      toStatus: string;
+      reason: string | null;
+      createdAt: string;
+    };
+  };
+}
+```
+
+Errors:
+
+```txt
+400 VALIDATION_ERROR
+400 INVALID_PAYMENT_STATUS_TRANSITION
+401 UNAUTHORIZED
+403 FORBIDDEN
+404 NOT_FOUND
+```
+
+Side effects:
+
+```txt
+- Creates payment_confirmation_events row.
+- Creates order_status_events row when order status changes.
+- Writes ORDER_PAYMENT_CONFIRMED audit log for confirmation.
+- Writes ORDER_PAYMENT_REJECTED audit log for rejection.
+- Writes ORDER_PAYMENT_STATUS_UPDATE audit log for review/proof states.
+```
 
 ## Auth Routes
 
@@ -555,6 +653,7 @@ DELIVERY_ZONE_UNAVAILABLE
 INVALID_ORDER_STATUS_TRANSITION
 INVALID_PAYMENT_STATUS_TRANSITION
 IDEMPOTENCY_CONFLICT
+PAYMENT_SETTINGS_UNAVAILABLE
 INTERNAL_ERROR
 ```
 

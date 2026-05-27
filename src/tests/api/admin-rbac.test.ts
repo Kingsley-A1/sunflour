@@ -5,7 +5,7 @@ import { GET as getSuperAdminHealth } from "@/app/api/v1/admin/super-admin/healt
 import { PATCH as patchPaymentSettings } from "@/app/api/v1/admin/settings/payment/route";
 import { requireRole } from "@/server/auth/rbac";
 import { UserRole } from "@/server/auth/roles";
-import { writeAuditLog } from "@/server/modules/audit/audit-service";
+import { updatePaymentSettings } from "@/server/modules/payments/payment-service";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import type { ApiErrorBody, ApiSuccess } from "@/server/lib/api/response";
@@ -14,12 +14,20 @@ vi.mock("@/server/auth/rbac", () => ({
   requireRole: vi.fn(),
 }));
 
-vi.mock("@/server/modules/audit/audit-service", () => ({
-  writeAuditLog: vi.fn(),
+vi.mock("@/server/modules/payments/payment-service", () => ({
+  updatePaymentSettings: vi.fn(),
 }));
 
 const mockedRequireRole = vi.mocked(requireRole);
-const mockedWriteAuditLog = vi.mocked(writeAuditLog);
+const mockedUpdatePaymentSettings = vi.mocked(updatePaymentSettings);
+
+const paymentSettingsInput = {
+  bankName: "Moniepoint",
+  accountName: "Sunflour Bakery",
+  accountNumber: "1234567890",
+  paymentInstruction: "Transfer the exact order total before sending proof.",
+  proofWhatsappNumber: "2348012345678",
+};
 
 function authError(status: 401 | 403): AppError {
   return new AppError({
@@ -46,7 +54,6 @@ function requestWithJson(body: unknown): NextRequest {
 describe("admin API RBAC", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mockedWriteAuditLog.mockResolvedValue({ id: "audit_1" });
   });
 
   it("rejects unauthenticated users from admin endpoints", async () => {
@@ -99,7 +106,7 @@ describe("admin API RBAC", () => {
     expect(response.status).toBe(403);
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe(ERROR_CODES.FORBIDDEN);
-    expect(mockedWriteAuditLog).not.toHaveBeenCalled();
+    expect(mockedUpdatePaymentSettings).not.toHaveBeenCalled();
   });
 
   it("allows super admins into super admin endpoints", async () => {
@@ -119,7 +126,8 @@ describe("admin API RBAC", () => {
     expect(body.data.role).toBe(UserRole.SUPER_ADMIN);
   });
 
-  it("allows super admins to reach payment settings guard and writes audit logs", async () => {
+  it("allows super admins to update payment settings", async () => {
+    const timestamp = new Date("2026-01-01T00:00:00.000Z");
     mockedRequireRole.mockResolvedValueOnce({
       id: "super_1",
       email: "owner@example.com",
@@ -127,20 +135,29 @@ describe("admin API RBAC", () => {
       image: null,
       role: UserRole.SUPER_ADMIN,
     });
+    mockedUpdatePaymentSettings.mockResolvedValueOnce({
+      id: "payment_settings_1",
+      settingKey: "default",
+      ...paymentSettingsInput,
+      isActive: true,
+      updatedByUserId: "super_1",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
 
     const response = await patchPaymentSettings(
-      requestWithJson({ reason: "phase 2 RBAC verification" }),
+      requestWithJson(paymentSettingsInput),
     );
-    const body = (await response.json()) as ApiSuccess<{ role: UserRole }>;
+    const body = (await response.json()) as ApiSuccess<{ bankName: string }>;
 
     expect(response.status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.data.role).toBe(UserRole.SUPER_ADMIN);
-    expect(mockedWriteAuditLog).toHaveBeenCalledWith(
+    expect(body.data.bankName).toBe("Moniepoint");
+    expect(mockedUpdatePaymentSettings).toHaveBeenCalledWith(
+      paymentSettingsInput,
       expect.objectContaining({
-        actorUserId: "super_1",
-        action: "PAYMENT_SETTINGS_ACCESS_VERIFIED",
-        targetType: "payment_settings",
+        id: "super_1",
+        role: UserRole.SUPER_ADMIN,
       }),
     );
   });

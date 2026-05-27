@@ -31,9 +31,9 @@ import {
 } from "./checkout-ids";
 import {
   buildWhatsAppProofMessage,
-  getCheckoutPaymentInstruction,
-  getCheckoutWhatsAppProofUrl,
+  buildWhatsAppProofUrl,
 } from "./checkout-payment";
+import { getActivePaymentSnapshot } from "@/server/modules/payments/payment-service";
 import type { CheckoutCreateInput, CheckoutItemInput } from "./checkout-schemas";
 
 const checkoutProductInclude = {
@@ -228,7 +228,10 @@ function mapCheckoutOrderResponse(order: CheckoutOrder): CheckoutOrderResponse {
     })),
     paymentInstruction: order.paymentInstructionSnapshot,
     invoiceUrl: buildInvoiceUrl(order.orderNumber),
-    whatsAppProofUrl: getCheckoutWhatsAppProofUrl(whatsAppProofMessage),
+    whatsAppProofUrl: buildWhatsAppProofUrl(
+      whatsAppProofMessage,
+      order.proofWhatsappNumberSnapshot,
+    ),
     whatsAppProofMessage,
   };
 }
@@ -280,7 +283,7 @@ export async function createCheckoutOrder(
     ? CustomerType.AUTHENTICATED
     : CustomerType.GUEST;
   const orderNumber = generateOrderNumber(options.now);
-  const paymentInstruction = getCheckoutPaymentInstruction();
+  const paymentSnapshot = await getActivePaymentSnapshot();
 
   const order = await prisma.$transaction(async (transaction) => {
     const createdOrder = await transaction.order.create({
@@ -311,7 +314,9 @@ export async function createCheckoutOrder(
         status: OrderStatus.PENDING_PAYMENT,
         paymentStatus: PaymentStatus.UNPAID,
         paymentMethod: PaymentMethod.BANK_TRANSFER,
-        paymentInstructionSnapshot: paymentInstruction,
+        paymentInstructionSnapshot: paymentSnapshot.paymentInstructionSnapshot,
+        proofWhatsappNumberSnapshot:
+          paymentSnapshot.proofWhatsappNumberSnapshot,
         customerNote: input.customerNote,
         items: {
           create: lineItems.map((item) => ({

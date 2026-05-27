@@ -1,6 +1,6 @@
 # Order Lifecycle - Sunflour Bakery
 
-Status: active draft. Phase 5 checkout now creates initial order records and status events.
+Status: active draft. Phase 5 checkout creates initial order records and Phase 6 adds manual payment verification events.
 
 ## Source Of Truth
 
@@ -67,11 +67,11 @@ Order created
 
 - [x] Every order starts as `PENDING_PAYMENT`.
 - [x] Every order starts with payment status `UNPAID`.
-- [ ] Payment confirmation is manual.
+- [x] Payment confirmation is manual.
 - [ ] Email failure does not block order creation.
 - [x] Every order status change writes `order_status_events`.
-- [ ] Every payment confirmation/rejection writes `payment_confirmation_events`.
-- [ ] Every payment confirmation/rejection writes `audit_logs`.
+- [x] Every payment confirmation/rejection writes `payment_confirmation_events`.
+- [x] Every payment confirmation/rejection writes `audit_logs`.
 - [ ] Cancelled orders cannot move to delivered without explicit `SUPER_ADMIN` override policy.
 - [ ] Rejected orders cannot continue normal fulfillment.
 - [ ] Customer-facing copy never claims payment is confirmed before admin verification.
@@ -104,7 +104,29 @@ Checkout creates:
 - product, variant, delivery fee, and payment instruction snapshots
 ```
 
-Payment verification, payment confirmation events, invoice records, and admin status transitions remain in later backend phases.
+Invoice records and broader admin status transitions remain in later backend phases.
+
+## Phase 6 Implementation Note
+
+Manual payment updates create:
+
+```txt
+- payment_confirmation_events row for every payment status update.
+- order_status_events row when payment status changes the order status.
+- audit_logs row for confirmation, rejection, or review state changes.
+```
+
+Payment status transitions currently allowed:
+
+| From | Allowed To |
+| --- | --- |
+| `UNPAID` | `PROOF_SENT_ON_WHATSAPP`, `UNDER_REVIEW`, `CONFIRMED`, `REJECTED` |
+| `PROOF_SENT_ON_WHATSAPP` | `UNDER_REVIEW`, `CONFIRMED`, `REJECTED` |
+| `UNDER_REVIEW` | `CONFIRMED`, `REJECTED` |
+| `CONFIRMED` | none |
+| `REJECTED` | none |
+
+Rejected payment requires a reason.
 
 ## Open Decisions
 

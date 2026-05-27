@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
   cartDeleteMany: vi.fn(),
   transaction: vi.fn(),
   getDeliveryQuote: vi.fn(),
+  getActivePaymentSnapshot: vi.fn(),
 }));
 
 vi.mock("@/server/db/prisma", () => ({
@@ -48,11 +49,13 @@ vi.mock("@/server/modules/delivery/delivery-service", () => ({
   getDeliveryQuote: mocks.getDeliveryQuote,
 }));
 
+vi.mock("@/server/modules/payments/payment-service", () => ({
+  getActivePaymentSnapshot: mocks.getActivePaymentSnapshot,
+}));
+
 vi.mock("@/server/config/env", () => ({
   getServerEnv: () => ({
     NEXT_PUBLIC_APP_URL: "https://sunflour.test",
-    SUNFLOUR_PAYMENT_INSTRUCTION: "Transfer to Sunflour test account.",
-    SUNFLOUR_PROOF_WHATSAPP_NUMBER: "2348012345678",
   }),
 }));
 
@@ -123,7 +126,9 @@ function checkoutOrder(overrides = {}) {
     status: OrderStatus.PENDING_PAYMENT,
     paymentStatus: PaymentStatus.UNPAID,
     paymentMethod: PaymentMethod.BANK_TRANSFER,
-    paymentInstructionSnapshot: "Transfer to Sunflour test account.",
+    paymentInstructionSnapshot:
+      "Bank Name: Moniepoint\nAccount Name: Sunflour Bakery\nAccount Number: 1234567890\n\nTransfer to Sunflour test account.",
+    proofWhatsappNumberSnapshot: "2348012345678",
     customerNote: null,
     adminNote: null,
     createdAt: now,
@@ -174,6 +179,11 @@ describe("checkout service", () => {
       appliedSurchargeRules: [],
       quotedAt: now.toISOString(),
     });
+    mocks.getActivePaymentSnapshot.mockResolvedValue({
+      paymentInstructionSnapshot:
+        "Bank Name: Moniepoint\nAccount Name: Sunflour Bakery\nAccount Number: 1234567890\n\nTransfer to Sunflour test account.",
+      proofWhatsappNumberSnapshot: "2348012345678",
+    });
   });
 
   it("creates a guest order with server-calculated product and delivery totals", async () => {
@@ -208,6 +218,8 @@ describe("checkout service", () => {
           subtotal: 500_000,
           total: 700_000,
           paymentMethod: PaymentMethod.BANK_TRANSFER,
+          paymentInstructionSnapshot: expect.stringContaining("Moniepoint"),
+          proofWhatsappNumberSnapshot: "2348012345678",
         }),
       }),
     );

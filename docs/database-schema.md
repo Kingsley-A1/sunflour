@@ -1,6 +1,6 @@
 # Database Schema - Sunflour Bakery
 
-Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, and Phase 5 checkout/order tables are implemented.
+Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, Phase 5 checkout/order, and Phase 6 payment workflow tables are implemented.
 
 ## Source Of Truth
 
@@ -128,6 +128,7 @@ delivery_base_fee_snapshot
 delivery_surcharge_snapshot
 delivery_total_fee_snapshot
 payment_instruction_snapshot
+proof_whatsapp_number_snapshot
 ```
 
 Old invoices must not change when products, prices, delivery zones, surcharge rules, or payment settings are updated later.
@@ -302,15 +303,56 @@ delivery_total_fee_snapshot
 subtotal
 total
 payment_instruction_snapshot
+proof_whatsapp_number_snapshot
 ```
 
 ### Payments
 
-- [ ] `payment_settings` store active Moniepoint transfer instructions.
-- [ ] Only `SUPER_ADMIN` can update payment settings.
-- [ ] Orders snapshot payment instructions.
-- [ ] Payment confirmation/rejection creates `payment_confirmation_events`.
-- [ ] Payment confirmation/rejection creates audit logs.
+- [x] `payment_settings` store active Moniepoint transfer instructions.
+- [x] Only `SUPER_ADMIN` can update payment settings.
+- [x] Orders snapshot payment instructions.
+- [x] Payment confirmation/rejection creates `payment_confirmation_events`.
+- [x] Payment confirmation/rejection creates audit logs.
+
+Implemented Phase 6 payment tables:
+
+```txt
+payment_settings
+payment_confirmation_events
+```
+
+Implemented Phase 6 payment fields:
+
+```txt
+payment_settings.id
+payment_settings.setting_key
+payment_settings.bank_name
+payment_settings.account_name
+payment_settings.account_number
+payment_settings.payment_instruction
+payment_settings.proof_whatsapp_number
+payment_settings.is_active
+payment_settings.updated_by_user_id
+payment_settings.created_at
+payment_settings.updated_at
+
+payment_confirmation_events.id
+payment_confirmation_events.order_id
+payment_confirmation_events.from_status
+payment_confirmation_events.to_status
+payment_confirmation_events.changed_by_user_id
+payment_confirmation_events.reason
+payment_confirmation_events.created_at
+```
+
+Payment workflow rules:
+
+```txt
+- payment_settings.setting_key is unique and uses the singleton value default.
+- Checkout reads only active payment settings.
+- Checkout stores payment_instruction_snapshot and proof_whatsapp_number_snapshot on orders.
+- Payment confirmation/rejection writes payment_confirmation_events and audit_logs.
+```
 
 ### Invoices
 
@@ -346,6 +388,7 @@ payment_instruction_snapshot
 - [x] Index order items by order and product.
 - [ ] Index reviews by status and product.
 - [ ] Index email outbox by status and next attempt time.
+- [x] Index payment confirmation events by order, status, actor, and creation time.
 - [ ] Index audit logs by actor, action, target, and creation time.
 
 ## Open Schema Decisions

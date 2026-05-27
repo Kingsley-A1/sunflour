@@ -43,14 +43,6 @@ const envSchema = z
       .enum(["true", "false"])
       .optional()
       .transform((value) => value === "true"),
-    SUNFLOUR_PAYMENT_INSTRUCTION: z.preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.string().trim().min(1).optional(),
-    ),
-    SUNFLOUR_PROOF_WHATSAPP_NUMBER: z.preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.string().trim().min(1).optional(),
-    ),
   })
   .superRefine((env, context) => {
     if (env.NODE_ENV === "production" && !env.DATABASE_URL) {
