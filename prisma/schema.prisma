@@ -18,6 +18,22 @@ enum AdminProfileStatus {
   SUSPENDED
 }
 
+enum ProductStatus {
+  ACTIVE
+  HIDDEN
+  OUT_OF_STOCK
+}
+
+enum MediaAssetStatus {
+  PENDING_UPLOAD
+  READY
+  DELETED
+}
+
+enum MediaUploadPurpose {
+  PRODUCT_IMAGE
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -34,6 +50,7 @@ model User {
   sessions     Session[]
   adminProfile AdminProfile?
   auditLogs    AuditLog[]    @relation("AuditActor")
+  mediaAssets  MediaAsset[]  @relation("MediaAssetCreator")
 
   @@map("users")
 }
@@ -103,6 +120,108 @@ model SiteSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("site_settings")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([isActive, sortOrder])
+  @@map("categories")
+}
+
+model Product {
+  id                 String        @id @default(cuid())
+  categoryId         String        @map("category_id")
+  name               String
+  slug               String        @unique
+  description        String?
+  basePrice          Int           @map("base_price")
+  status             ProductStatus @default(ACTIVE)
+  showWhenOutOfStock Boolean       @default(true) @map("show_when_out_of_stock")
+  isFeatured         Boolean       @default(false) @map("is_featured")
+  isPopular          Boolean       @default(false) @map("is_popular")
+  sortOrder          Int           @default(0) @map("sort_order")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  category Category         @relation(fields: [categoryId], references: [id])
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  @@index([categoryId])
+  @@index([status, sortOrder])
+  @@index([isFeatured])
+  @@index([isPopular])
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String   @map("product_id")
+  name      String
+  price     Int
+  sku       String?
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, isActive, sortOrder])
+  @@index([sku])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id           String   @id @default(cuid())
+  productId    String   @map("product_id")
+  mediaAssetId String   @map("media_asset_id")
+  altText      String?  @map("alt_text")
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id])
+
+  @@unique([productId, mediaAssetId])
+  @@index([productId, isPrimary, sortOrder])
+  @@index([mediaAssetId])
+  @@map("product_images")
+}
+
+model MediaAsset {
+  id               String             @id @default(cuid())
+  bucket           String
+  objectKey        String             @unique @map("object_key")
+  publicUrl        String?            @map("public_url")
+  originalFilename String             @map("original_filename")
+  contentType      String             @map("content_type")
+  byteSize         Int                @map("byte_size")
+  uploadPurpose    MediaUploadPurpose @map("upload_purpose")
+  status           MediaAssetStatus   @default(PENDING_UPLOAD)
+  createdByUserId  String?            @map("created_by_user_id")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  createdBy     User?          @relation("MediaAssetCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  productImages ProductImage[]
+
+  @@index([status])
+  @@index([uploadPurpose])
+  @@index([createdByUserId])
+  @@map("media_assets")
 }
 
 model AuditLog {

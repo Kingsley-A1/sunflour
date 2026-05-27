@@ -1,0 +1,23 @@
+{
+  "categories": [
+    {
+      "name": "Replace With Official Category",
+      "slug": "replace-with-official-category",
+      "description": "Use this file format for the approved Sunflour menu seed.",
+      "sortOrder": 0,
+      "isActive": false,
+      "products": [
+        {
+          "name": "Replace With Official Product",
+          "slug": "replace-with-official-product",
+          "description": "Replace before production. Prices are integer minor units in NGN.",
+          "basePrice": 0,
+          "status": "HIDDEN",
+          "showWhenOutOfStock": false,
+          "sortOrder": 0,
+          "variants": []
+        }
+      ]
+    }
+  ]
+}

@@ -175,11 +175,38 @@ admin_profiles.updated_at
 
 ### Catalog
 
-- [ ] `categories` support active state and sort order.
-- [ ] `products` support category, slug, price, status, feature flags, and sort order.
-- [ ] `product_variants` support product-specific option pricing.
-- [ ] `product_images` or `media_assets` support controlled image records.
-- [ ] Product price updates do not affect existing order snapshots.
+- [x] `categories` support active state and sort order.
+- [x] `products` support category, slug, price, status, feature flags, and sort order.
+- [x] `product_variants` support product-specific option pricing.
+- [x] `product_images` and `media_assets` support controlled image records.
+- [x] Product price snapshot utility exists for checkout/order item creation.
+
+Implemented Phase 3 catalog/media tables:
+
+```txt
+categories
+products
+product_variants
+product_images
+media_assets
+```
+
+Implemented Phase 3 enums:
+
+```txt
+ProductStatus:
+ACTIVE
+HIDDEN
+OUT_OF_STOCK
+
+MediaAssetStatus:
+PENDING_UPLOAD
+READY
+DELETED
+
+MediaUploadPurpose:
+PRODUCT_IMAGE
+```
 
 ### Delivery
 
@@ -231,8 +258,8 @@ admin_profiles.updated_at
 
 ## Index and Constraint Checklist
 
-- [ ] Unique product slug.
-- [ ] Unique category slug.
+- [x] Unique product slug.
+- [x] Unique category slug.
 - [ ] Unique order number.
 - [ ] Unique invoice number.
 - [ ] Index orders by status, payment status, created date, customer phone, and user.

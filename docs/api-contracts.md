@@ -70,20 +70,49 @@ Route handler -> validate request -> call service/module -> return typed respons
 
 Purpose: Return active categories and orderable public products.
 
-Decisions needed:
+Status: implemented in Phase 3.
 
-- [ ] Product visibility rules for `OUT_OF_STOCK` items.
-- [ ] Pagination or full menu response for v1.
-- [ ] Image payload shape.
+Rules:
+
+```txt
+- HIDDEN products are never returned publicly.
+- ACTIVE products are public and orderable.
+- OUT_OF_STOCK products are public only when show_when_out_of_stock is true.
+- OUT_OF_STOCK products are never orderable.
+- Only active variants are returned publicly.
+- Only READY media assets are returned as public product images.
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    categories: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      description: string | null;
+      products: PublicProduct[];
+    }>;
+  };
+}
+```
 
 ### `GET /api/v1/public/products/[slug]`
 
 Purpose: Return public product detail, variants, images, status, and orderability.
 
-Decisions needed:
+Status: implemented in Phase 3.
 
-- [ ] Slug uniqueness policy.
-- [ ] Related products policy.
+Rules:
+
+```txt
+- Slugs are unique.
+- Hidden products return 404 publicly.
+- Public product detail uses the same visibility rules as /menu.
+```
 
 ### `GET /api/v1/public/delivery/zones`
 
@@ -158,18 +187,80 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [x] `GET /api/v1/admin/health`
 - [x] `GET /api/v1/admin/super-admin/health`
 - [x] `PATCH /api/v1/admin/settings/payment` Phase 2 guard only; full payment settings mutation belongs to Phase 6.
+- [x] Category CRUD endpoints.
+- [x] Product CRUD endpoints.
+- [x] Product variant CRUD endpoints.
+- [x] Product image create endpoint.
+- [x] Product status update endpoint.
+- [x] R2 signed upload endpoint.
 - [ ] Dashboard metrics endpoint.
 - [ ] Order list/detail/update endpoints.
 - [ ] Payment confirmation/rejection endpoints.
-- [ ] Product/category/variant CRUD endpoints.
 - [ ] Delivery zone and surcharge rule endpoints.
 - [ ] Payment settings endpoint.
 - [ ] Email template/outbox endpoints.
 - [ ] Review moderation endpoints.
 - [ ] Audit log endpoint.
-- [ ] R2 signed upload endpoint.
 
 Admin contracts must document required role and audit behavior.
+
+### Category Admin
+
+```txt
+GET    /api/v1/admin/categories          MODERATOR | SUPER_ADMIN
+POST   /api/v1/admin/categories          SUPER_ADMIN
+PATCH  /api/v1/admin/categories/[id]     SUPER_ADMIN
+DELETE /api/v1/admin/categories/[id]     SUPER_ADMIN, soft-archives with is_active=false
+```
+
+### Product Admin
+
+```txt
+GET    /api/v1/admin/products                      MODERATOR | SUPER_ADMIN
+POST   /api/v1/admin/products                      SUPER_ADMIN
+GET    /api/v1/admin/products/[id]                 MODERATOR | SUPER_ADMIN
+PATCH  /api/v1/admin/products/[id]                 SUPER_ADMIN
+DELETE /api/v1/admin/products/[id]                 SUPER_ADMIN, soft-archives with status=HIDDEN
+PATCH  /api/v1/admin/products/[id]/status          MODERATOR | SUPER_ADMIN
+POST   /api/v1/admin/products/[id]/variants        SUPER_ADMIN
+PATCH  /api/v1/admin/variants/[id]                 SUPER_ADMIN
+DELETE /api/v1/admin/variants/[id]                 SUPER_ADMIN, soft-archives with is_active=false
+POST   /api/v1/admin/products/[id]/images          SUPER_ADMIN
+```
+
+Rules:
+
+```txt
+- Moderators can only update product availability between ACTIVE and OUT_OF_STOCK.
+- Moderators cannot hide products or unhide hidden products.
+- Product base price updates write PRODUCT_PRICE_UPDATE audit logs.
+- Product variant price updates write PRODUCT_VARIANT_PRICE_UPDATE audit logs.
+- Product status updates write PRODUCT_STATUS_UPDATE audit logs.
+```
+
+### Media Admin
+
+```txt
+POST /api/v1/admin/media/presign-upload       SUPER_ADMIN
+POST /api/v1/admin/media/[id]/complete        SUPER_ADMIN
+```
+
+Upload validation:
+
+```txt
+Allowed types: image/jpeg, image/png, image/webp, image/avif
+Max product image size: 5 MB
+Purpose: PRODUCT_IMAGE
+```
+
+Side effects:
+
+```txt
+- Presign creates media_assets status PENDING_UPLOAD.
+- Completion marks media_assets status READY.
+- Product image creation attaches READY media assets only.
+- Media upload URL creation and completion write audit logs.
+```
 
 ### `GET /api/v1/admin/health`
 

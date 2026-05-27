@@ -28,6 +28,17 @@ const envSchema = z
     AUTH_GOOGLE_ID: z.string().min(1).optional(),
     AUTH_GOOGLE_SECRET: z.string().min(1).optional(),
     ADMIN_ALLOWLIST_EMAILS: z.string().optional().default(""),
+    R2_ACCOUNT_ID: z.string().min(1).optional(),
+    R2_ACCESS_KEY_ID: z.string().min(1).optional(),
+    R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    R2_BUCKET_NAME: z.string().min(1).optional(),
+    R2_PUBLIC_BASE_URL: z.string().url().optional(),
+    R2_PRESIGNED_UPLOAD_EXPIRES_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(60)
+      .max(3600)
+      .default(300),
     RUN_DB_TESTS: z
       .enum(["true", "false"])
       .optional()

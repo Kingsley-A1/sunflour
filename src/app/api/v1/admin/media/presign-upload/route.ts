@@ -1,0 +1,26 @@
+import { requireRole } from "@/server/auth/rbac";
+import { SUPER_ADMIN_ROLES } from "@/server/auth/roles";
+import { readJsonBody } from "@/server/lib/api/request";
+import { apiError, apiSuccess } from "@/server/lib/api/response";
+import { validateInput } from "@/server/lib/validation/zod";
+import { presignedUploadRequestSchema } from "@/server/modules/media/media-schemas";
+import { createPresignedProductImageUpload } from "@/server/modules/media/media-service";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
+  try {
+    const actor = await requireRole(SUPER_ADMIN_ROLES);
+    const input = validateInput(
+      presignedUploadRequestSchema,
+      await readJsonBody(request),
+    );
+
+    return apiSuccess(await createPresignedProductImageUpload(input, actor), {
+      status: 201,
+    });
+  } catch (error) {
+    return apiError(error);
+  }
+}
