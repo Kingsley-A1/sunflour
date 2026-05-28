@@ -9,6 +9,7 @@ import { prisma } from "@/server/db/prisma";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
+import { assertOrderCanReceivePaymentStatusUpdate } from "@/server/modules/orders";
 import {
   buildPaymentInstructionSnapshot,
   type PaymentInstructionSource,
@@ -295,6 +296,8 @@ export async function updateOrderPaymentStatus(
   if (!order) {
     throw notFound("Order not found.");
   }
+
+  assertOrderCanReceivePaymentStatusUpdate(order.status);
 
   validatePaymentStatusTransition(
     order.paymentStatus,
