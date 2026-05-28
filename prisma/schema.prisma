@@ -92,6 +92,13 @@ enum EmailEventType {
   SKIPPED
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -107,10 +114,13 @@ model User {
   accounts     Account[]
   sessions     Session[]
   adminProfile AdminProfile?
+  customerProfile CustomerProfile?
   auditLogs    AuditLog[]    @relation("AuditActor")
   mediaAssets  MediaAsset[]  @relation("MediaAssetCreator")
   carts        Cart[]
   orders       Order[]
+  reviews      Review[]      @relation("ReviewAuthor")
+  reviewedReviews Review[]   @relation("ReviewModerator")
   orderStatusEvents OrderStatusEvent[] @relation("OrderStatusEventActor")
   paymentSettingsUpdated PaymentSetting[] @relation("PaymentSettingUpdater")
   paymentConfirmationEvents PaymentConfirmationEvent[] @relation("PaymentConfirmationEventActor")
@@ -177,6 +187,20 @@ model AdminProfile {
   @@map("admin_profiles")
 }
 
+model CustomerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  fullName  String   @map("full_name")
+  phone     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([phone])
+  @@map("customer_profiles")
+}
+
 model SiteSetting {
   id        String   @id @default(cuid())
   key       String   @unique
@@ -223,6 +247,7 @@ model Product {
   images   ProductImage[]
   cartItems CartItem[]
   orderItems OrderItem[]
+  reviews Review[]
 
   @@index([categoryId])
   @@index([status, sortOrder])
@@ -393,10 +418,12 @@ model Order {
   paymentConfirmationEvents PaymentConfirmationEvent[]
   invoice      Invoice?
   emailOutbox  EmailOutbox[]
+  reviews      Review[]
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@index([paymentStatus, createdAt])
+  @@index([customerType, createdAt])
   @@index([customerPhoneSnapshot])
   @@index([createdAt])
   @@map("orders")
@@ -588,4 +615,31 @@ model AuditLog {
   @@index([targetType, targetId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model Review {
+  id                   String       @id @default(cuid())
+  userId               String?      @map("user_id")
+  orderId              String?      @map("order_id")
+  productId            String?      @map("product_id")
+  customerNameSnapshot String       @map("customer_name_snapshot")
+  rating               Int
+  comment              String
+  status               ReviewStatus @default(PENDING)
+  reviewedByUserId     String?      @map("reviewed_by_user_id")
+  moderationReason     String?      @map("moderation_reason")
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @updatedAt @map("updated_at")
+
+  user       User?    @relation("ReviewAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  order      Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  reviewedBy User?    @relation("ReviewModerator", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([productId, status])
+  @@index([orderId])
+  @@index([userId])
+  @@index([reviewedByUserId])
+  @@map("reviews")
 }
