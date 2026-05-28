@@ -1,6 +1,6 @@
 # Order Lifecycle - Sunflour Bakery
 
-Status: active draft. Phase 5 checkout creates initial order records, Phase 6 adds manual payment verification events, Phase 7 adds invoice creation, and Phase 8 queues transactional email through an outbox.
+Status: active draft. Phase 5 checkout creates initial order records, Phase 6 adds manual payment verification events, Phase 7 adds invoice creation, Phase 8 queues transactional email through an outbox, and Phase 9 adds admin lifecycle operations.
 
 ## Source Of Truth
 
@@ -73,11 +73,11 @@ Order created
 - [x] Every payment confirmation/rejection writes `payment_confirmation_events`.
 - [x] Every payment confirmation/rejection writes `audit_logs`.
 - [x] Checkout creates an invoice snapshot.
-- [ ] Cancelled orders cannot move to delivered without explicit `SUPER_ADMIN` override policy.
-- [ ] Rejected orders cannot continue normal fulfillment.
-- [ ] Customer-facing copy never claims payment is confirmed before admin verification.
+- [x] Cancelled orders cannot move to delivered without explicit `SUPER_ADMIN` override policy.
+- [x] Rejected orders cannot continue normal fulfillment.
+- [x] Customer-facing copy never claims payment is confirmed before admin verification.
 
-## Transition Matrix Placeholder
+## Transition Matrix
 
 Complete this matrix before implementing status transition validation.
 
@@ -92,6 +92,23 @@ Complete this matrix before implementing status transition validation.
 | `READY_FOR_PICKUP` | `DELIVERED` | Admin | No | delivered timestamp |
 | `OUT_FOR_DELIVERY` | `DELIVERED` | Admin | No | delivered timestamp |
 | any active status | `CANCELLED` | Admin | Yes | audit log |
+
+Protected terminal statuses:
+
+```txt
+CANCELLED
+REJECTED
+DELIVERED
+```
+
+Current v1 policy:
+
+```txt
+- Terminal orders do not move backward.
+- Terminal orders do not move to delivered from cancelled/rejected.
+- Super admin override behavior is intentionally deferred until the business approves an explicit break-glass policy.
+- Payment status updates are blocked after an order is CANCELLED or REJECTED.
+```
 
 ## Phase 5 Implementation Note
 
@@ -130,6 +147,20 @@ Checkout now attempts to queue:
 ```
 
 Email queue failures are swallowed after the order commits. Actual delivery is handled later by `email_outbox` processing, which records sent, failed, skipped, and retried events.
+
+## Phase 9 Implementation Note
+
+Admin order operations now support:
+
+```txt
+- Order list and detail endpoints.
+- Status update endpoint.
+- Admin note endpoint.
+- Server-side transition validation.
+- order_status_events for every status mutation.
+- audit_logs for every admin order mutation.
+- delivered_at and cancelled_at timestamp handling.
+```
 
 ## Phase 6 Implementation Note
 

@@ -1517,6 +1517,8 @@ Generate reliable purchase invoices for every order.
 - Customer invoice access for logged-in customers.
 - Admin invoice access.
 - Optional PDF generation later.
+- Use a dependency-light templating approach for maintainability.
+- Use dependency where needed so taht we dont overbuild the invoice system but also have a clean way to generate HTML.
 
 ## Tests
 
@@ -1547,7 +1549,7 @@ Add controlled transactional emails without creating spam or operational risk.
 ## Build
 
 - Resend client wrapper.
-- React Email templates.
+- React Email templates .
 - Email template registry.
 - Email outbox table.
 - Email queue function.
@@ -1555,6 +1557,7 @@ Add controlled transactional emails without creating spam or operational risk.
 - Retry failed email endpoint/job.
 - Optional Vercel Cron route for periodic email outbox processing.
 - Email logs for admin.
+- Admin Manual emailing 
 - Order confirmation email.
 - Purchase invoice email.
 - Password reset/auth email if email auth is enabled.
@@ -1622,6 +1625,110 @@ Allow admins to operate the full order lifecycle safely.
 ## Outcome
 Sunflour gets a real operational order backend.
 
+## Implementation status — 2026-05-28
+
+Done:
+
+```txt
+- Admin order list/detail endpoints.
+- Admin status update endpoint.
+- Admin note update endpoint.
+- Server-side status transition validator.
+- Terminal order protections for CANCELLED, REJECTED, and DELIVERED.
+- order_status_events for every status mutation.
+- audit_logs for admin order mutations.
+- delivered_at and cancelled_at timestamp handling.
+- Payment workflow hardened so CANCELLED/REJECTED orders cannot receive later payment status updates.
+```
+
+Deferred:
+
+```txt
+- Super admin break-glass override policy for terminal orders. This requires explicit business approval before implementation.
+- Customer email status update queueing remains optional because status-update email deduplication needs a separate outbox policy.
+```
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior backend engineer working in the Sunflour Bakery modular monolith. You specialize in order lifecycle systems, RBAC, auditability, and safe operational workflows for commerce/restaurant platforms.
+
+Goal:
+Give Sunflour staff a dependable order operations backend where every status change is valid, traceable, and safe for manual Moniepoint payment operations.
+
+Context:
+Read first:
+- AGENTS.md
+- backend-implementation.md
+- docs/api-contracts.md
+- docs/database-schema.md
+- docs/order-lifecycle.md
+- src/server/modules/payments/*
+- src/server/modules/checkout/*
+- src/server/modules/email/*
+- existing admin API route patterns under src/app/api/v1/admin
+
+Current backend facts:
+- Checkout creates orders, order items, initial order_status_events, invoices, and email outbox records.
+- Manual payment confirmation already updates payment_status, may update order.status, writes payment_confirmation_events, and writes audit logs.
+- Order statuses are PENDING_PAYMENT, PAYMENT_UNDER_REVIEW, PAYMENT_CONFIRMED, PREPARING, READY_FOR_PICKUP, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, REJECTED.
+- Payment status and fulfillment status are separate concepts.
+
+Task:
+Implement Phase 9: Order Lifecycle Admin Backend.
+
+Deliver these artifacts:
+- Admin order list endpoint with filters for status, paymentStatus, date range, orderNumber, customer phone, customer type, and pagination.
+- Admin order detail endpoint with items, invoice summary, payment events, order status timeline, notes, and customer snapshots.
+- Order status transition validator.
+- Admin order status update endpoint.
+- Admin notes update support.
+- Cancellation/rejection path with reason.
+- Delivered timestamp handling.
+- Order status event history creation for every status change.
+- Audit logging for every admin-critical action.
+- Optional customer email status update queueing through EmailService only.
+
+Constraints:
+- Use pnpm only.
+- Keep route handlers thin: validate request, authorize, call service, return typed response.
+- Business logic belongs in src/server/modules/orders or a similarly scoped module.
+- Validate every body, query, and route param with Zod.
+- Enforce RBAC server-side. Customers must never update order status.
+- Moderators can operate normal lifecycle transitions but must not perform protected super_admin overrides unless the policy explicitly allows it.
+- Cancelled orders must not move to delivered without explicit super_admin override logic.
+- Delivered orders must not move backward without explicit super_admin override logic.
+- Every status mutation must create order_status_events.
+- Every admin-critical mutation must write audit_logs.
+- Never recalculate historical order totals or invoice totals in this phase.
+- Do not send email directly. Queue through EmailService only, and do not let email failure break order updates.
+- Do not redesign payment confirmation unless needed to share validators cleanly.
+
+Output Format:
+Return a concise engineering closeout with these headings:
+1. Changed files
+2. API routes added or changed
+3. Tests added or changed
+4. Checks run
+5. Risks or unresolved decisions
+
+Examples:
+Use existing admin route patterns from payment, delivery, product, and email routes. Do not invent a new response envelope.
+
+Evaluation Criteria:
+The implementation is good if:
+- Invalid transitions fail with a typed API error.
+- Valid transitions update the order and write exactly the expected event/audit records.
+- Admin list/detail responses are enough for the frontend admin order UI without exposing secrets.
+- Moderator and super_admin permissions are tested.
+- Payment status and order status remain separate.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Evaluation Criteria. If any criterion fails, revise the implementation before reporting completion. If a business rule is genuinely undecided, leave a specific TODO in docs/order-lifecycle.md and call it out in the final response.
+```
+
 ---
 
 # Phase 10 — Customer Profile and Guest Tracking
@@ -1655,6 +1762,103 @@ Support mobile-first customers while respecting guest checkout reality.
 
 ## Outcome
 Balanced customer identity system.
+
+## Implementation status — 2026-05-28
+
+Done:
+
+```txt
+- Customer profile read/update endpoints.
+- customer_profiles table for authenticated buyer name and phone.
+- Authenticated customer order list/detail endpoints.
+- Guest order lookup endpoint requiring order number and normalized phone match.
+- Guest lookup returns a limited customer-safe shape and does not expose admin notes, audit logs, internal ids, or admin-only history.
+- Guest order count helper for dashboard metrics.
+```
+
+Deferred:
+
+```txt
+- Saved addresses table/endpoints. Address structure remains an open product decision.
+- Reorder support. It should reuse checkout availability validation in a later phase.
+```
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior backend engineer building customer identity and guest-order lookup for a mobile-first restaurant commerce platform. You optimize for low-friction checkout, privacy, and predictable customer APIs.
+
+Goal:
+Let returning customers manage simple profile data and order history without making guest checkout harder.
+
+Context:
+Read first:
+- AGENTS.md
+- backend-implementation.md
+- docs/api-contracts.md
+- docs/database-schema.md
+- docs/order-lifecycle.md
+- src/server/auth/*
+- src/server/modules/checkout/*
+- src/server/modules/invoices/*
+- existing customer route patterns under src/app/api/v1/customer
+
+Current backend facts:
+- Orders can belong to authenticated users or guests.
+- Checkout snapshots customer name, phone, and optional email.
+- Invoice access exists for authenticated customers and tokenized public invoice links.
+- Guest order lookup token strategy is still an open decision in docs/api-contracts.md.
+
+Task:
+Implement Phase 10: Customer Profile and Guest Tracking.
+
+Deliver these artifacts:
+- Customer profile read endpoint.
+- Customer profile update endpoint for name and phone.
+- Saved addresses model/service/endpoints if the schema decision is clear; otherwise document the exact deferred address structure.
+- Authenticated customer order history endpoint.
+- Authenticated customer order detail endpoint.
+- Guest order lookup endpoint requiring order number and phone, with safe response shape.
+- Guest count metric support for dashboard use.
+- Basic reorder support only if it can reuse existing product availability and checkout validation safely; otherwise document it as later.
+
+Constraints:
+- Use pnpm only.
+- Do not force login for checkout.
+- Validate every request with Zod.
+- Customers can read only their own authenticated orders.
+- Guest lookup must not reveal whether an order exists unless the phone number also matches.
+- Guest lookup must not expose admin notes, audit logs, internal ids, or unsafe customer data.
+- Do not trust phone text without normalization or strict comparison rules.
+- Do not change old order snapshots when profile data changes.
+- Keep customer routes under /api/v1/customer and guest-safe lookup under /api/v1/public or another documented public namespace.
+- Do not add broad customer CRM features in this phase.
+
+Output Format:
+Return a concise engineering closeout with these headings:
+1. Changed files
+2. Customer and guest API contracts
+3. Tests added or changed
+4. Checks run
+5. Risks or unresolved decisions
+
+Examples:
+Use existing invoice customer access as the ownership model. Use checkout customer snapshot fields as the privacy boundary for guest lookup.
+
+Evaluation Criteria:
+The implementation is good if:
+- Authenticated users can view profile and own orders.
+- Authenticated users cannot view another user's orders.
+- Guest lookup requires both order number and phone and returns a limited customer-safe view.
+- Profile updates validate name and phone.
+- Guest orders can be counted for dashboard metrics.
+- Checkout remains guest-friendly.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Evaluation Criteria. If guest lookup token/phone policy is not safely decidable from docs, do not invent broad behavior; implement the conservative path and document the remaining decision.
+```
 
 ---
 
@@ -1690,6 +1894,104 @@ Allow customers to give reviews without letting spam damage the brand.
 
 ## Outcome
 Trust-building review system with moderation.
+
+## Implementation status — 2026-05-28
+
+Done:
+
+```txt
+- ReviewStatus enum and reviews table.
+- Public review submission endpoint.
+- Public approved-review listing endpoint.
+- Admin review list endpoint.
+- Admin moderation endpoint for APPROVED, REJECTED, and HIDDEN.
+- Moderation audit logs with before/after status.
+- Rate limit on public review submission.
+- Pending review count helper for dashboard metrics.
+```
+
+Deferred:
+
+```txt
+- Mandatory order-linked reviews. Current v1 supports moderated non-order-linked reviews first.
+```
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior backend engineer implementing brand-safe review collection and moderation for a public restaurant ordering platform. You prioritize spam control, customer trust, and admin auditability.
+
+Goal:
+Allow customers to submit useful reviews while ensuring nothing appears publicly until Sunflour approves it.
+
+Context:
+Read first:
+- AGENTS.md
+- backend-implementation.md
+- docs/api-contracts.md
+- docs/database-schema.md
+- docs/order-lifecycle.md
+- existing public/admin route patterns under src/app/api/v1
+- src/server/modules/audit/*
+- src/server/auth/rbac.ts
+
+Current backend facts:
+- Public reviews must enter PENDING state first.
+- Only approved reviews can appear publicly.
+- Admin moderation must write audit logs.
+- Dashboard metrics later need pending review counts.
+
+Task:
+Implement Phase 11: Reviews and Moderation.
+
+Deliver these artifacts:
+- ReviewStatus enum and reviews table if not already implemented.
+- Public review submission endpoint.
+- Optional order-linked review endpoint only if ownership/guest verification is clear.
+- Public approved reviews endpoint or inclusion strategy for approved product reviews.
+- Admin review list endpoint with filters.
+- Admin review moderation endpoint for APPROVED, REJECTED, and HIDDEN.
+- Audit logging for every moderation action.
+- Rate limiting for public review submission using existing or newly scoped rate-limit utilities.
+- Pending review metric helper for dashboard phase.
+
+Constraints:
+- Use pnpm only.
+- Validate every request with Zod.
+- Never show PENDING, REJECTED, or HIDDEN reviews publicly.
+- Public submission must not allow clients to choose APPROVED status.
+- Review moderation requires MODERATOR or SUPER_ADMIN server-side authorization.
+- Moderation actions must write audit_logs with before/after status.
+- Rate limits must fail safely and return the standard API error envelope.
+- Do not build marketing/testimonial automation in this phase.
+- Do not expose customer phone, email, admin notes, or internal audit details publicly.
+
+Output Format:
+Return a concise engineering closeout with these headings:
+1. Changed files
+2. Public review APIs
+3. Admin moderation APIs
+4. Tests added or changed
+5. Checks run
+6. Risks or unresolved decisions
+
+Examples:
+Use product/catalog response visibility as the pattern: public endpoints return only approved and safe fields; admin endpoints return operational fields behind RBAC.
+
+Evaluation Criteria:
+The implementation is good if:
+- Public submissions always create PENDING reviews.
+- Public listing returns only APPROVED reviews.
+- Admin moderation changes status and writes audit logs.
+- Rate limiting covers the public submission endpoint.
+- Invalid ratings/comments are rejected with field errors.
+- Dashboard can later count pending reviews without duplicating query logic.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Evaluation Criteria. If order-linked reviews need an unresolved identity decision, implement non-order-linked public reviews first and document the order-linking decision explicitly.
+```
 
 ---
 
@@ -1733,6 +2035,99 @@ Give Sunflour’s team a clean operational view of business activity.
 ## Outcome
 Admin dashboard backend ready for UI.
 
+## Implementation status — 2026-05-28
+
+Done:
+
+```txt
+- Admin dashboard metrics service.
+- One MODERATOR/SUPER_ADMIN dashboard endpoint.
+- Timezone-aware default date range using APP_TIME_ZONE.
+- Counts for orders, pending payment confirmation, preparing, users, guests, cancelled, out for delivery, delivered, and pending reviews.
+- Conservative confirmed-sales estimate.
+- Top ordered items aggregation from order item snapshots.
+- Hidden/out-of-stock product summary.
+- Recent pending review summary.
+```
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior backend engineer building operational analytics for a restaurant admin dashboard. You focus on accurate database-backed metrics, fast queries, and safe role-gated responses.
+
+Goal:
+Give Sunflour staff one backend endpoint that summarizes today's operational priorities without exposing sensitive settings or making frontend guesses.
+
+Context:
+Read first:
+- AGENTS.md
+- backend-implementation.md
+- docs/api-contracts.md
+- docs/database-schema.md
+- docs/order-lifecycle.md
+- src/server/modules/checkout/*
+- src/server/modules/payments/*
+- src/server/modules/email/*
+- src/server/modules/reviews/* if implemented
+- existing admin route patterns under src/app/api/v1/admin
+
+Current backend facts:
+- Sales estimate must be conservative: SUM(total) where payment_status = CONFIRMED and status is not CANCELLED or REJECTED.
+- Dashboard data must come from backend queries, not frontend guesses.
+- Moderators can view dashboard but must not receive sensitive payment/email settings.
+
+Task:
+Implement Phase 12: Admin Dashboard Metrics.
+
+Deliver these artifacts:
+- Dashboard metrics service.
+- Admin dashboard metrics endpoint.
+- Date range parsing with a safe default for today in the application timezone.
+- Counts for today's orders, pending payment confirmation, preparing orders, total users, guests, cancelled orders, out for delivery, delivered orders.
+- Conservative total sales estimate.
+- Top ordered items aggregation.
+- Low/hidden/out-of-stock products summary.
+- Pending reviews summary if reviews are implemented; otherwise a documented placeholder that cannot break the endpoint.
+- Focused query tests with seeded/mocked data.
+
+Constraints:
+- Use pnpm only.
+- Validate query params with Zod.
+- Require MODERATOR or SUPER_ADMIN.
+- Do not expose bank account numbers, email template bodies, secrets, audit metadata, or customer PII beyond what dashboard cards need.
+- Keep aggregation in backend service code, not route handlers.
+- Avoid N+1 queries.
+- Use integer minor units for money.
+- Label total sales as estimate in the response contract.
+- Keep date logic explicit about timezone.
+
+Output Format:
+Return a concise engineering closeout with these headings:
+1. Changed files
+2. Dashboard response shape
+3. Metrics implemented
+4. Tests added or changed
+5. Checks run
+6. Risks or unresolved decisions
+
+Examples:
+Use payment workflow definitions for sales estimate and order lifecycle docs for status-based cards.
+
+Evaluation Criteria:
+The implementation is good if:
+- One admin endpoint returns all dashboard cards needed by the frontend.
+- Metrics match database reality in tests.
+- Sales estimate excludes CANCELLED and REJECTED orders and includes only CONFIRMED payments.
+- Guest count is based on guest orders, not guessed from missing users.
+- Top items aggregation uses order item snapshots.
+- Sensitive settings are absent from the response.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Evaluation Criteria. If a metric depends on a later phase, return a stable zero/empty shape and document why, instead of leaving the frontend to guess.
+```
+
 ---
 
 # Phase 13 — Hardening, Performance, and Launch Readiness
@@ -1775,6 +2170,110 @@ Prepare backend for real customers and business operations.
 
 ## Outcome
 Backend ready for launch.
+
+## Implementation status — 2026-05-28
+
+Done:
+
+```txt
+- Rate limits on checkout, guest lookup, public review submission, media presign, and email cron processing.
+- Sanitized API 500 error logging.
+- API security headers through Next.js headers().
+- Prisma schema indexes for customer/guest, dashboard, and review query patterns.
+- Production seed, backup/export, environment, and Preview smoke-test checklists documented in docs/vercel-deployment.md.
+- pnpm 11 install hardening with pnpm-workspace.yaml build-script allowlist.
+```
+
+Remaining launch owner actions:
+
+```txt
+- Configure Vercel project/environment values.
+- Confirm CockroachDB backup/restore ownership.
+- Verify Resend sender domain and R2 bucket credentials.
+- Decide whether production rate limiting needs a durable shared store before higher traffic.
+```
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a principal backend engineer performing production-readiness hardening for a Next.js App Router commerce backend on Vercel. You specialize in security, observability, rate limiting, database performance, and launch discipline.
+
+Goal:
+Prepare Sunflour's backend for real customer traffic and daily business operations without introducing risky last-minute rewrites.
+
+Context:
+Read first:
+- AGENTS.md
+- backend-implementation.md
+- frontend-implimentation.md
+- docs/api-contracts.md
+- docs/database-schema.md
+- docs/order-lifecycle.md
+- docs/vercel-deployment.md if present
+- .env.example
+- package.json scripts
+- existing API routes under src/app/api/v1
+- existing server modules under src/server
+
+Current backend facts:
+- Core backend phases now include auth/RBAC, catalog/media, delivery pricing, checkout/orders, manual payment workflow, invoice access, email outbox, and upcoming admin/customer/review/dashboard operations.
+- Vercel Preview and Production environment variables must be separated.
+- No secrets may be committed to GitHub.
+- Every production-facing flow must preserve customer clarity, business trust, and operational simplicity.
+
+Task:
+Implement Phase 13: Hardening, Performance, and Launch Readiness.
+
+Deliver these artifacts:
+- Rate limiting for sensitive public and auth-adjacent endpoints.
+- Request logging and structured error monitoring hooks that do not expose secrets.
+- Security headers where this backend controls them.
+- API response consistency audit and fixes.
+- Database index review and migration for slow/high-cardinality queries.
+- Query optimization for dashboard/order/customer/review flows.
+- Production seed strategy for required business data.
+- Backup/export strategy documentation.
+- Admin handover checklist.
+- Production environment variable checklist.
+- Vercel deployment checks and smoke-test checklist.
+
+Constraints:
+- Use pnpm only.
+- Do not introduce broad rewrites during hardening.
+- Do not add dependencies unless the value is specific and documented.
+- Preserve all existing API contracts unless a bug requires a documented breaking change.
+- Do not log secrets, payment account numbers, access tokens, customer proof links, or raw auth/session data.
+- Rate limits must protect public review submission, checkout, guest order lookup, upload presign, and cron/webhook endpoints where relevant.
+- Security changes must not break Vercel runtime compatibility.
+- Production seed data must not contain fake secrets or committed real credentials.
+- Any launch checklist must be actionable, not generic.
+
+Output Format:
+Return a concise engineering closeout with these headings:
+1. Changed files
+2. Hardening completed
+3. Performance/index changes
+4. Deployment and environment checklist updates
+5. Tests and smoke checks
+6. Remaining launch risks
+
+Examples:
+Use existing API response envelope and existing validation/error utilities. Use Vercel Preview workflow as the deployment reference.
+
+Evaluation Criteria:
+The implementation is good if:
+- Sensitive endpoints have explicit rate-limit coverage.
+- Logs help diagnose production issues without leaking private data.
+- API errors remain consistent and customer-safe.
+- Indexes match real query patterns introduced in phases 9 through 12.
+- Preview smoke checklist covers checkout, invoice, email, R2 upload, admin auth, dashboard, delivery surcharge, and payment workflow.
+- Environment variables are documented with owner, preview value strategy, and production value strategy.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Evaluation Criteria. If any hardening item would require an external production credential or Vercel account action, document the exact owner action instead of faking completion.
+```
 
 ---
 

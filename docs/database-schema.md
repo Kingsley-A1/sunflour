@@ -1,6 +1,6 @@
 # Database Schema - Sunflour Bakery
 
-Status: active draft. Phase 1 foundation, Phase 2 auth/RBAC, Phase 3 catalog/media, Phase 4 delivery pricing, Phase 5 checkout/order, Phase 6 payment workflow, Phase 7 invoice tables, and Phase 8 email outbox tables are implemented.
+Status: active draft. Backend Phases 1-13 are implemented for the current v1 scope: foundation, auth/RBAC, catalog/media, delivery pricing, checkout/orders, manual payment, invoices, email outbox, order lifecycle admin, customer profile/guest lookup, reviews, dashboard metrics, and launch hardening.
 
 ## Source Of Truth
 
@@ -156,6 +156,7 @@ Old invoices must not change when products, prices, delivery zones, surcharge ru
 - [x] `users.role` supports `CUSTOMER`, `MODERATOR`, and `SUPER_ADMIN`.
 - [x] `admin_profiles` can mark admin access active/inactive.
 - [x] Moderator restrictions are enforceable server-side.
+- [x] `customer_profiles` stores authenticated customer name and phone for profile convenience.
 
 Implemented Phase 2 auth tables:
 
@@ -165,6 +166,7 @@ accounts
 sessions
 verification_tokens
 admin_profiles
+customer_profiles
 ```
 
 Implemented Phase 2 auth fields:
@@ -187,6 +189,13 @@ admin_profiles.role
 admin_profiles.status
 admin_profiles.created_at
 admin_profiles.updated_at
+
+customer_profiles.id
+customer_profiles.user_id
+customer_profiles.full_name
+customer_profiles.phone
+customer_profiles.created_at
+customer_profiles.updated_at
 ```
 
 ### Catalog
@@ -406,9 +415,32 @@ Invoice rules:
 
 ### Reviews
 
-- [ ] Reviews default to `PENDING`.
-- [ ] Only approved reviews appear publicly.
-- [ ] Review moderation writes audit logs.
+- [x] Reviews default to `PENDING`.
+- [x] Only approved reviews appear publicly.
+- [x] Review moderation writes audit logs.
+
+Implemented Phase 11 review table:
+
+```txt
+reviews
+```
+
+Implemented Phase 11 review fields:
+
+```txt
+reviews.id
+reviews.user_id
+reviews.order_id
+reviews.product_id
+reviews.customer_name_snapshot
+reviews.rating
+reviews.comment
+reviews.status
+reviews.reviewed_by_user_id
+reviews.moderation_reason
+reviews.created_at
+reviews.updated_at
+```
 
 ### Email
 
@@ -451,7 +483,7 @@ Email rules:
 - [x] Unique invoice number.
 - [x] Index orders by status, payment status, created date, customer phone, and user.
 - [x] Index order items by order and product.
-- [ ] Index reviews by status and product.
+- [x] Index reviews by status and product.
 - [x] Index email outbox by status and next attempt time.
 - [x] Index payment confirmation events by order, status, actor, and creation time.
 - [ ] Index audit logs by actor, action, target, and creation time.
@@ -463,5 +495,6 @@ Email rules:
 - [ ] Address structure for delivery orders.
 - [ ] Whether cart storage is needed for guests or only authenticated users.
 - [ ] Whether order lookup uses token, phone verification, or both.
+- [x] Guest order lookup uses order number + normalized phone for v1; tokenized invoice access remains separate.
 - [ ] Whether email preferences exist in v1 or are deferred until authenticated profiles mature.
 - [ ] Exact audit metadata JSON shape.

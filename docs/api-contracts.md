@@ -53,8 +53,8 @@ Route handler -> validate request -> call service/module -> return typed respons
 
 ## Contract Checklist
 
-- [ ] Every request body/query/param is validated with Zod.
-- [ ] Every route documents auth requirement: public, customer, moderator, or super_admin.
+- [x] Every request body/query/param is validated with Zod for implemented routes.
+- [x] Every implemented route documents or enforces auth requirement: public, customer, moderator, or super_admin.
 - [ ] Every route documents success response shape.
 - [ ] Every route documents expected error codes.
 - [ ] Every route documents side effects.
@@ -301,7 +301,7 @@ Decisions needed:
 - [x] Required customer fields: full name and phone. Email is optional.
 - [x] Phone number format: normalized to digits with optional leading `+`.
 - [x] Idempotency key header name: `Idempotency-Key`.
-- [ ] Guest order lookup token strategy.
+- [x] Guest order lookup uses order number + normalized phone match in v1. Tokenized invoice access remains separate.
 
 Phase 6 update:
 
@@ -369,24 +369,72 @@ Errors:
 
 Purpose: Accept public review submissions.
 
+Status: implemented in Phase 11.
+
 Rules:
 
 - New reviews enter `PENDING`.
 - Public listing must only show approved reviews.
 - Apply rate limiting.
 
-Decisions needed:
+Request:
 
-- [ ] Whether reviews must be order-linked in v1.
-- [ ] Minimum and maximum comment length.
+```ts
+{
+  customerName: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  comment: string;
+  productId?: string;
+}
+```
+
+Success:
+
+```ts
+{
+  ok: true;
+  data: {
+    review: {
+      id: string;
+      status: "PENDING";
+      createdAt: string;
+    };
+  };
+}
+```
+
+### `GET /api/v1/public/reviews`
+
+Purpose: Return only approved public reviews.
+
+Status: implemented in Phase 11.
+
+Query:
+
+```txt
+productId optional
+limit optional, max 50
+```
+
+Rules:
+
+```txt
+- Only APPROVED reviews are returned.
+- Customer phone, email, admin moderation notes, and audit details are never returned publicly.
+```
+
+Decisions still deferred:
+
+- [ ] Whether reviews must be order-linked in v1. Current v1 supports non-order-linked moderated public reviews.
 
 ## Planned Customer API Contracts
 
-- [ ] `GET /api/v1/customer/profile`
-- [ ] `PATCH /api/v1/customer/profile`
-- [ ] `GET /api/v1/customer/orders`
-- [ ] `GET /api/v1/customer/orders/[orderNumber]`
+- [x] `GET /api/v1/customer/profile`
+- [x] `PATCH /api/v1/customer/profile`
+- [x] `GET /api/v1/customer/orders`
+- [x] `GET /api/v1/customer/orders/[orderNumber]`
 - [x] `GET /api/v1/customer/orders/[orderNumber]/invoice`
+- [x] `POST /api/v1/public/orders/lookup`
 
 Decision needed: confirm whether customer auth is Google-only in v1 or also credentials/email reset.
 
@@ -402,14 +450,14 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [x] Product image create endpoint.
 - [x] Product status update endpoint.
 - [x] R2 signed upload endpoint.
-- [ ] Dashboard metrics endpoint.
-- [ ] Order list/detail/update endpoints.
+- [x] Dashboard metrics endpoint.
+- [x] Order list/detail/update endpoints.
 - [x] `GET /api/v1/admin/orders/[orderNumber]/invoice`
 - [x] Payment confirmation/rejection endpoint.
 - [x] Delivery zone and surcharge rule endpoints.
 - [x] Payment settings endpoint.
 - [x] Email template/outbox endpoints.
-- [ ] Review moderation endpoints.
+- [x] Review moderation endpoints.
 - [ ] Audit log endpoint.
 
 Admin contracts must document required role and audit behavior.
@@ -608,6 +656,75 @@ Rules:
 
 ```txt
 PATCH /api/v1/admin/orders/[orderNumber]/payment-status     MODERATOR | SUPER_ADMIN
+```
+
+### Order Lifecycle Admin
+
+```txt
+GET   /api/v1/admin/orders                         MODERATOR | SUPER_ADMIN
+GET   /api/v1/admin/orders/[orderNumber]           MODERATOR | SUPER_ADMIN
+PATCH /api/v1/admin/orders/[orderNumber]/status    MODERATOR | SUPER_ADMIN
+PATCH /api/v1/admin/orders/[orderNumber]/notes     MODERATOR | SUPER_ADMIN
+```
+
+Rules:
+
+```txt
+- Status transitions are validated server-side.
+- CANCELLED, REJECTED, and DELIVERED are terminal unless a future super_admin override policy is explicitly approved.
+- Cancellation and rejection require a reason.
+- Every status change creates an order_status_events row.
+- Every admin mutation writes audit_logs.
+```
+
+### Customer Profile And Guest Lookup
+
+```txt
+GET   /api/v1/customer/profile                   authenticated customer
+PATCH /api/v1/customer/profile                   authenticated customer
+GET   /api/v1/customer/orders                    authenticated customer owner
+GET   /api/v1/customer/orders/[orderNumber]      authenticated customer owner
+POST  /api/v1/public/orders/lookup               public, order number + phone
+```
+
+Rules:
+
+```txt
+- Customer order routes return only the authenticated user's own orders.
+- Guest lookup requires both order number and normalized phone match.
+- Guest lookup returns the same NOT_FOUND response for missing order and phone mismatch.
+- Guest lookup does not expose admin notes, audit logs, internal IDs, or admin-only history.
+```
+
+### Review Moderation Admin
+
+```txt
+GET   /api/v1/admin/reviews                         MODERATOR | SUPER_ADMIN
+PATCH /api/v1/admin/reviews/[id]/moderation         MODERATOR | SUPER_ADMIN
+```
+
+Rules:
+
+```txt
+- Public submissions cannot choose review status.
+- Moderation supports APPROVED, REJECTED, and HIDDEN.
+- REJECTED and HIDDEN require a reason.
+- Every moderation action writes audit_logs.
+```
+
+### Dashboard Metrics Admin
+
+```txt
+GET /api/v1/admin/dashboard       MODERATOR | SUPER_ADMIN
+```
+
+Rules:
+
+```txt
+- Response contains one operational dashboard payload.
+- Date range defaults to today in APP_TIME_ZONE.
+- Sales estimate sums CONFIRMED payments and excludes CANCELLED and REJECTED orders.
+- Sensitive payment settings, email template bodies, secrets, audit metadata, and customer PII are excluded.
 ```
 
 Purpose: Manually verify or reject payment after WhatsApp proof review.
