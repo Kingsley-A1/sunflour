@@ -1,6 +1,6 @@
 # Vercel Deployment Plan - Sunflour Bakery
 
-Status: Phase 0 confirmation document. This repository is not currently linked to a Vercel project in local files.
+Status: Phase 13 launch-readiness document. This repository is not currently linked to a Vercel project in local files; owner confirmation is still required before production.
 
 ## Current Local Evidence
 
@@ -45,6 +45,9 @@ Every meaningful PR must include:
 - [ ] Checkout smoke test on Preview when checkout is touched.
 - [ ] Admin smoke test on Preview when admin is touched.
 - [ ] Email/payment/manual proof smoke test when those flows are touched.
+- [ ] Admin dashboard metrics smoke test when dashboard or order queries are touched.
+- [ ] Review submission/moderation smoke test when reviews are touched.
+- [ ] Guest order lookup smoke test when customer/order access is touched.
 
 No direct production edits.
 
@@ -70,6 +73,72 @@ AI agents may document required variable names and usage. AI agents must not cre
 - [ ] Payment settings are managed through the app/admin database after the payment module exists, not hardcoded into frontend code.
 - [ ] Email sender domain is verified before production email is enabled.
 - [ ] R2 upload credentials are scoped to required buckets only.
+- [ ] `APP_TIME_ZONE` is set to `Africa/Lagos` unless Sunflour approves a different operating timezone.
+- [ ] `EMAIL_CRON_SECRET` is unique per environment.
+- [ ] Vercel Cron is configured for `/api/v1/webhooks/cron/email-outbox` only after `EMAIL_CRON_SECRET` is set.
+
+## Production Seed Strategy
+
+Seed only non-secret operational data through `pnpm db:seed`:
+
+```txt
+- Admin users come from ADMIN_ALLOWLIST_EMAILS.
+- Menu data can load from SUNFLOUR_MENU_SEED_PATH.
+- Payment settings must be entered through the super_admin payment settings route, not committed seed data.
+- Delivery zones and surcharge rules can be seeded only with owner-approved values.
+```
+
+Do not commit real Moniepoint credentials, Resend keys, OAuth secrets, R2 keys, or production database URLs.
+
+## Backup And Export Strategy
+
+Owner actions before launch:
+
+```txt
+- Confirm CockroachDB automated backups and restore window.
+- Document who can restore the production database.
+- Export product/menu/payment/delivery settings before major admin changes.
+- Keep preview and production databases separated.
+```
+
+## Backend Smoke Test Checklist
+
+Run on Vercel Preview before production:
+
+```txt
+- Public health endpoint returns ok.
+- Menu endpoint returns active categories/products only.
+- Delivery quote returns pickup as zero and applies the 6 PM surcharge in Africa/Lagos after 18:00.
+- Guest checkout creates order, invoice, payment instruction, and WhatsApp proof URL.
+- Public invoice opens only with token.
+- Guest order lookup requires order number + phone.
+- Admin auth blocks non-admin users.
+- Admin order status update writes timeline and audit log.
+- Manual payment confirmation writes payment event and audit log.
+- Review submission creates PENDING review.
+- Review moderation publishes only APPROVED reviews publicly.
+- Dashboard endpoint returns metrics without sensitive settings.
+- Email outbox processing is protected by EMAIL_CRON_SECRET.
+- R2 presign endpoint requires super_admin and validates upload metadata.
+```
+
+## Hardening Notes
+
+Implemented backend hardening:
+
+```txt
+- Standard API error envelope remains in use.
+- Sensitive endpoints have explicit rate-limit coverage.
+- API 500 errors log sanitized code/status/message only.
+- API security headers are configured through Next.js headers().
+- Dashboard/order/review/customer query indexes are represented in Prisma schema and migration.
+```
+
+Remaining owner decision:
+
+```txt
+The in-process rate limiter is suitable as a zero-dependency baseline and testable guardrail. For multi-instance production strictness, replace the store with a durable shared backend such as Vercel KV/Upstash before high traffic.
+```
 
 ## Open Decisions
 

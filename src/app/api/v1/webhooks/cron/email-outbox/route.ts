@@ -1,7 +1,9 @@
 import { getServerEnv } from "@/server/config/env";
+import { getClientIp } from "@/server/lib/api/request";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
+import { enforceRateLimit } from "@/server/lib/rate-limit";
 import { processEmailOutbox } from "@/server/modules/email";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +32,11 @@ function requireCronSecret(request: Request): void {
 
 export async function POST(request: Request) {
   try {
+    enforceRateLimit({
+      key: `email-cron:${getClientIp(request)}`,
+      limit: 60,
+      windowMs: 60 * 60_000,
+    });
     requireCronSecret(request);
 
     return apiSuccess(await processEmailOutbox());

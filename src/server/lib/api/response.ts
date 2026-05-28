@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { AppError } from "@/server/lib/errors/app-error";
 import { errorFromUnknown } from "@/server/lib/errors/app-error";
+import { logApiError } from "@/server/lib/observability";
 
 export interface ApiSuccess<T> {
   ok: true;
@@ -30,6 +31,7 @@ export function apiError(
   init?: ResponseInit,
 ): NextResponse<ApiErrorBody> {
   const appError = errorFromUnknown(error);
+  logApiError(appError);
 
   return NextResponse.json(
     {
