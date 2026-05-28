@@ -1,4 +1,7 @@
 export {
+  getLocalDayUtcRange,
+} from "./local-day";
+export {
   getLocalTimeParts,
   isClockTimeInRange,
   minutesSinceMidnight,
