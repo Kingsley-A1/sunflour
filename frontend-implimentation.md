@@ -1422,6 +1422,74 @@ Lock the frontend standard before building screens.
 ## Outcome
 A stable UI direction that AI agents can follow.
 
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior product-minded frontend architect setting the UI rules for a mobile-first restaurant ordering platform. You specialize in Next.js App Router, design systems, WCAG 2.2 AA, Apple HIG clarity, Material state discipline, and operational admin UX.
+
+Goal:
+Lock the frontend standard so every later agent builds Sunflour UI from shared routes, tokens, components, and accessibility rules instead of inventing one-off screens.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- backend-implementation.md
+- docs/design-system.md
+- docs/frontend-routes.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+
+Current frontend facts:
+- Sunflour is mobile-first, light-mode default, dark-mode ready, API-first, and built on Next.js App Router.
+- The UI must feel warm, fresh, professional, accessible, and operationally useful.
+- Design tokens, component contracts, and route contracts already define the implementation boundaries.
+
+Task:
+Implement Frontend Phase 0: Frontend Product and UI Lockdown.
+
+Deliver these artifacts:
+- Confirmed brand/token notes.
+- Confirmed logo usage rules.
+- Confirmed public route map.
+- Confirmed admin route map.
+- Confirmed checkout steps.
+- Confirmed invoice layout requirements.
+- Confirmed dark-mode policy.
+- Frontend acceptance checklist updates.
+- Any missing docs updates needed before UI coding begins.
+
+Constraints:
+- Use pnpm only.
+- Do not write production UI until the rules are explicit.
+- Do not hardcode SVG logos or decorative SVG illustrations when the real logo, product imagery, or an icon library should be used.
+- Use logo/image assets for brand marks; do not recreate or distort the Sunflour logo with text or inline SVG.
+- Use icon components from the approved icon library when available; do not scatter route-level inline SVG icons.
+- Use semantic design tokens, not random raw colors.
+- Keep mobile 360px usability, keyboard access, and dark mode in scope from the start.
+- Do not invent backend fields or business rules.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Frontend rules confirmed
+3. Decisions still needed
+4. Checks run
+
+Examples:
+Use docs/design-system.md for tokens and accessibility rules, docs/frontend-routes.md for route scope, and docs/component-contracts.md for component boundaries.
+
+Evaluation Criteria:
+The implementation is good if:
+- Later agents can implement frontend phases without guessing route, token, logo, icon, or accessibility rules.
+- The checkout flow, invoice expectations, admin metric list, and dark-mode policy are explicit.
+- No UI implementation begins on top of unresolved design/product rules.
+
+Iteration:
+Before final output, self-review against the Evaluation Criteria. If a rule is missing or contradictory, update the docs or list the exact decision required instead of proceeding silently.
+```
+
 ---
 
 # Phase 1 — Frontend Foundation and Design Tokens
@@ -1462,6 +1530,77 @@ Create the reusable UI foundation.
 
 ## Outcome
 A reusable frontend foundation.
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior frontend platform engineer building the reusable UI foundation for a Next.js 16, React 19, TypeScript strict, Tailwind CSS application.
+
+Goal:
+Create the token, primitive component, formatter, and typed API foundation that every public, customer, and admin screen will reuse.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/frontend-routes.md
+- docs/api-contracts.md
+- backend-implementation.md
+
+Current frontend facts:
+- The frontend architecture is design tokens -> primitives -> composed components -> route sections -> routes -> flows.
+- Components must use semantic tokens and support light/dark mode.
+- Primitives must define focus, loading, disabled, hover, pressed, and error states where relevant.
+
+Task:
+Implement Frontend Phase 1: Frontend Foundation and Design Tokens.
+
+Deliver these artifacts:
+- Tailwind/CSS token setup.
+- Light and dark semantic color tokens.
+- Typography, spacing, radius, elevation, and motion tokens.
+- Base primitives: Button, Input, Select, Card, Badge, Dialog or Sheet, Toast, Skeleton, EmptyState, ErrorState.
+- Money and date formatters.
+- Typed API client shell and API error normalization.
+- Initial tests for formatters and primitive states.
+
+Constraints:
+- Use pnpm only.
+- Use CSS variables and semantic token names from docs/design-system.md.
+- Do not hardcode raw brand colors in component JSX.
+- Do not hardcode SVG icons inside primitives; use approved icon components where an icon is needed.
+- Do not recreate the logo as text, CSS, or inline SVG.
+- Keep primitives business-agnostic.
+- Avoid adding UI libraries unless the value and accessibility behavior are clear.
+- Every interactive primitive must have visible focus in light and dark mode.
+- Public bundle weight matters; do not import admin-heavy code into shared public primitives.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Tokens and primitives added
+3. Tests added
+4. Checks run
+5. Remaining gaps
+
+Examples:
+Follow Primitive Contracts in docs/component-contracts.md. Button and IconButton must use accessible names; IconButton needs aria-label and tooltip for unfamiliar icons.
+
+Evaluation Criteria:
+The implementation is good if:
+- Tokens are the styling source of truth.
+- Primitives are reusable and typed.
+- Light and dark mode render intentionally.
+- Focus, disabled, loading, and error states are covered.
+- Formatters and API helpers are ready for later phases.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Evaluation Criteria and the Component Review Checklist. If any primitive violates token, accessibility, or SVG/icon rules, fix it before reporting completion.
+```
 
 ---
 
@@ -1504,6 +1643,78 @@ Make routing predictable and production-ready.
 
 ## Outcome
 Application shell ready for real flows.
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior Next.js App Router frontend engineer building route shells, navigation, loading states, and error boundaries for a mobile-first commerce app.
+
+Goal:
+Make the public, customer, and admin surfaces feel clearly separated, navigable, accessible, and production-ready before real flows are added.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+
+Current frontend facts:
+- Route groups should separate public, customer, and admin surfaces.
+- Users must always know where they are and what action is available.
+- Loading, error, empty, and not-found states must preserve context and avoid layout shift.
+
+Task:
+Implement Frontend Phase 2: App Shell, Routing, Loading, and Error States.
+
+Deliver these artifacts:
+- Public app shell.
+- Admin app shell.
+- Mobile navigation.
+- Header and footer.
+- loading.tsx for key routes.
+- error.tsx for key route groups.
+- not-found.tsx.
+- Global toast provider if the primitive exists.
+- Theme provider only if it stays simple and aligns with the dark-mode policy.
+
+Constraints:
+- Use pnpm only.
+- Keep route groups aligned with docs/frontend-routes.md.
+- Do not make the whole app a Client Component.
+- Use Server Components by default; add client boundaries only for interaction.
+- Use the real logo asset if available; do not draw the logo with inline SVG or text.
+- Use approved icon components for navigation icons; do not hardcode route-level SVGs.
+- Navigation must be keyboard accessible and touch-friendly.
+- Loading states must use stable dimensions and not cause violent layout shift.
+- Public and admin bundles must remain separated.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Route shell structure
+3. Loading/error states added
+4. Tests or visual checks
+5. Checks run
+
+Examples:
+Use docs/frontend-routes.md as the folder map and docs/component-contracts.md for AdminShell, AdminSidebar, AdminTopbar, EmptyState, ErrorState, LoadingState, and Toast behavior.
+
+Evaluation Criteria:
+The implementation is good if:
+- Public and admin shells are visually and structurally distinct.
+- Mobile navigation works at 360px width.
+- Route loading and error states are useful and stable.
+- Dark mode applies consistently.
+- No hardcoded SVG logo/icon shortcuts appear where assets or icon components should be used.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Route Review Checklist and Design Review Checklist. Fix unclear navigation, missing state handling, or icon/logo rule violations before reporting completion.
+```
 
 ---
 
@@ -1549,6 +1760,83 @@ Make the public storefront useful and fast.
 ## Outcome
 Sunflour has a polished public storefront.
 
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior storefront frontend engineer building a fast, mobile-first restaurant menu experience with Next.js Server Components and accessible client interactions.
+
+Goal:
+Make Sunflour's public homepage and menu useful, fast, visually controlled, and easy to order from on small phones.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+
+Current frontend facts:
+- Public menu data must come from backend public API contracts.
+- Product cards must be readable, stable, and not crowded.
+- Out-of-stock products can be shown only when backend says they are visible, but cannot be ordered.
+
+Task:
+Implement Frontend Phase 3: Public Homepage and Menu.
+
+Deliver these artifacts:
+- Homepage sections with clear primary CTA to menu.
+- Menu page with server-rendered initial data.
+- Category filter.
+- Search UI.
+- Product grid/list.
+- ProductCard.
+- ProductDetailSheet or product detail route integration.
+- Add-to-cart affordance.
+- WhatsApp enquiry affordance.
+- Loading, error, and empty states.
+
+Constraints:
+- Use pnpm only.
+- Use next/image for real product, hero, logo, or bakery imagery with stable sizes.
+- Do not create SVG hero illustrations, decorative inline SVGs, or hardcoded logo SVGs.
+- Use approved icon components for buttons and small UI cues.
+- Use semantic tokens and component contracts; no random colors.
+- Keep public pages mostly server-rendered.
+- Do not trust displayed product price as checkout authority.
+- Do not hardcode products, categories, prices, or availability.
+- Product images need useful alt text and stable aspect ratio.
+- ProductCard must work at 360px mobile width.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Routes and components implemented
+3. Data/API contracts used
+4. Tests or visual checks
+5. Checks run
+6. Known gaps
+
+Examples:
+Use ProductCard, ProductGrid, ProductDetailSheet, CategoryPills, and SearchBar contracts from docs/component-contracts.md. Use /menu and /products/[slug] route rules from docs/frontend-routes.md.
+
+Evaluation Criteria:
+The implementation is good if:
+- Homepage makes the primary action obvious.
+- Menu loads active public products from the backend contract.
+- Search/filter does not make the public bundle heavy.
+- Out-of-stock state blocks ordering.
+- Product cards remain readable and stable on mobile.
+- Image and icon usage follows the no-hardcoded-SVG rule.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the public route acceptance checklist. If the page looks polished but hides price, availability, loading, empty, or error state clarity, revise before reporting completion.
+```
+
 ---
 
 # Phase 4 — Cart, Delivery Quote, and 6 PM Surcharge Display
@@ -1590,6 +1878,84 @@ Make pricing transparent before checkout.
 
 ## Outcome
 Cart becomes trustworthy and checkout-ready.
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior frontend commerce engineer building cart and delivery quote UX for a manual-payment restaurant ordering platform.
+
+Goal:
+Make cart review and delivery pricing transparent before checkout while keeping backend-calculated fees authoritative.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+
+Current frontend facts:
+- Delivery quote comes from /api/v1/public/delivery/quote.
+- Pickup shows NGN 0 delivery fee.
+- Delivery base fee and 6 PM surcharge must be visually separate.
+- Frontend totals are display estimates only; checkout recalculates server-side.
+
+Task:
+Implement Frontend Phase 4: Cart, Delivery Quote, and 6 PM Surcharge Display.
+
+Deliver these artifacts:
+- Cart page.
+- Sticky cart bar.
+- Cart item rows.
+- Quantity controls.
+- Delivery/pickup selector.
+- Delivery zone selector.
+- Delivery quote API call.
+- Delivery fee breakdown with base fee, surcharge, and total.
+- Empty cart state.
+- Loading and error states for quote calls.
+
+Constraints:
+- Use pnpm only.
+- Do not trust frontend totals as final checkout authority.
+- Do not hardcode delivery zones, base fees, surcharge amounts, or available methods.
+- Use backend quote response for delivery fee display.
+- Use shared money formatter.
+- Use RadioGroup/Select/QuantityStepper contracts.
+- Use icons from approved icon components when needed; do not inline hardcoded SVG controls.
+- Cart controls must be touch-friendly and keyboard usable.
+- Error messages must explain what the user can do next.
+- Do not hide 6 PM surcharge when backend returns it.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Cart state and quote flow
+3. Components implemented
+4. Tests added or changed
+5. Checks run
+6. Known gaps
+
+Examples:
+Use CartItemRow, QuantityStepper, DeliveryZoneSelector, DeliveryQuoteSummary, and StickyCartBar contracts from docs/component-contracts.md.
+
+Evaluation Criteria:
+The implementation is good if:
+- Users can review cart contents and update quantities.
+- Users can choose pickup or delivery.
+- Backend quote shows base fee, surcharge, and total clearly.
+- Pickup shows NGN 0 delivery.
+- Empty, loading, and error states exist.
+- UI copy never implies frontend totals are final authority.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Commerce Acceptance Checklist. If surcharge, pickup, quote error, or mobile ergonomics are unclear, revise before reporting completion.
+```
 
 ---
 
@@ -1638,6 +2004,87 @@ Build the complete purchase flow.
 ## Outcome
 Sunflour can receive real orders through the website.
 
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior checkout frontend engineer building a low-friction, mobile-first manual-payment checkout flow with excellent form validation and payment clarity.
+
+Goal:
+Let guests and authenticated customers create orders, receive payment instructions, access invoices, and send WhatsApp proof without confusion.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+- docs/order-lifecycle.md
+
+Current frontend facts:
+- Checkout posts to /api/v1/public/checkout with Idempotency-Key.
+- Email is optional.
+- Backend returns order number, payment status, payment instruction snapshot, invoice URL, WhatsApp proof URL/message, subtotal, delivery fee, surcharge, and total.
+- Payment must stay visibly pending until backend/admin confirmation.
+
+Task:
+Implement Frontend Phase 5: Checkout, Payment Instruction, Invoice, and WhatsApp Proof.
+
+Deliver these artifacts:
+- Checkout stepper.
+- Customer details form.
+- Delivery/pickup details form.
+- Order review screen.
+- Idempotent submit order action.
+- Payment instruction screen.
+- Invoice link/download/print screen.
+- WhatsApp proof button.
+- Field-level errors.
+- Error summary for serious validation failures.
+- Backend error handling for unavailable items, delivery zone errors, idempotency conflicts, and validation errors.
+
+Constraints:
+- Use pnpm only.
+- Do not submit trusted prices, delivery totals, surcharge, or payment confirmation from the frontend.
+- Use backend checkout response as the post-order source of truth.
+- Do not require email.
+- Do not mark payment confirmed before backend says it is confirmed.
+- Use React Hook Form and Zod resolver if form foundation exists; backend validation remains authoritative.
+- Use clear GOV.UK-style field errors.
+- Use shared money/date/API helpers.
+- Use InvoiceCard, PaymentInstructionCard, WhatsAppProofButton, CheckoutStepper, and OrderSummaryCard contracts.
+- Use approved icons for copy/print/WhatsApp actions; do not hardcode inline SVG buttons.
+- Keep checkout short, calm, and usable at 360px width.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Checkout flow implemented
+3. API contracts used
+4. Tests added or changed
+5. Checks run
+6. Risks or unresolved decisions
+
+Examples:
+Follow /checkout and /orders/[orderNumber]/invoice rules in docs/frontend-routes.md. PaymentInstructionCard must show pending payment honestly and must not confirm payment.
+
+Evaluation Criteria:
+The implementation is good if:
+- Guest checkout succeeds without email.
+- Authenticated checkout can reuse available profile data without blocking guests.
+- Validation errors are field-specific and human.
+- Backend checkout errors are recoverable.
+- Invoice is accessible immediately after order creation.
+- WhatsApp proof URL includes the backend-provided proof message/link.
+- pnpm lint, pnpm typecheck, pnpm test, pnpm build, and relevant Playwright checks pass when available.
+
+Iteration:
+Before final output, self-review against checkout acceptance criteria and the Form/Error Standard. If the flow creates payment ambiguity, hidden fees, or inaccessible forms, revise before reporting completion.
+```
+
 ---
 
 # Phase 6 — Auth, Customer Profile, and Order History
@@ -1676,6 +2123,80 @@ Give returning users convenience without blocking guests.
 ## Outcome
 Customer experience supports repeat orders.
 
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior frontend engineer building customer account UX that improves repeat ordering without blocking guest checkout.
+
+Goal:
+Give authenticated customers a simple profile, saved details, order history, order detail, and invoice access while preserving the guest-first buying path.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+
+Current frontend facts:
+- Customer auth is convenience, not a checkout wall.
+- Backend enforces ownership; UI must not pretend to be the security boundary.
+- Customer order detail should link to invoice access.
+
+Task:
+Implement Frontend Phase 6: Auth, Customer Profile, and Order History.
+
+Deliver these artifacts:
+- Google sign-in UI.
+- Account page.
+- Profile details form.
+- Saved address UI if backend supports it; otherwise a documented empty/deferred state.
+- Customer order history.
+- Customer order detail screen.
+- Invoice access from order history/detail.
+- Loading, empty, error, and restricted states.
+
+Constraints:
+- Use pnpm only.
+- Do not make guest checkout harder.
+- Do not expose another user's order in UI.
+- Do not rely on UI checks as authorization; backend remains authority.
+- Use typed customer API wrappers.
+- Use shared StatusBadge/StatusPill mapping for order/payment states.
+- Use semantic tokens and component contracts.
+- Use approved icons for account/order actions; do not hardcode inline SVGs.
+- Profile forms need labels, field errors, submit loading, and success/error states.
+- Keep account pages mobile-first and sparse.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Customer routes implemented
+3. Components implemented
+4. Tests added or changed
+5. Checks run
+6. Known gaps
+
+Examples:
+Use /account, /account/orders, and /account/orders/[orderNumber] route rules from docs/frontend-routes.md. Use Status Contract from docs/component-contracts.md.
+
+Evaluation Criteria:
+The implementation is good if:
+- Guest checkout remains available and obvious.
+- Authenticated users can view their profile and own orders.
+- Order history shows meaningful statuses and invoice links.
+- Profile form validation is accessible.
+- Empty order history has a clear next action.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against customer route acceptance criteria. If auth convenience starts acting like a checkout requirement, revise before reporting completion.
+```
+
 ---
 
 # Phase 7 — Reviews
@@ -1710,6 +2231,79 @@ Collect trust signals safely.
 
 ## Outcome
 Public trust layer ready.
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior frontend engineer building public review UX for a restaurant brand where moderation and accessibility matter.
+
+Goal:
+Collect customer trust signals safely while making it clear that submitted reviews may require approval before becoming public.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+
+Current frontend facts:
+- Public reviews must show approved reviews only.
+- Submitted reviews enter pending moderation.
+- Review forms must be rate-limit friendly and accessible.
+
+Task:
+Implement Frontend Phase 7: Reviews.
+
+Deliver these artifacts:
+- Public reviews page.
+- Approved review list.
+- ReviewCard.
+- Review submission form.
+- Rating selector.
+- Pending moderation success state.
+- Empty, loading, and error states.
+- Rate-limit and validation error handling.
+
+Constraints:
+- Use pnpm only.
+- Do not render pending, rejected, or hidden reviews publicly.
+- Do not let users choose review status.
+- Use backend review API contracts; do not invent review fields.
+- Use accessible labels and keyboard support for rating input.
+- Status must not rely on color alone.
+- Use approved icons for rating/star UI if available; do not hardcode repeated inline SVG stars in the route.
+- Do not add testimonial carousel libraries or marketing automation.
+- Keep copy direct and moderation-aware.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Review UI implemented
+3. API contracts used
+4. Tests added or changed
+5. Checks run
+6. Known gaps
+
+Examples:
+Use ReviewForm and ReviewCard contracts from docs/component-contracts.md and /reviews acceptance criteria from docs/frontend-routes.md.
+
+Evaluation Criteria:
+The implementation is good if:
+- Public list displays approved reviews only.
+- Review form validates rating, comment, and name.
+- Submission success explains moderation.
+- Rate-limit/backend errors are understandable.
+- Rating UI is keyboard and screen-reader usable.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the accessibility checklist and review route acceptance criteria. If moderation, keyboard use, or icon implementation is weak, revise before reporting completion.
+```
 
 ---
 
@@ -1750,6 +2344,80 @@ Give Sunflour staff a clean operating dashboard.
 
 ## Outcome
 Admin dashboard UI ready.
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior admin-UX frontend engineer building an operational dashboard for restaurant staff. You optimize for scannability, role clarity, accessibility, and dense but calm interfaces.
+
+Goal:
+Give moderators and super admins an admin shell and dashboard that show operational priorities immediately without exposing restricted settings.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+
+Current frontend facts:
+- Admin UI should feel operational, not decorative.
+- Dashboard metrics must come from backend, not frontend guesses.
+- Moderators can view dashboard but should not see sensitive settings.
+
+Task:
+Implement Frontend Phase 8: Admin Shell and Dashboard.
+
+Deliver these artifacts:
+- Admin layout.
+- Admin sidebar/topbar.
+- Dashboard metric cards.
+- Priority order queue.
+- Pending payment confirmation block.
+- Top ordered items block.
+- Pending reviews block.
+- Hidden/out-of-stock block.
+- Loading, empty, error, restricted, and mobile/tablet states.
+
+Constraints:
+- Use pnpm only.
+- Keep admin components separated from public bundles.
+- Use backend dashboard metric contract only; do not guess metrics client-side.
+- Use AdminShell, AdminSidebar, AdminTopbar, MetricCard, StatusBadge, and EmptyState contracts.
+- Admin screens can be denser than public pages but must remain keyboard accessible.
+- Do not use decorative charts or vanity visuals unless backed by a real operational need.
+- Use approved icon components for nav/actions/metric cues; do not hardcode inline SVG icon sets.
+- Do not expose payment/email sensitive settings to moderators.
+- Use semantic tokens and dark-mode-ready surfaces.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Admin shell implemented
+3. Dashboard sections implemented
+4. Tests or visual checks
+5. Checks run
+6. Known gaps
+
+Examples:
+Use /admin route rules from docs/frontend-routes.md and Admin Component Contracts from docs/component-contracts.md.
+
+Evaluation Criteria:
+The implementation is good if:
+- Admin sees current operational priorities above the fold.
+- Metrics use backend values.
+- Moderator restricted settings are hidden or represented as restricted states.
+- Dashboard works on mobile/tablet/desktop.
+- MetricCard states cover loading, empty, and error.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against Admin Acceptance Checklist and Design Review Checklist. If the screen becomes decorative, crowded, or dependent on frontend metric guesses, revise before reporting completion.
+```
 
 ---
 
@@ -1793,6 +2461,84 @@ Allow staff to operate orders end-to-end.
 ## Outcome
 Admin order operations ready.
 
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior frontend engineer building admin order operations for a manual-payment restaurant platform. You specialize in lifecycle UX, guarded actions, status clarity, and backend-error recovery.
+
+Goal:
+Let staff process daily orders end-to-end while preventing risky transitions and keeping order history understandable.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- docs/order-lifecycle.md
+- backend-implementation.md
+
+Current frontend facts:
+- Backend enforces RBAC, payment confirmation, audit logs, and status transitions.
+- UI should hide invalid transitions when known but must still handle backend rejection gracefully.
+- Payment status and order fulfillment status are separate.
+
+Task:
+Implement Frontend Phase 9: Admin Order Lifecycle UI.
+
+Deliver these artifacts:
+- Order list with filters.
+- Search by order number/phone.
+- Status badges.
+- Order detail page.
+- Payment confirmation controls.
+- Status transition controls.
+- Order timeline.
+- Admin notes.
+- Cancel/reject confirmation dialogs.
+- Loading, empty, error, and restricted states.
+
+Constraints:
+- Use pnpm only.
+- Use backend admin order APIs; do not mutate lifecycle locally without API confirmation.
+- Do not bypass backend audit behavior.
+- Do not show invalid transitions as normal actions.
+- Still handle backend invalid transition errors clearly.
+- Use ConfirmDialog for cancellation, rejection, and any destructive/irreversible action.
+- Use StatusBadge and OrderStatusTimeline contracts.
+- Use text plus tone for statuses; never color alone.
+- Use approved icons for filters/actions; do not hardcode inline SVG controls.
+- Keep tables keyboard usable and readable on tablet/mobile.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Order routes implemented
+3. Lifecycle actions implemented
+4. Tests added or changed
+5. Checks run
+6. Risks or unresolved decisions
+
+Examples:
+Use /admin/orders and /admin/orders/[id] route rules from docs/frontend-routes.md. Use OrderTable, OrderFilters, StatusBadge, OrderStatusTimeline, and ConfirmDialog contracts.
+
+Evaluation Criteria:
+The implementation is good if:
+- Admin can filter and search orders.
+- Payment confirmation controls reflect role and backend policy.
+- Valid lifecycle actions call backend endpoints and update UI after confirmation.
+- Cancellation/rejection requires confirmation.
+- Order timeline makes history understandable.
+- Backend invalid transition errors are recoverable.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against order route acceptance criteria. If any risky action lacks confirmation, any status depends on color only, or any mutation bypasses backend authority, revise before reporting completion.
+```
+
 ---
 
 # Phase 10 — Admin Products, Categories, and Media
@@ -1833,6 +2579,83 @@ Let Sunflour manage the menu without code changes.
 ## Outcome
 Menu operations ready.
 
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior admin frontend engineer building safe catalog-management UI for a restaurant menu with product images, categories, variants, and availability controls.
+
+Goal:
+Let Sunflour manage the menu through admin UI without code changes while preserving backend-controlled prices, visibility, and media safety.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+
+Current frontend facts:
+- Products, categories, variants, images, and status are backend-controlled.
+- R2 uploads use backend signed upload flow.
+- Product price updates must not imply old invoice changes.
+- Moderators may have limited availability controls depending backend policy.
+
+Task:
+Implement Frontend Phase 10: Admin Products, Categories, and Media.
+
+Deliver these artifacts:
+- Product list.
+- Category filter.
+- Status filter.
+- Product create/edit form.
+- Variant editor.
+- Category manager.
+- Availability/status controls.
+- Image upload with signed upload flow.
+- Image preview/progress/error UI.
+- Loading, empty, error, and restricted states.
+
+Constraints:
+- Use pnpm only.
+- Do not hardcode products, categories, status rules, prices, or upload URLs.
+- Use backend signed upload endpoints only.
+- Validate product/category/variant forms client-side for UX and rely on backend validation for authority.
+- Use ProductTable, ProductEditorForm, CategoryEditorForm, AdminUploadField or equivalent contracts.
+- Use next/image or stable img dimensions for previews.
+- Use approved icons for upload/edit/delete/status actions; do not hardcode inline SVG action icons.
+- Do not create UI that suggests product price edits change old invoices.
+- Destructive or critical changes require confirmation.
+- Admin tables/forms must be keyboard accessible.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Catalog admin routes implemented
+3. Media upload flow
+4. Tests added or changed
+5. Checks run
+6. Risks or unresolved decisions
+
+Examples:
+Use /admin/products, /admin/products/new, /admin/products/[id], and /admin/categories route rules from docs/frontend-routes.md. Use admin product/media contracts from docs/component-contracts.md.
+
+Evaluation Criteria:
+The implementation is good if:
+- Admin can create and edit products through backend APIs.
+- Product forms validate name, category, price, status, variants, and images.
+- Signed upload flow shows progress, success, and failure.
+- Availability/status controls respect role policy.
+- Product image previews are stable and accessible.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against Admin Acceptance Checklist and media route contracts. If upload, price, status, or destructive action behavior is ambiguous, document the exact backend/API decision needed.
+```
+
 ---
 
 # Phase 11 — Admin Delivery, Payment, Email, and Reviews
@@ -1872,6 +2695,84 @@ Expose controlled business settings to the right roles.
 
 ## Outcome
 Admin settings and moderation ready.
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a senior admin frontend engineer building controlled business settings and moderation UI for delivery, payment, email, and reviews.
+
+Goal:
+Expose sensitive operational controls only to the right roles while keeping delivery pricing, Moniepoint payment settings, transactional email, and review moderation understandable.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/frontend-routes.md
+- docs/design-system.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+- docs/order-lifecycle.md
+
+Current frontend facts:
+- Delivery zones and 6 PM surcharge are backend-managed.
+- Payment settings are super_admin-only.
+- Email controls are transactional only; no marketing automation.
+- Reviews require moderation before public display.
+
+Task:
+Implement Frontend Phase 11: Admin Delivery, Payment, Email, and Reviews.
+
+Deliver these artifacts:
+- Delivery zone manager.
+- 6 PM surcharge rule UI.
+- Payment settings page.
+- Email settings/templates list.
+- Email outbox list/retry UI if backend supports it.
+- Review moderation page.
+- Restricted access UI for moderators where appropriate.
+- Confirmation dialogs for sensitive changes.
+- Loading, empty, error, success, and restricted states.
+
+Constraints:
+- Use pnpm only.
+- Do not expose payment settings to unauthorized roles.
+- Do not put payment account details into public or shared UI.
+- Do not hardcode delivery fees, surcharge amount, email template keys, or review statuses.
+- Use backend APIs and typed wrappers.
+- Use DeliveryZoneTable, SurchargeRuleForm, PaymentSettingsForm, EmailTemplateList, ReviewModerationList, and ConfirmDialog contracts.
+- Use approved icons for actions/status cues; do not hardcode inline SVGs.
+- Make 6 PM surcharge and base fee visually separate.
+- Email UI must remain transactional; do not add campaign/newsletter concepts.
+- Review moderation actions must give clear feedback and handle backend audit/permission errors.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Admin settings routes implemented
+3. Role restrictions handled
+4. Tests added or changed
+5. Checks run
+6. Risks or unresolved decisions
+
+Examples:
+Use /admin/delivery, /admin/reviews, /admin/settings/payment, and /admin/settings/email route rules from docs/frontend-routes.md. Use relevant admin component contracts from docs/component-contracts.md.
+
+Evaluation Criteria:
+The implementation is good if:
+- Super_admin can manage sensitive settings through guarded UI.
+- Moderator sees restricted states instead of sensitive controls.
+- Delivery base fee and surcharge are clear.
+- Payment settings changes require confirmation.
+- Email controls are transactional and not noisy.
+- Review moderation is accessible and status-safe.
+- pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.
+
+Iteration:
+Before final output, self-review against the Admin UI Rules and sensitive-settings acceptance criteria. If sensitive settings leak, marketing email concepts appear, or surcharge/payment copy is unclear, revise before reporting completion.
+```
 
 ---
 
@@ -1918,6 +2819,149 @@ Prepare the frontend for real customers.
 
 ## Outcome
 Frontend ready for production launch.
+
+## Implementation status update — 2026-05-28
+
+Status: frontend phases 0 through 12 have a production-oriented implementation baseline in the Next.js App Router app.
+
+Completed:
+
+```txt
+- Phase 0: Product/UI lockdown docs remain the source of truth.
+- Phase 1: Tailwind/PostCSS setup, semantic CSS tokens, dark mode, primitives, typed API helpers, status maps, money/date formatters, and frontend tests.
+- Phase 2: Public/customer/admin route groups, public shell, admin shell, loading/error/not-found states, toast provider, and mobile navigation.
+- Phase 3: Homepage, menu page, category filter, search, product grid/card, product detail route, and add-to-cart flow.
+- Phase 4: Client cart, quantity controls, delivery/pickup selector, delivery-zone loading, backend delivery quote, base fee/surcharge display, and empty/error states.
+- Phase 5: Guest checkout form, idempotent checkout submission, field-level errors, order review, payment instruction card, invoice link conversion, and WhatsApp proof handoff.
+- Phase 6: Google sign-in entry, account profile display/update, customer order history, customer order detail, and invoice access from authenticated orders.
+- Phase 7: Approved reviews list, review card, accessible rating input, public review submission, and pending-moderation success copy.
+- Phase 8: Admin shell/dashboard using backend metrics, operational cards, top items, unavailable products, and pending reviews.
+- Phase 9: Admin order list filters, order detail, status/payment actions, notes, timeline, and guarded status confirmation through backend APIs.
+- Phase 10: Admin products, product create/edit form, category manager, availability controls, and signed media upload flow.
+- Phase 11: Delivery zone/surcharge manager, super-admin payment settings with confirmation, transactional email template list, and review moderation UI.
+- Phase 12: SEO metadata, responsive/dark-mode token pass, print invoice action, reduced-motion CSS, error/empty/loading state pass, and production build verification.
+```
+
+Phase 1-8 review improvements completed:
+
+```txt
+- Replaced starter shell with real route groups and clear public/admin separation.
+- Forwarded refs through form primitives so React Hook Form and native accessibility work correctly.
+- Removed fake dashboard/order/review/customer placeholders where backend endpoints now exist.
+- Kept dashboard metrics backend-sourced only; no frontend metric guessing.
+- Preserved checkout rule: frontend never submits trusted prices, delivery fees, surcharge, totals, or payment confirmation.
+- Added explicit display-estimate copy for cart/checkout totals.
+- Used real image assets for homepage/logo and lucide icon components instead of inline SVG shortcuts.
+- Added pnpm workspace build-script approval config for pnpm 11 reproducibility.
+```
+
+Checks run:
+
+```txt
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Local verification:
+
+```txt
+- Production server started with pnpm start.
+- /, /menu, /cart, /checkout, and /reviews returned HTTP 200 locally.
+- Browser plugin tooling was not exposed in this session, so automated screenshot/axe/Lighthouse checks were not run.
+```
+
+Remaining launch risks:
+
+```txt
+- Real mobile device QA, Playwright E2E, axe scans, and Lighthouse checks still need to run before production approval.
+- Vercel Preview review still requires linked Vercel project access.
+- Production readiness depends on valid DATABASE_URL, Google OAuth, R2, Resend, Moniepoint/payment settings, admin allowlist, and official business contact data.
+- Product imagery quality depends on real uploaded menu photos through the signed media flow.
+```
+
+## Implementation prompt for AI agents
+
+```txt
+Role:
+You are a principal frontend engineer performing launch-readiness hardening for a Next.js App Router commerce application on Vercel.
+
+Goal:
+Prepare the frontend for real customers and staff by closing accessibility, performance, dark-mode, mobile, error-state, SEO, and Vercel Preview gaps.
+
+Context:
+Read first:
+- AGENTS.md
+- frontend-implimentation.md
+- docs/design-system.md
+- docs/frontend-routes.md
+- docs/component-contracts.md
+- docs/api-contracts.md
+- backend-implementation.md
+- docs/vercel-deployment.md if present
+
+Current frontend facts:
+- Public critical path is menu -> cart -> checkout -> invoice -> WhatsApp proof.
+- Admin critical path is dashboard -> orders -> payment confirmation -> lifecycle update.
+- WCAG 2.2 AA, Core Web Vitals, mobile 360px, dark mode, and Vercel Preview review are launch requirements.
+
+Task:
+Implement Frontend Phase 12: Frontend Hardening and Launch Readiness.
+
+Deliver these artifacts:
+- Accessibility pass.
+- Performance pass.
+- Dark-mode pass.
+- Mobile device pass.
+- Error/empty/loading state pass.
+- SEO metadata.
+- Open Graph image setup using real/generative bitmap assets where appropriate.
+- Print invoice check.
+- Reduced-motion check.
+- Final Vercel Preview review checklist.
+- Playwright critical path tests where available.
+- axe accessibility checks where available.
+
+Constraints:
+- Use pnpm only.
+- Do not introduce broad UI rewrites during hardening.
+- Do not add heavy dependencies unless the launch value is specific and documented.
+- Do not create hardcoded SVG logos, decorative SVG hero art, or ad-hoc inline SVG icon sets.
+- Use real logo/product/place imagery or generated bitmap assets where visual assets are needed.
+- Use approved icon components for controls.
+- Preserve backend-trusted pricing and payment rules.
+- Public pages must keep small client bundles.
+- All interactive controls need visible focus and accessible names.
+- No text overflow on 360px mobile.
+- All launch checklists must be actionable.
+
+Output Format:
+Return a concise closeout with these headings:
+1. Files changed
+2. Accessibility fixes
+3. Performance fixes
+4. Mobile/dark-mode fixes
+5. SEO/preview checklist
+6. Tests and checks run
+7. Remaining launch risks
+
+Examples:
+Use the Accessibility Checklist, Performance Checklist, Design Review Checklist, Route Review Checklist, and Testing Contract from the docs.
+
+Evaluation Criteria:
+The implementation is good if:
+- Public and admin critical flows pass.
+- Checkout, invoice, admin dashboard, admin orders, and forms have accessible states.
+- Core Web Vitals risks are reduced and documented.
+- Dark mode looks intentional.
+- Mobile 360px layouts do not overflow.
+- Logo/icon/image usage follows the strict asset and no-hardcoded-SVG rules.
+- pnpm lint, pnpm typecheck, pnpm test, pnpm build, and relevant Playwright/axe checks pass when available.
+
+Iteration:
+Before final output, self-review against all launch checklists. If any check requires external Vercel credentials, production assets, or manual device verification, document the exact owner action instead of marking it complete.
+```
 
 ---
 
