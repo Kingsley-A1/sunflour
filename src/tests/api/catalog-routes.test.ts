@@ -162,6 +162,7 @@ describe("catalog API routes", () => {
         name: "Cake",
         basePrice: 2500,
       }),
+      adminUser,
     );
   });
 

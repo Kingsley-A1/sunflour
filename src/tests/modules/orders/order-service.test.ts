@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { OrderStatus, PaymentStatus, UserRole } from "@/generated/prisma/enums";
+import {
+  DeliveryMethod,
+  OrderStatus,
+  PaymentStatus,
+  UserRole,
+} from "@/generated/prisma/enums";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import {
@@ -82,6 +87,28 @@ describe("order service", () => {
     }
   });
 
+  it("blocks pickup orders from moving out for delivery", () => {
+    expect(() =>
+      validateOrderStatusTransition(
+        OrderStatus.PREPARING,
+        OrderStatus.OUT_FOR_DELIVERY,
+        undefined,
+        DeliveryMethod.PICKUP,
+      ),
+    ).toThrow("PICKUP orders cannot move to OUT_FOR_DELIVERY.");
+  });
+
+  it("blocks delivery orders from moving ready for pickup", () => {
+    expect(() =>
+      validateOrderStatusTransition(
+        OrderStatus.PREPARING,
+        OrderStatus.READY_FOR_PICKUP,
+        undefined,
+        DeliveryMethod.DELIVERY,
+      ),
+    ).toThrow("DELIVERY orders cannot move to READY_FOR_PICKUP.");
+  });
+
   it("blocks payment updates after order rejection or cancellation", () => {
     try {
       assertOrderCanReceivePaymentStatusUpdate(OrderStatus.REJECTED);
@@ -98,6 +125,7 @@ describe("order service", () => {
       id: "order_1",
       orderNumber: "SFB-20260101-ABC123",
       status: OrderStatus.PAYMENT_CONFIRMED,
+      deliveryMethod: DeliveryMethod.PICKUP,
     });
     mocks.orderUpdate.mockResolvedValueOnce({
       orderNumber: "SFB-20260101-ABC123",

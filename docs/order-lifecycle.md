@@ -1,6 +1,6 @@
 # Order Lifecycle - Sunflour Bakery
 
-Status: active draft. Phase 5 checkout creates initial order records, Phase 6 adds manual payment verification events, Phase 7 adds invoice creation, Phase 8 queues transactional email through an outbox, and Phase 9 adds admin lifecycle operations.
+Status: active Backend 2.0 contract. Checkout creates initial order records, manual payment verification writes payment events, invoices are snapshotted, transactional email is queued through a hardened outbox, and admin lifecycle operations enforce delivery-method-aware transitions.
 
 ## Source Of Truth
 
@@ -79,19 +79,17 @@ Order created
 
 ## Transition Matrix
 
-Complete this matrix before implementing status transition validation.
-
-| From | Allowed To | Actor | Required Reason | Side Effects |
-| --- | --- | --- | --- | --- |
-| `PENDING_PAYMENT` | `PAYMENT_UNDER_REVIEW` | Customer/Admin/System | No | payment proof received |
-| `PAYMENT_UNDER_REVIEW` | `PAYMENT_CONFIRMED` | Admin | No | payment event, audit log |
-| `PAYMENT_UNDER_REVIEW` | `REJECTED` | Admin | Yes | payment event, audit log |
-| `PAYMENT_CONFIRMED` | `PREPARING` | Admin | No | order status event |
-| `PREPARING` | `READY_FOR_PICKUP` | Admin | No | order status event |
-| `PREPARING` | `OUT_FOR_DELIVERY` | Admin | No | order status event |
-| `READY_FOR_PICKUP` | `DELIVERED` | Admin | No | delivered timestamp |
-| `OUT_FOR_DELIVERY` | `DELIVERED` | Admin | No | delivered timestamp |
-| any active status | `CANCELLED` | Admin | Yes | audit log |
+| From | Allowed To | Delivery Method | Actor | Required Reason | Side Effects |
+| --- | --- | --- | --- | --- | --- |
+| `PENDING_PAYMENT` | `PAYMENT_UNDER_REVIEW` | Any | Customer/Admin/System | No | payment proof received |
+| `PAYMENT_UNDER_REVIEW` | `PAYMENT_CONFIRMED` | Any | Admin | No | payment event, audit log |
+| `PAYMENT_UNDER_REVIEW` | `REJECTED` | Any | Admin | Yes | payment event, audit log |
+| `PAYMENT_CONFIRMED` | `PREPARING` | Any | Admin | No | order status event |
+| `PREPARING` | `READY_FOR_PICKUP` | `PICKUP` only | Admin | No | order status event |
+| `PREPARING` | `OUT_FOR_DELIVERY` | `DELIVERY` only | Admin | No | order status event |
+| `READY_FOR_PICKUP` | `DELIVERED` | `PICKUP` only | Admin | No | delivered timestamp |
+| `OUT_FOR_DELIVERY` | `DELIVERED` | `DELIVERY` only | Admin | No | delivered timestamp |
+| any active status | `CANCELLED` | Any | Admin | Yes | audit log |
 
 Protected terminal statuses:
 
@@ -106,9 +104,19 @@ Current v1 policy:
 ```txt
 - Terminal orders do not move backward.
 - Terminal orders do not move to delivered from cancelled/rejected.
+- Pickup orders cannot move to OUT_FOR_DELIVERY.
+- Delivery orders cannot move to READY_FOR_PICKUP.
 - Super admin override behavior is intentionally deferred until the business approves an explicit break-glass policy.
 - Payment status updates are blocked after an order is CANCELLED or REJECTED.
 ```
+
+## Moderator Payment Policy
+
+Current v1 policy allows active `MODERATOR` and `SUPER_ADMIN` users to update payment status through the admin payment-status endpoint. Each payment decision writes `payment_confirmation_events` and `audit_logs`. This can be tightened later if Sunflour decides payment confirmation must be super-admin-only.
+
+## Rejected Payment Behavior
+
+Rejected payment requires a reason and moves the order to `REJECTED`. `REJECTED` is terminal in v1. The customer must place a new order or staff must use a future approved break-glass policy; no implicit retry loop is implemented.
 
 ## Phase 5 Implementation Note
 
@@ -157,6 +165,7 @@ Admin order operations now support:
 - Status update endpoint.
 - Admin note endpoint.
 - Server-side transition validation.
+- Delivery-method-aware fulfillment validation.
 - order_status_events for every status mutation.
 - audit_logs for every admin order mutation.
 - delivered_at and cancelled_at timestamp handling.
@@ -184,12 +193,8 @@ Payment status transitions currently allowed:
 
 Rejected payment requires a reason.
 
-## Open Decisions
+## Deferred Decisions
 
 - [ ] Whether customer WhatsApp proof updates payment status automatically or remains an admin-only state change.
-- [ ] Whether moderators can confirm payment in v1 or only mark proof as under review.
 - [ ] Exact `SUPER_ADMIN` override policy for protected transitions.
 - [ ] Customer notification triggers for each status.
-- [ ] Whether `READY_FOR_PICKUP` applies only to pickup orders.
-- [ ] Whether delivery orders can ever move to `READY_FOR_PICKUP`.
-- [ ] Whether rejected payment cancels the order or leaves it awaiting corrected proof.

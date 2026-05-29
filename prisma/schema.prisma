@@ -79,6 +79,7 @@ enum EmailTemplateKey {
 
 enum EmailOutboxStatus {
   QUEUED
+  PROCESSING
   SENT
   FAILED
   SKIPPED
@@ -484,7 +485,7 @@ model EmailOutbox {
   order  Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
   events EmailEvent[]
 
-  @@unique([orderId, templateKey])
+  @@unique([orderId, templateKey, recipientEmail])
   @@index([status, nextAttemptAt])
   @@index([templateKey, status])
   @@index([recipientEmail])

@@ -12,7 +12,10 @@ async function collectTypeScriptFiles(directory: string): Promise<string[]> {
         return collectTypeScriptFiles(fullPath);
       }
 
-      if (entry.isFile() && fullPath.endsWith(".ts")) {
+      if (
+        entry.isFile() &&
+        (fullPath.endsWith(".ts") || fullPath.endsWith(".tsx"))
+      ) {
         return [fullPath];
       }
 
@@ -42,5 +45,5 @@ describe("email infrastructure boundary", () => {
     }
 
     expect(matches).toEqual(["src/server/modules/email/resend-client.ts"]);
-  });
+  }, 20_000);
 });

@@ -24,9 +24,27 @@ export class AppError extends Error {
   }
 }
 
+function hasPrismaCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === code
+  );
+}
+
 export function errorFromUnknown(error: unknown): AppError {
   if (error instanceof AppError) {
     return error;
+  }
+
+  if (hasPrismaCode(error, "P2025")) {
+    return new AppError({
+      code: "NOT_FOUND",
+      publicMessage: "The requested record was not found.",
+      status: 404,
+      cause: error,
+    });
   }
 
   return new AppError({

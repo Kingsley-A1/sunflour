@@ -1,6 +1,9 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { OrderStatus } from "@/generated/prisma/enums";
-import type { OrderStatus as OrderStatusValue } from "@/generated/prisma/enums";
+import { DeliveryMethod, OrderStatus } from "@/generated/prisma/enums";
+import type {
+  DeliveryMethod as DeliveryMethodValue,
+  OrderStatus as OrderStatusValue,
+} from "@/generated/prisma/enums";
 import type { AuthenticatedUser } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { AppError } from "@/server/lib/errors/app-error";
@@ -188,6 +191,17 @@ function invalidOrderTransition(
   });
 }
 
+function invalidFulfillmentTransition(
+  deliveryMethod: DeliveryMethodValue,
+  toStatus: OrderStatusValue,
+): AppError {
+  return new AppError({
+    code: ERROR_CODES.INVALID_ORDER_STATUS_TRANSITION,
+    publicMessage: `${deliveryMethod} orders cannot move to ${toStatus}.`,
+    status: 400,
+  });
+}
+
 function isTerminalOrderStatus(status: OrderStatusValue): boolean {
   return terminalOrderStatuses.includes(
     status as (typeof terminalOrderStatuses)[number],
@@ -254,6 +268,7 @@ export function validateOrderStatusTransition(
   fromStatus: OrderStatusValue,
   toStatus: OrderStatusValue,
   reason?: string,
+  deliveryMethod?: DeliveryMethodValue,
 ): void {
   if (
     (toStatus === OrderStatus.CANCELLED ||
@@ -269,6 +284,20 @@ export function validateOrderStatusTransition(
     !allowedOrderTransitions[fromStatus].includes(toStatus)
   ) {
     throw invalidOrderTransition(fromStatus, toStatus);
+  }
+
+  if (
+    deliveryMethod === DeliveryMethod.PICKUP &&
+    toStatus === OrderStatus.OUT_FOR_DELIVERY
+  ) {
+    throw invalidFulfillmentTransition(deliveryMethod, toStatus);
+  }
+
+  if (
+    deliveryMethod === DeliveryMethod.DELIVERY &&
+    toStatus === OrderStatus.READY_FOR_PICKUP
+  ) {
+    throw invalidFulfillmentTransition(deliveryMethod, toStatus);
   }
 }
 
@@ -326,6 +355,7 @@ export async function updateAdminOrderStatus(
       id: true,
       orderNumber: true,
       status: true,
+      deliveryMethod: true,
     },
   });
 
@@ -333,7 +363,12 @@ export async function updateAdminOrderStatus(
     throw notFound();
   }
 
-  validateOrderStatusTransition(order.status, input.status, input.reason);
+  validateOrderStatusTransition(
+    order.status,
+    input.status,
+    input.reason,
+    order.deliveryMethod,
+  );
 
   return prisma.$transaction(async (transaction) => {
     const updatedOrder = await transaction.order.update({

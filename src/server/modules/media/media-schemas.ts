@@ -19,11 +19,7 @@ export const presignedUploadRequestSchema = z
   })
   .strict();
 
-export const completeMediaUploadSchema = z
-  .object({
-    publicUrl: z.string().url().optional(),
-  })
-  .strict();
+export const completeMediaUploadSchema = z.object({}).strict();
 
 export const mediaIdParamSchema = z.object({
   id: z.string().min(1),

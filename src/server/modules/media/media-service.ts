@@ -1,9 +1,16 @@
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  HeadObjectCommand,
+  type HeadObjectCommandOutput,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { MediaAssetStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/server/db/prisma";
 import type { AuthenticatedUser } from "@/server/auth/rbac";
+import { AppError } from "@/server/lib/errors/app-error";
+import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import type { PresignedUploadRequestInput } from "./media-schemas";
 import { getPublicMediaUrl, getR2Config, getR2Endpoint } from "./r2-config";
@@ -42,6 +49,14 @@ export interface PresignDependencies {
   ) => Promise<string>;
 }
 
+export interface CompleteUploadDependencies {
+  config?: R2Config;
+  headObject?: (
+    client: S3Client,
+    command: HeadObjectCommand,
+  ) => Promise<HeadObjectCommandOutput>;
+}
+
 function createR2Client(config: R2Config): S3Client {
   return new S3Client({
     region: "auto",
@@ -50,6 +65,29 @@ function createR2Client(config: R2Config): S3Client {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
     },
+  });
+}
+
+function notFound(): AppError {
+  return new AppError({
+    code: ERROR_CODES.NOT_FOUND,
+    publicMessage: "Media asset not found.",
+    status: 404,
+  });
+}
+
+function invalidMediaUpload(
+  message: string,
+  metadata?: Record<string, unknown>,
+): AppError {
+  return new AppError({
+    code: ERROR_CODES.VALIDATION_ERROR,
+    publicMessage: message,
+    status: 400,
+    fieldErrors: {
+      mediaAssetId: [message],
+    },
+    cause: metadata,
   });
 }
 
@@ -130,25 +168,109 @@ export async function createPresignedProductImageUpload(
 export async function completeMediaAssetUpload(
   mediaAssetId: string,
   actor: AuthenticatedUser,
-  publicUrl?: string,
+  dependencies: CompleteUploadDependencies = {},
 ) {
-  const mediaAsset = await prisma.mediaAsset.update({
+  const mediaAsset = await prisma.mediaAsset.findUnique({
     where: { id: mediaAssetId },
-    data: {
-      status: MediaAssetStatus.READY,
-      publicUrl,
-    },
   });
 
-  await writeAuditLog({
-    actorUserId: actor.id,
-    action: "MEDIA_UPLOAD_COMPLETED",
-    targetType: "media_asset",
-    targetId: mediaAssetId,
-    metadata: {
-      objectKey: mediaAsset.objectKey,
-    },
-  });
+  if (!mediaAsset) {
+    throw notFound();
+  }
 
-  return mediaAsset;
+  if (mediaAsset.status === MediaAssetStatus.READY) {
+    return mediaAsset;
+  }
+
+  if (mediaAsset.status !== MediaAssetStatus.PENDING_UPLOAD) {
+    throw invalidMediaUpload("Only pending uploads can be completed.");
+  }
+
+  const config = dependencies.config ?? getR2Config();
+  const client = createR2Client(config);
+  const headObject = dependencies.headObject ?? ((r2Client, command) =>
+    r2Client.send(command));
+  let objectMetadata: HeadObjectCommandOutput;
+
+  try {
+    objectMetadata = await headObject(
+      client,
+      new HeadObjectCommand({
+        Bucket: mediaAsset.bucket,
+        Key: mediaAsset.objectKey,
+      }),
+    );
+  } catch (error) {
+    await writeAuditLog({
+      actorUserId: actor.id,
+      action: "MEDIA_UPLOAD_VERIFICATION_FAILED",
+      targetType: "media_asset",
+      targetId: mediaAsset.id,
+      metadata: {
+        objectKey: mediaAsset.objectKey,
+        reason: "OBJECT_NOT_FOUND",
+      },
+    });
+
+    throw invalidMediaUpload("Uploaded object could not be verified.", {
+      error,
+    });
+  }
+
+  const actualByteSize = objectMetadata.ContentLength;
+  const actualContentType = objectMetadata.ContentType;
+
+  if (
+    actualByteSize !== mediaAsset.byteSize ||
+    actualContentType !== mediaAsset.contentType
+  ) {
+    await writeAuditLog({
+      actorUserId: actor.id,
+      action: "MEDIA_UPLOAD_VERIFICATION_FAILED",
+      targetType: "media_asset",
+      targetId: mediaAsset.id,
+      metadata: {
+        objectKey: mediaAsset.objectKey,
+        expected: {
+          byteSize: mediaAsset.byteSize,
+          contentType: mediaAsset.contentType,
+        },
+        actual: {
+          byteSize: actualByteSize ?? null,
+          contentType: actualContentType ?? null,
+        },
+      },
+    });
+
+    throw invalidMediaUpload("Uploaded object metadata does not match.");
+  }
+
+  const publicUrl = getPublicMediaUrl(config, mediaAsset.objectKey);
+
+  return prisma.$transaction(async (transaction) => {
+    const completedMediaAsset = await transaction.mediaAsset.update({
+      where: { id: mediaAssetId },
+      data: {
+        status: MediaAssetStatus.READY,
+        publicUrl,
+      },
+    });
+
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "MEDIA_UPLOAD_COMPLETED",
+        targetType: "media_asset",
+        targetId: mediaAssetId,
+        metadata: {
+          objectKey: mediaAsset.objectKey,
+          byteSize: mediaAsset.byteSize,
+          contentType: mediaAsset.contentType,
+        },
+      },
+      transaction,
+    );
+
+    return completedMediaAsset;
+  });
 }

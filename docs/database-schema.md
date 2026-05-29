@@ -1,6 +1,6 @@
 # Database Schema - Sunflour Bakery
 
-Status: active draft. Backend Phases 1-13 are implemented for the current v1 scope: foundation, auth/RBAC, catalog/media, delivery pricing, checkout/orders, manual payment, invoices, email outbox, order lifecycle admin, customer profile/guest lookup, reviews, dashboard metrics, and launch hardening.
+Status: active Backend 2.0 contract. Backend Phases 1-20 are implemented for the current v1 scope: foundation, auth/RBAC, catalog/media, delivery pricing, checkout/orders, manual payment, invoices, hardened email outbox, verified media completion, order lifecycle admin, customer profile/guest lookup, reviews, dashboard metrics, audit listing, CI, and launch hardening.
 
 ## Source Of Truth
 
@@ -76,6 +76,7 @@ HIDDEN
 
 EmailOutboxStatus:
 QUEUED
+PROCESSING
 SENT
 FAILED
 SKIPPED
@@ -126,6 +127,8 @@ audit_logs
 site_settings
 media_assets
 ```
+
+`addresses` is deferred for v1 saved-address support. Current delivery orders store the delivery address snapshot directly on `orders`.
 
 ## Snapshot Rules
 
@@ -446,6 +449,8 @@ reviews.updated_at
 
 - [x] Email templates support only approved transactional use cases.
 - [x] Email outbox supports queue, sent, failed, skipped, retry count, and error message.
+- [x] Email outbox uses `PROCESSING` as an atomic send-claim state.
+- [x] Email outbox uniqueness is recipient-aware: one order can queue the same template to multiple recipients.
 - [x] Email failure does not break order creation.
 - [x] Email events log queued, sent, failed, skipped, and retried actions.
 - [x] Email preferences table exists for authenticated customer controls.
@@ -464,9 +469,10 @@ Email rules:
 ```txt
 - Emails are queued through EmailService before any send attempt.
 - Resend API access is isolated to the email module.
+- Processing claims a queued row before sending so concurrent processors cannot send the same outbox row twice.
 - Disabled templates create SKIPPED outbox records instead of sending.
 - Failed sends record error_message and next_attempt_at for retry.
-- order_id + template_key is unique so duplicate order emails, including appreciation emails, are prevented.
+- order_id + template_key + recipient_email is unique so duplicate recipient emails are prevented while multi-admin alerts can be queued.
 ```
 
 ### Audit
@@ -474,6 +480,8 @@ Email rules:
 - [x] Admin-critical mutations can write `audit_logs` through the audit service.
 - [x] Audit logs capture actor, action, target, metadata, and timestamp.
 - [x] `audit_logs.actor_user_id` is linked to `users.id` with `ON DELETE SET NULL`.
+- [x] Super admins can list audit logs through `/api/v1/admin/audit-logs`.
+- [x] Audit-list responses redact sensitive metadata keys before returning records.
 
 ## Index and Constraint Checklist
 
@@ -486,15 +494,25 @@ Email rules:
 - [x] Index reviews by status and product.
 - [x] Index email outbox by status and next attempt time.
 - [x] Index payment confirmation events by order, status, actor, and creation time.
-- [ ] Index audit logs by actor, action, target, and creation time.
+- [x] Index audit logs by actor, action, target, and creation time.
 
 ## Open Schema Decisions
 
 - [ ] Final ID strategy: `cuid`, `uuid`, or database-generated IDs.
 - [ ] Phone normalization format.
-- [ ] Address structure for delivery orders.
+- [x] Address structure for delivery orders in v1 is snapshot-only on `orders`; saved addresses are deferred.
 - [ ] Whether cart storage is needed for guests or only authenticated users.
 - [ ] Whether order lookup uses token, phone verification, or both.
 - [x] Guest order lookup uses order number + normalized phone for v1; tokenized invoice access remains separate.
-- [ ] Whether email preferences exist in v1 or are deferred until authenticated profiles mature.
-- [ ] Exact audit metadata JSON shape.
+- [x] Email preferences exist in schema for authenticated customer controls, but public preference UI remains deferred.
+- [x] Audit metadata for critical mutations uses `before` and `after` where practical; sensitive keys are redacted in the audit list endpoint.
+
+## Deferred Schema Work
+
+```txt
+- Saved customer addresses.
+- Order-linked review requirement.
+- Super-admin break-glass override records.
+- PDF invoice asset metadata beyond optional invoices.pdf_url.
+- Durable distributed rate-limit store metadata.
+```

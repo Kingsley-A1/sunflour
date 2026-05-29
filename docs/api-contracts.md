@@ -1,6 +1,6 @@
 # API Contracts - Sunflour Bakery
 
-Status: placeholder for Phase 0. Complete this document before implementing backend API routes.
+Status: active Backend 2.0 API contract. This document reflects the implemented `src/app/api/v1` route inventory as of 2026-05-28 and records launch-blocking owner decisions separately from completed backend behavior.
 
 ## Source Of Truth
 
@@ -51,18 +51,99 @@ Route handlers must stay thin:
 Route handler -> validate request -> call service/module -> return typed response
 ```
 
+## Implemented Route Inventory
+
+```txt
+GET    /api/v1/public/health
+GET    /api/v1/public/menu
+GET    /api/v1/public/products/[slug]
+GET    /api/v1/public/delivery/zones
+POST   /api/v1/public/delivery/quote
+POST   /api/v1/public/checkout
+GET    /api/v1/public/invoices/[orderNumber]?token=...
+POST   /api/v1/public/orders/lookup
+GET    /api/v1/public/reviews
+POST   /api/v1/public/reviews
+
+GET    /api/v1/customer/profile
+PATCH  /api/v1/customer/profile
+GET    /api/v1/customer/orders
+GET    /api/v1/customer/orders/[orderNumber]
+GET    /api/v1/customer/orders/[orderNumber]/invoice
+
+GET    /api/v1/admin/health
+GET    /api/v1/admin/super-admin/health
+GET    /api/v1/admin/dashboard
+GET    /api/v1/admin/audit-logs
+GET    /api/v1/admin/categories
+POST   /api/v1/admin/categories
+PATCH  /api/v1/admin/categories/[id]
+DELETE /api/v1/admin/categories/[id]
+GET    /api/v1/admin/products
+POST   /api/v1/admin/products
+GET    /api/v1/admin/products/[id]
+PATCH  /api/v1/admin/products/[id]
+DELETE /api/v1/admin/products/[id]
+PATCH  /api/v1/admin/products/[id]/status
+POST   /api/v1/admin/products/[id]/variants
+PATCH  /api/v1/admin/variants/[id]
+DELETE /api/v1/admin/variants/[id]
+POST   /api/v1/admin/products/[id]/images
+POST   /api/v1/admin/media/presign-upload
+POST   /api/v1/admin/media/[id]/complete
+GET    /api/v1/admin/delivery/zones
+POST   /api/v1/admin/delivery/zones
+PATCH  /api/v1/admin/delivery/zones/[id]
+DELETE /api/v1/admin/delivery/zones/[id]
+GET    /api/v1/admin/delivery/surcharge-rules
+POST   /api/v1/admin/delivery/surcharge-rules
+PATCH  /api/v1/admin/delivery/surcharge-rules/[id]
+DELETE /api/v1/admin/delivery/surcharge-rules/[id]
+GET    /api/v1/admin/settings/payment
+PATCH  /api/v1/admin/settings/payment
+GET    /api/v1/admin/orders
+GET    /api/v1/admin/orders/[orderNumber]
+PATCH  /api/v1/admin/orders/[orderNumber]/status
+PATCH  /api/v1/admin/orders/[orderNumber]/notes
+PATCH  /api/v1/admin/orders/[orderNumber]/payment-status
+GET    /api/v1/admin/orders/[orderNumber]/invoice
+GET    /api/v1/admin/reviews
+PATCH  /api/v1/admin/reviews/[id]/moderation
+GET    /api/v1/admin/email/templates
+PATCH  /api/v1/admin/email/templates/[key]
+GET    /api/v1/admin/email/outbox
+POST   /api/v1/admin/email/outbox/process
+POST   /api/v1/admin/email/outbox/[id]/retry
+POST   /api/v1/admin/email/manual
+
+POST   /api/v1/webhooks/cron/email-outbox
+```
+
 ## Contract Checklist
 
 - [x] Every request body/query/param is validated with Zod for implemented routes.
 - [x] Every implemented route documents or enforces auth requirement: public, customer, moderator, or super_admin.
-- [ ] Every route documents success response shape.
-- [ ] Every route documents expected error codes.
-- [ ] Every route documents side effects.
-- [ ] Every admin-critical mutation documents audit log behavior.
-- [ ] Every order status mutation documents `order_status_events` behavior.
+- [x] Every implemented route is listed by namespace and role.
+- [x] Critical route families document success response shape.
+- [x] Critical route families document expected error codes.
+- [x] Critical route families document side effects.
+- [x] Every admin-critical mutation documents audit log behavior.
+- [x] Every order status mutation documents `order_status_events` behavior.
 - [x] Checkout uses idempotency.
-- [ ] Frontend never submits trusted prices, fees, surcharge, or totals.
-- [ ] Public APIs expose only data needed for the user journey.
+- [x] Frontend never submits trusted prices, fees, surcharge, or totals.
+- [x] Public APIs expose only data needed for the user journey.
+
+Malformed JSON returns:
+
+```txt
+400 VALIDATION_ERROR
+```
+
+Prisma not-found errors are normalized to:
+
+```txt
+404 NOT_FOUND
+```
 
 ## Planned Public API Contracts
 
@@ -458,7 +539,7 @@ Decision needed: confirm whether customer auth is Google-only in v1 or also cred
 - [x] Payment settings endpoint.
 - [x] Email template/outbox endpoints.
 - [x] Review moderation endpoints.
-- [ ] Audit log endpoint.
+- [x] Audit log endpoint.
 
 Admin contracts must document required role and audit behavior.
 
@@ -494,6 +575,9 @@ Rules:
 - Product base price updates write PRODUCT_PRICE_UPDATE audit logs.
 - Product variant price updates write PRODUCT_VARIANT_PRICE_UPDATE audit logs.
 - Product status updates write PRODUCT_STATUS_UPDATE audit logs.
+- Category create/update/archive writes CATEGORY_CREATE, CATEGORY_UPDATE, and CATEGORY_ARCHIVE audit logs.
+- Product create/update/archive writes PRODUCT_CREATE, PRODUCT_UPDATE, and PRODUCT_ARCHIVE audit logs.
+- Product variant create/archive writes PRODUCT_VARIANT_CREATE and PRODUCT_VARIANT_ARCHIVE audit logs.
 ```
 
 ### Media Admin
@@ -515,7 +599,9 @@ Side effects:
 
 ```txt
 - Presign creates media_assets status PENDING_UPLOAD.
-- Completion marks media_assets status READY.
+- Completion verifies the object exists in R2 and that content type and byte size match before marking media_assets status READY.
+- Completion does not accept a client-supplied public URL; the backend derives the public URL from configured R2 public base URL.
+- Failed completion keeps media_assets status PENDING_UPLOAD and writes MEDIA_UPLOAD_VERIFICATION_FAILED.
 - Product image creation attaches READY media assets only.
 - Media upload URL creation and completion write audit logs.
 ```
@@ -671,6 +757,10 @@ Rules:
 
 ```txt
 - Status transitions are validated server-side.
+- Pickup orders can move PREPARING -> READY_FOR_PICKUP -> DELIVERED.
+- Delivery orders can move PREPARING -> OUT_FOR_DELIVERY -> DELIVERED.
+- Pickup orders cannot move to OUT_FOR_DELIVERY.
+- Delivery orders cannot move to READY_FOR_PICKUP.
 - CANCELLED, REJECTED, and DELIVERED are terminal unless a future super_admin override policy is explicitly approved.
 - Cancellation and rejection require a reason.
 - Every status change creates an order_status_events row.
@@ -723,8 +813,39 @@ Rules:
 ```txt
 - Response contains one operational dashboard payload.
 - Date range defaults to today in APP_TIME_ZONE.
+- `rangeMetrics` contains selected-period counts, sales estimate, and top ordered items.
+- `currentBacklog` contains current operational queues such as pending payment, preparing, out for delivery, pending reviews, and unavailable products.
+- Legacy `counts`, `salesEstimate`, `topOrderedItems`, `unavailableProducts`, and `recentPendingReviews` remain for current frontend compatibility.
 - Sales estimate sums CONFIRMED payments and excludes CANCELLED and REJECTED orders.
 - Sensitive payment settings, email template bodies, secrets, audit metadata, and customer PII are excluded.
+```
+
+Success includes:
+
+```ts
+{
+  ok: true;
+  data: {
+    range: { from: Date; to: Date; timeZone: string };
+    rangeMetrics: {
+      ordersInRange: number;
+      guestOrdersInRange: number;
+      cancelledOrders: number;
+      deliveredOrders: number;
+      salesEstimate: { label: string; currency: "NGN"; total: number; semantics: "range" };
+      topOrderedItems: Array<{ productName: string; variantName: string | null; quantity: number; salesTotal: number }>;
+    };
+    currentBacklog: {
+      pendingPaymentConfirmation: number;
+      preparingOrders: number;
+      totalUsers: number;
+      outForDeliveryOrders: number;
+      pendingReviews: number;
+      unavailableProducts: unknown[];
+      recentPendingReviews: unknown[];
+    };
+  };
+}
 ```
 
 Purpose: Manually verify or reject payment after WhatsApp proof review.
@@ -829,9 +950,38 @@ Rules:
 - All emails are queued through EmailService.
 - Admin manual email queues an approved transactional template only.
 - Disabled templates create SKIPPED outbox records.
+- Outbox rows are claimed as PROCESSING before sending to prevent duplicate sends from concurrent processors.
+- `order_id + template_key + recipient_email` prevents duplicate recipient sends while allowing multiple admin alert recipients.
 - Failed sends are logged and can be retried.
 - Resend failures do not block checkout/order creation.
 - Cron processing requires EMAIL_CRON_SECRET in Authorization Bearer or x-cron-secret.
+```
+
+### Audit Logs Admin
+
+```txt
+GET /api/v1/admin/audit-logs        SUPER_ADMIN
+```
+
+Query:
+
+```txt
+actorUserId optional
+action optional
+targetType optional
+targetId optional
+createdFrom optional ISO date
+createdTo optional ISO date
+page default 1
+pageSize default 25, max 100
+```
+
+Rules:
+
+```txt
+- Moderators cannot view audit logs.
+- Response metadata is sanitized for sensitive keys such as secrets, tokens, passwords, account numbers, payment instructions, and WhatsApp proof numbers.
+- Audit logs are append-only from the application perspective.
 ```
 
 ## Auth Routes
@@ -872,12 +1022,23 @@ INTERNAL_ERROR
 
 ## Open Product Decisions
 
-- [ ] Official Sunflour address.
-- [ ] Moniepoint bank details.
-- [ ] WhatsApp proof number.
-- [ ] Admin emails and role assignments.
-- [ ] Delivery zones and base fees.
-- [ ] Surcharge rule enablement and close-of-day behavior.
-- [ ] Pickup operating rules.
-- [ ] Order operating hours.
-- [ ] Email sender domain and sender name.
+- [ ] Launch-blocking owner confirmation: official Sunflour address.
+- [ ] Launch-blocking owner confirmation: Moniepoint bank details.
+- [ ] Launch-blocking owner confirmation: WhatsApp proof number.
+- [ ] Launch-blocking owner confirmation: admin emails and role assignments.
+- [ ] Launch-blocking owner confirmation: delivery zones and base fees.
+- [ ] Launch-blocking owner confirmation: surcharge rule enablement and close-of-day behavior.
+- [ ] Launch-blocking owner confirmation: pickup operating rules.
+- [ ] Launch-blocking owner confirmation: order operating hours.
+- [ ] Launch-blocking owner confirmation: email sender domain and sender name.
+- [ ] Launch-blocking owner confirmation: R2 bucket and public media URL strategy.
+
+## Deferred Work
+
+```txt
+- Saved customer addresses.
+- Order-linked review requirement.
+- Super-admin break-glass override workflow.
+- Durable distributed rate limiting.
+- PDF invoice generation.
+```

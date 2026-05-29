@@ -3,6 +3,49 @@ import { formatZodFieldErrors } from "@/server/lib/validation/zod";
 
 type EnvInput = Record<string, string | undefined>;
 
+const emptyStringToUndefined = (value: unknown) => {
+  if (typeof value === "string" && value.trim() === "") {
+    return undefined;
+  }
+
+  return value;
+};
+
+const optionalString = (schema: z.ZodString) =>
+  z.preprocess(emptyStringToUndefined, schema.optional());
+
+const optionalUrl = optionalString(z.string().url());
+const optionalSecret = optionalString(z.string().min(1));
+const optionalEmail = optionalString(z.string().email());
+
+const optionalBoolean = z
+  .preprocess(emptyStringToUndefined, z.enum(["true", "false"]).optional())
+  .transform((value) => value === "true");
+
+const optionalNumberWithDefault = (
+  min: number,
+  max: number,
+  defaultValue: number,
+) =>
+  z.preprocess(
+    emptyStringToUndefined,
+    z.coerce.number().int().min(min).max(max).default(defaultValue),
+  );
+
+const isPlaceholderValue = (value: string | undefined) => {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  return (
+    normalized.startsWith("<") ||
+    normalized.includes("placeholder") ||
+    normalized.startsWith("missing-")
+  );
+};
+
 export class EnvValidationError extends Error {
   readonly fieldErrors: Record<string, string[]>;
 
@@ -18,47 +61,34 @@ const envSchema = z
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+    NEXT_PUBLIC_APP_URL: optionalUrl,
     APP_TIME_ZONE: z.string().min(1).default("Africa/Lagos"),
-    DATABASE_URL: z.string().url().optional(),
-    TEST_DATABASE_URL: z.string().url().optional(),
-    SHADOW_DATABASE_URL: z.string().url().optional(),
-    NEXTAUTH_URL: z.string().url().optional(),
-    AUTH_SECRET: z.string().min(32).optional(),
-    AUTH_GOOGLE_ID: z.string().min(1).optional(),
-    AUTH_GOOGLE_SECRET: z.string().min(1).optional(),
+    DATABASE_URL: optionalUrl,
+    TEST_DATABASE_URL: optionalUrl,
+    SHADOW_DATABASE_URL: optionalUrl,
+    NEXTAUTH_URL: optionalUrl,
+    AUTH_SECRET: optionalString(z.string().min(32)),
+    AUTH_GOOGLE_ID: optionalSecret,
+    AUTH_GOOGLE_SECRET: optionalSecret,
     ADMIN_ALLOWLIST_EMAILS: z.string().optional().default(""),
-    RESEND_API_KEY: z.string().min(1).optional(),
-    EMAIL_FROM_ADDRESS: z.string().email().optional(),
+    RESEND_API_KEY: optionalSecret,
+    EMAIL_FROM_ADDRESS: optionalEmail,
     EMAIL_FROM_NAME: z.string().min(1).default("Sunflour Bakery"),
-    EMAIL_SENDING_ENABLED: z
-      .enum(["true", "false"])
-      .optional()
-      .default("false")
-      .transform((value) => value === "true"),
-    EMAIL_OUTBOX_BATCH_SIZE: z.coerce
-      .number()
-      .int()
-      .min(1)
-      .max(50)
-      .default(10),
-    EMAIL_CRON_SECRET: z.string().min(16).optional(),
+    EMAIL_SENDING_ENABLED: optionalBoolean,
+    EMAIL_OUTBOX_BATCH_SIZE: optionalNumberWithDefault(1, 50, 10),
+    EMAIL_CRON_SECRET: optionalString(z.string().min(16)),
     ADMIN_ORDER_ALERT_EMAILS: z.string().optional().default(""),
-    R2_ACCOUNT_ID: z.string().min(1).optional(),
-    R2_ACCESS_KEY_ID: z.string().min(1).optional(),
-    R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-    R2_BUCKET_NAME: z.string().min(1).optional(),
-    R2_PUBLIC_BASE_URL: z.string().url().optional(),
-    R2_PRESIGNED_UPLOAD_EXPIRES_SECONDS: z.coerce
-      .number()
-      .int()
-      .min(60)
-      .max(3600)
-      .default(300),
-    RUN_DB_TESTS: z
-      .enum(["true", "false"])
-      .optional()
-      .transform((value) => value === "true"),
+    R2_ACCOUNT_ID: optionalSecret,
+    R2_ACCESS_KEY_ID: optionalSecret,
+    R2_SECRET_ACCESS_KEY: optionalSecret,
+    R2_BUCKET_NAME: optionalSecret,
+    R2_PUBLIC_BASE_URL: optionalUrl,
+    R2_PRESIGNED_UPLOAD_EXPIRES_SECONDS: optionalNumberWithDefault(
+      60,
+      3600,
+      300,
+    ),
+    RUN_DB_TESTS: optionalBoolean,
   })
   .superRefine((env, context) => {
     if (env.NODE_ENV === "production" && !env.DATABASE_URL) {
@@ -91,6 +121,20 @@ const envSchema = z
         path: ["AUTH_GOOGLE_SECRET"],
         message: "AUTH_GOOGLE_SECRET is required in production.",
       });
+    }
+
+    for (const key of [
+      "AUTH_SECRET",
+      "AUTH_GOOGLE_ID",
+      "AUTH_GOOGLE_SECRET",
+    ] as const) {
+      if (env.NODE_ENV === "production" && isPlaceholderValue(env[key])) {
+        context.addIssue({
+          code: "custom",
+          path: [key],
+          message: `${key} must be a real production value, not a placeholder.`,
+        });
+      }
     }
 
     if (env.EMAIL_SENDING_ENABLED && !env.RESEND_API_KEY) {

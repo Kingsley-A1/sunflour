@@ -4,26 +4,33 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/server/db/prisma";
 import { applyAdminAllowlistRole } from "@/server/auth/provisioning";
 import { UserRole } from "@/server/auth/roles";
+import { getServerEnv } from "@/server/config/env";
+
+export interface GoogleProviderCredentials {
+  clientId: string;
+  clientSecret: string;
+}
 
 function getOptionalSecret(): string | undefined {
-  return process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  return getServerEnv().AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
 }
 
-function getGoogleClientId(): string {
-  return (
-    process.env.AUTH_GOOGLE_ID ??
-    process.env.GOOGLE_CLIENT_ID ??
-    "missing-google-client-id"
-  );
+export function getGoogleProviderCredentials(
+  input: Record<string, string | undefined> = process.env,
+): GoogleProviderCredentials | null {
+  const env = getServerEnv(input);
+
+  if (!env.AUTH_GOOGLE_ID || !env.AUTH_GOOGLE_SECRET) {
+    return null;
+  }
+
+  return {
+    clientId: env.AUTH_GOOGLE_ID,
+    clientSecret: env.AUTH_GOOGLE_SECRET,
+  };
 }
 
-function getGoogleClientSecret(): string {
-  return (
-    process.env.AUTH_GOOGLE_SECRET ??
-    process.env.GOOGLE_CLIENT_SECRET ??
-    "missing-google-client-secret"
-  );
-}
+const googleCredentials = getGoogleProviderCredentials();
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(
@@ -33,12 +40,14 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "database",
   },
-  providers: [
+  providers: googleCredentials
+    ? [
     GoogleProvider({
-      clientId: getGoogleClientId(),
-      clientSecret: getGoogleClientSecret(),
+          clientId: googleCredentials.clientId,
+          clientSecret: googleCredentials.clientSecret,
     }),
-  ],
+      ]
+    : [],
   callbacks: {
     session({ session, user }) {
       if (session.user) {

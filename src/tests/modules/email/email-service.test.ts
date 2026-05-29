@@ -6,8 +6,10 @@ import {
 } from "@/generated/prisma/enums";
 import {
   queueAppreciationAfterDeliveryEmail,
+  queueAdminNewOrderAlertEmailsForOrder,
   queueEmail,
   queueOrderConfirmationEmailForOrder,
+  processEmailOutbox,
   retryFailedEmail,
   sendQueuedEmail,
 } from "@/server/modules/email/email-service";
@@ -19,7 +21,10 @@ const mocks = vi.hoisted(() => ({
   emailOutboxFindFirst: vi.fn(),
   emailOutboxFindUnique: vi.fn(),
   emailOutboxUpdate: vi.fn(),
+  emailOutboxUpdateMany: vi.fn(),
+  emailOutboxFindMany: vi.fn(),
   sendEmailWithResend: vi.fn(),
+  adminOrderAlertEmails: "",
 }));
 
 vi.mock("@/server/db/prisma", () => ({
@@ -32,6 +37,8 @@ vi.mock("@/server/db/prisma", () => ({
       findFirst: mocks.emailOutboxFindFirst,
       findUnique: mocks.emailOutboxFindUnique,
       update: mocks.emailOutboxUpdate,
+      updateMany: mocks.emailOutboxUpdateMany,
+      findMany: mocks.emailOutboxFindMany,
     },
   },
 }));
@@ -43,7 +50,7 @@ vi.mock("@/server/modules/email/resend-client", () => ({
 vi.mock("@/server/config/env", () => ({
   getServerEnv: () => ({
     NEXT_PUBLIC_APP_URL: "https://sunflour.test",
-    ADMIN_ORDER_ALERT_EMAILS: "",
+    ADMIN_ORDER_ALERT_EMAILS: mocks.adminOrderAlertEmails,
     EMAIL_OUTBOX_BATCH_SIZE: 10,
   }),
 }));
@@ -62,6 +69,7 @@ function order(overrides = {}) {
     status: OrderStatus.PENDING_PAYMENT,
     deliveredAt: null,
     paymentInstructionSnapshot: "Transfer to Sunflour Bakery.",
+    proofWhatsappNumberSnapshot: "+2348000000000",
     invoice: {
       invoiceNumber: "INV-SFB-20260101-ABC123",
       publicAccessToken: "invoice-token",
@@ -95,6 +103,7 @@ function outbox(overrides = {}) {
 describe("email service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mocks.adminOrderAlertEmails = "";
     mocks.emailTemplateFindUnique.mockResolvedValue(null);
     mocks.emailOutboxCreate.mockImplementation(
       async (args: { data: Record<string, unknown> }) =>
@@ -110,6 +119,7 @@ describe("email service", () => {
           errorMessage: args.data.errorMessage,
         }),
     );
+    mocks.emailOutboxUpdateMany.mockResolvedValue({ count: 1 });
   });
 
   it("queues order confirmation only when the order has customer email", async () => {
@@ -131,6 +141,33 @@ describe("email service", () => {
           recipientEmail: "ada@example.com",
           templateKey: EmailTemplateKey.ORDER_CONFIRMATION,
           status: EmailOutboxStatus.QUEUED,
+          payloadJson: expect.objectContaining({
+            whatsAppProofUrl: expect.stringContaining("https://wa.me/"),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("queues multiple admin alert recipients for one order", async () => {
+    mocks.adminOrderAlertEmails = "owner@example.com,manager@example.com";
+
+    const alerts = await queueAdminNewOrderAlertEmailsForOrder(order());
+
+    expect(alerts).toHaveLength(2);
+    expect(mocks.emailOutboxCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          recipientEmail: "owner@example.com",
+          templateKey: EmailTemplateKey.ADMIN_NEW_ORDER_ALERT,
+        }),
+      }),
+    );
+    expect(mocks.emailOutboxCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          recipientEmail: "manager@example.com",
+          templateKey: EmailTemplateKey.ADMIN_NEW_ORDER_ALERT,
         }),
       }),
     );
@@ -178,6 +215,17 @@ describe("email service", () => {
 
     const failed = await sendQueuedEmail("email_1");
 
+    expect(mocks.emailOutboxUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: "email_1",
+          status: EmailOutboxStatus.QUEUED,
+        }),
+        data: expect.objectContaining({
+          status: EmailOutboxStatus.PROCESSING,
+        }),
+      }),
+    );
     expect(failed.ok).toBe(false);
     expect(failed.outbox.status).toBe(EmailOutboxStatus.FAILED);
     expect(failed.outbox.errorMessage).toBe("Resend unavailable");
@@ -202,6 +250,42 @@ describe("email service", () => {
 
     expect(retried.status).toBe(EmailOutboxStatus.QUEUED);
     expect(retried.errorMessage).toBeNull();
+  });
+
+  it("does not send when another processor already claimed the row", async () => {
+    mocks.emailOutboxFindUnique
+      .mockResolvedValueOnce(outbox())
+      .mockResolvedValueOnce(
+        outbox({
+          status: EmailOutboxStatus.PROCESSING,
+        }),
+      );
+    mocks.emailOutboxUpdateMany.mockResolvedValueOnce({ count: 0 });
+
+    const result = await sendQueuedEmail("email_1");
+
+    expect(result.ok).toBe(false);
+    expect(result.outbox.status).toBe(EmailOutboxStatus.PROCESSING);
+    expect(mockedSendEmailWithResend).not.toHaveBeenCalled();
+  });
+
+  it("processes only claimable queued email rows", async () => {
+    mocks.emailOutboxFindMany.mockResolvedValueOnce([{ id: "email_1" }]);
+    mocks.emailOutboxFindUnique.mockResolvedValueOnce(outbox());
+    mockedSendEmailWithResend.mockResolvedValueOnce({ id: "resend_1" });
+    mocks.emailOutboxUpdate.mockImplementationOnce(
+      async (args: { data: Record<string, unknown> }) =>
+        outbox({
+          status: args.data.status,
+          resendEmailId: args.data.resendEmailId,
+          sentAt: args.data.sentAt,
+        }),
+    );
+
+    const result = await processEmailOutbox();
+
+    expect(result.processed).toBe(1);
+    expect(result.sent).toBe(1);
   });
 
   it("queues appreciation email once after delivery", async () => {

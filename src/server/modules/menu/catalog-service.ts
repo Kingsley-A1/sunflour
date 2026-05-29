@@ -173,32 +173,110 @@ export async function listAdminCategories() {
   });
 }
 
-export async function createCategory(input: CategoryCreateInput) {
-  return prisma.category.create({
-    data: {
-      ...input,
-      slug: requireSlug(input),
-    },
+export async function createCategory(
+  input: CategoryCreateInput,
+  actor: AuthenticatedUser,
+) {
+  return prisma.$transaction(async (transaction) => {
+    const category = await transaction.category.create({
+      data: {
+        ...input,
+        slug: requireSlug(input),
+      },
+    });
+
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "CATEGORY_CREATE",
+        targetType: "category",
+        targetId: category.id,
+        metadata: {
+          before: null,
+          after: category,
+        },
+      },
+      transaction,
+    );
+
+    return category;
   });
 }
 
-export async function updateCategory(id: string, input: CategoryUpdateInput) {
-  return prisma.category.update({
+export async function updateCategory(
+  id: string,
+  input: CategoryUpdateInput,
+  actor: AuthenticatedUser,
+) {
+  const before = await prisma.category.findUnique({
     where: { id },
-    data: {
-      ...input,
-      slug:
-        input.slug ?? (input.name ? requireSlug({ name: input.name }) : undefined),
-    },
+  });
+
+  if (!before) {
+    throw notFound("Category not found.");
+  }
+
+  return prisma.$transaction(async (transaction) => {
+    const category = await transaction.category.update({
+      where: { id },
+      data: {
+        ...input,
+        slug:
+          input.slug ??
+          (input.name ? requireSlug({ name: input.name }) : undefined),
+      },
+    });
+
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "CATEGORY_UPDATE",
+        targetType: "category",
+        targetId: id,
+        metadata: {
+          before,
+          after: category,
+        },
+      },
+      transaction,
+    );
+
+    return category;
   });
 }
 
-export async function archiveCategory(id: string) {
-  return prisma.category.update({
+export async function archiveCategory(id: string, actor: AuthenticatedUser) {
+  const before = await prisma.category.findUnique({
     where: { id },
-    data: {
-      isActive: false,
-    },
+  });
+
+  if (!before) {
+    throw notFound("Category not found.");
+  }
+
+  return prisma.$transaction(async (transaction) => {
+    const category = await transaction.category.update({
+      where: { id },
+      data: {
+        isActive: false,
+      },
+    });
+
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "CATEGORY_ARCHIVE",
+        targetType: "category",
+        targetId: id,
+        metadata: {
+          before,
+          after: category,
+        },
+      },
+      transaction,
+    );
+
+    return category;
   });
 }
 
@@ -222,26 +300,55 @@ export async function getAdminProduct(id: string) {
   return product;
 }
 
-export async function createProduct(input: ProductCreateInput) {
-  return prisma.product.create({
-    data: {
-      categoryId: input.categoryId,
-      name: input.name,
-      slug: requireSlug(input),
-      description: input.description,
-      basePrice: input.basePrice,
-      status: input.status,
-      showWhenOutOfStock: input.showWhenOutOfStock,
-      isFeatured: input.isFeatured,
-      isPopular: input.isPopular,
-      sortOrder: input.sortOrder,
-      variants: input.variants?.length
-        ? {
-            create: input.variants,
-          }
-        : undefined,
-    },
-    include: adminProductInclude,
+export async function createProduct(
+  input: ProductCreateInput,
+  actor: AuthenticatedUser,
+) {
+  return prisma.$transaction(async (transaction) => {
+    const product = await transaction.product.create({
+      data: {
+        categoryId: input.categoryId,
+        name: input.name,
+        slug: requireSlug(input),
+        description: input.description,
+        basePrice: input.basePrice,
+        status: input.status,
+        showWhenOutOfStock: input.showWhenOutOfStock,
+        isFeatured: input.isFeatured,
+        isPopular: input.isPopular,
+        sortOrder: input.sortOrder,
+        variants: input.variants?.length
+          ? {
+              create: input.variants,
+            }
+          : undefined,
+      },
+      include: adminProductInclude,
+    });
+
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "PRODUCT_CREATE",
+        targetType: "product",
+        targetId: product.id,
+        metadata: {
+          before: null,
+          after: {
+            id: product.id,
+            categoryId: product.categoryId,
+            name: product.name,
+            slug: product.slug,
+            basePrice: product.basePrice,
+            status: product.status,
+            variantCount: product.variants.length,
+          },
+        },
+      },
+      transaction,
+    );
+
+    return product;
   });
 }
 
@@ -253,8 +360,17 @@ export async function updateProduct(
   const before = await prisma.product.findUnique({
     where: { id },
     select: {
+      id: true,
+      categoryId: true,
+      name: true,
+      slug: true,
+      description: true,
       basePrice: true,
       status: true,
+      showWhenOutOfStock: true,
+      isFeatured: true,
+      isPopular: true,
+      sortOrder: true,
     },
   });
 
@@ -262,34 +378,70 @@ export async function updateProduct(
     throw notFound("Product not found.");
   }
 
-  const product = await prisma.product.update({
-    where: { id },
-    data: {
-      ...input,
-      slug:
-        input.slug ?? (input.name ? requireSlug({ name: input.name }) : undefined),
-    },
-    include: adminProductInclude,
-  });
-
-  if (input.basePrice !== undefined && input.basePrice !== before.basePrice) {
-    await writeAuditLog({
-      actorUserId: actor.id,
-      action: "PRODUCT_PRICE_UPDATE",
-      targetType: "product",
-      targetId: id,
-      metadata: {
-        from: before.basePrice,
-        to: input.basePrice,
+  return prisma.$transaction(async (transaction) => {
+    const product = await transaction.product.update({
+      where: { id },
+      data: {
+        ...input,
+        slug:
+          input.slug ??
+          (input.name ? requireSlug({ name: input.name }) : undefined),
       },
+      include: adminProductInclude,
     });
-  }
 
-  return product;
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "PRODUCT_UPDATE",
+        targetType: "product",
+        targetId: id,
+        metadata: {
+          before,
+          after: {
+            id: product.id,
+            categoryId: product.categoryId,
+            name: product.name,
+            slug: product.slug,
+            description: product.description,
+            basePrice: product.basePrice,
+            status: product.status,
+            showWhenOutOfStock: product.showWhenOutOfStock,
+            isFeatured: product.isFeatured,
+            isPopular: product.isPopular,
+            sortOrder: product.sortOrder,
+          },
+        },
+      },
+      transaction,
+    );
+
+    if (input.basePrice !== undefined && input.basePrice !== before.basePrice) {
+      await writeAuditLog(
+        {
+          actorUserId: actor.id,
+          action: "PRODUCT_PRICE_UPDATE",
+          targetType: "product",
+          targetId: id,
+          metadata: {
+            before: {
+              basePrice: before.basePrice,
+            },
+            after: {
+              basePrice: input.basePrice,
+            },
+          },
+        },
+        transaction,
+      );
+    }
+
+    return product;
+  });
 }
 
 export async function archiveProduct(id: string, actor: AuthenticatedUser) {
-  return updateProductStatus(
+  const product = await updateProductStatus(
     id,
     {
       status: ProductStatus.HIDDEN,
@@ -297,17 +449,50 @@ export async function archiveProduct(id: string, actor: AuthenticatedUser) {
     },
     actor,
   );
+
+  await writeAuditLog({
+    actorUserId: actor.id,
+    action: "PRODUCT_ARCHIVE",
+    targetType: "product",
+    targetId: id,
+    metadata: {
+      after: {
+        status: product.status,
+      },
+    },
+  });
+
+  return product;
 }
 
 export async function createProductVariant(
   productId: string,
   input: ProductVariantCreateInput,
+  actor: AuthenticatedUser,
 ) {
-  return prisma.productVariant.create({
-    data: {
-      ...input,
-      productId,
-    },
+  return prisma.$transaction(async (transaction) => {
+    const variant = await transaction.productVariant.create({
+      data: {
+        ...input,
+        productId,
+      },
+    });
+
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "PRODUCT_VARIANT_CREATE",
+        targetType: "product_variant",
+        targetId: variant.id,
+        metadata: {
+          before: null,
+          after: variant,
+        },
+      },
+      transaction,
+    );
+
+    return variant;
   });
 }
 
@@ -350,12 +535,41 @@ export async function updateProductVariant(
   return variant;
 }
 
-export async function archiveProductVariant(id: string) {
-  return prisma.productVariant.update({
+export async function archiveProductVariant(
+  id: string,
+  actor: AuthenticatedUser,
+) {
+  const before = await prisma.productVariant.findUnique({
     where: { id },
-    data: {
-      isActive: false,
-    },
+  });
+
+  if (!before) {
+    throw notFound("Product variant not found.");
+  }
+
+  return prisma.$transaction(async (transaction) => {
+    const variant = await transaction.productVariant.update({
+      where: { id },
+      data: {
+        isActive: false,
+      },
+    });
+
+    await writeAuditLog(
+      {
+        actorUserId: actor.id,
+        action: "PRODUCT_VARIANT_ARCHIVE",
+        targetType: "product_variant",
+        targetId: id,
+        metadata: {
+          before,
+          after: variant,
+        },
+      },
+      transaction,
+    );
+
+    return variant;
   });
 }
 

@@ -17,6 +17,10 @@ import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import { buildInvoicePublicUrl } from "@/server/modules/invoices";
+import {
+  buildWhatsAppProofMessage,
+  buildWhatsAppProofUrl,
+} from "@/server/modules/payments/payment-instructions";
 import type {
   EmailTemplateUpdateInput,
   ManualEmailQueueInput,
@@ -75,6 +79,7 @@ export interface EmailOrderForQueue {
   status: OrderStatusValue;
   deliveredAt?: Date | null;
   paymentInstructionSnapshot?: string | null;
+  proofWhatsappNumberSnapshot?: string | null;
   invoice?: {
     invoiceNumber: string;
     publicAccessToken: string;
@@ -105,6 +110,15 @@ function errorMessageFromUnknown(error: unknown): string {
   return "Email send failed.";
 }
 
+function hasPrismaCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === code
+  );
+}
+
 function buildAbsoluteInvoiceUrl(order: EmailOrderForQueue): string | undefined {
   if (!order.invoice?.publicAccessToken) {
     return undefined;
@@ -124,6 +138,12 @@ function buildAbsoluteInvoiceUrl(order: EmailOrderForQueue): string | undefined 
 }
 
 function orderEmailPayload(order: EmailOrderForQueue): Record<string, unknown> {
+  const whatsAppProofMessage = buildWhatsAppProofMessage({
+    orderNumber: order.orderNumber,
+    customerName: order.customerNameSnapshot,
+    total: order.total,
+  });
+
   return {
     orderNumber: order.orderNumber,
     customerName: order.customerNameSnapshot,
@@ -132,6 +152,10 @@ function orderEmailPayload(order: EmailOrderForQueue): Record<string, unknown> {
     invoiceNumber: order.invoice?.invoiceNumber,
     invoiceUrl: buildAbsoluteInvoiceUrl(order),
     paymentInstruction: order.paymentInstructionSnapshot ?? undefined,
+    whatsAppProofUrl: buildWhatsAppProofUrl(
+      whatsAppProofMessage,
+      order.proofWhatsappNumberSnapshot,
+    ),
   };
 }
 
@@ -170,26 +194,47 @@ export async function queueEmail(
     ? EmailOutboxStatus.QUEUED
     : EmailOutboxStatus.SKIPPED;
 
-  return prisma.emailOutbox.create({
-    data: {
-      orderId: input.orderId ?? null,
-      recipientEmail: input.recipientEmail,
-      recipientName: input.recipientName ?? null,
-      templateKey: input.templateKey,
-      subjectSnapshot: rendered.subject,
-      htmlSnapshot: rendered.html,
-      payloadJson: input.payload as Prisma.InputJsonObject,
-      status,
-      errorMessage: policy.reason,
-      events: {
-        create: {
-          eventType: emailEventForStatus(status),
-          message: policy.reason ?? "Email queued.",
+  try {
+    return await prisma.emailOutbox.create({
+      data: {
+        orderId: input.orderId ?? null,
+        recipientEmail: input.recipientEmail,
+        recipientName: input.recipientName ?? null,
+        templateKey: input.templateKey,
+        subjectSnapshot: rendered.subject,
+        htmlSnapshot: rendered.html,
+        payloadJson: input.payload as Prisma.InputJsonObject,
+        status,
+        errorMessage: policy.reason,
+        events: {
+          create: {
+            eventType: emailEventForStatus(status),
+            message: policy.reason ?? "Email queued.",
+          },
         },
       },
-    },
-    select: emailOutboxSelect,
-  });
+      select: emailOutboxSelect,
+    });
+  } catch (error) {
+    if (!input.orderId || !hasPrismaCode(error, "P2002")) {
+      throw error;
+    }
+
+    const existing = await prisma.emailOutbox.findFirst({
+      where: {
+        orderId: input.orderId,
+        templateKey: input.templateKey,
+        recipientEmail: input.recipientEmail,
+      },
+      select: emailOutboxSelect,
+    });
+
+    if (!existing) {
+      throw error;
+    }
+
+    return existing;
+  }
 }
 
 export async function queueManualEmail(input: ManualEmailQueueInput) {
@@ -294,6 +339,7 @@ export async function queueAppreciationAfterDeliveryEmail(
 }
 
 export async function sendQueuedEmail(id: string): Promise<EmailSendResult> {
+  const now = new Date();
   const outbox = await prisma.emailOutbox.findUnique({
     where: {
       id,
@@ -310,6 +356,52 @@ export async function sendQueuedEmail(id: string): Promise<EmailSendResult> {
       ok: false,
       outbox,
       errorMessage: `Email is ${outbox.status}.`,
+    };
+  }
+
+  if (outbox.nextAttemptAt && outbox.nextAttemptAt > now) {
+    return {
+      ok: false,
+      outbox,
+      errorMessage: "Email is waiting for its next retry window.",
+    };
+  }
+
+  const claim = await prisma.emailOutbox.updateMany({
+    where: {
+      id,
+      status: EmailOutboxStatus.QUEUED,
+      OR: [
+        {
+          nextAttemptAt: null,
+        },
+        {
+          nextAttemptAt: {
+            lte: now,
+          },
+        },
+      ],
+    },
+    data: {
+      status: EmailOutboxStatus.PROCESSING,
+      errorMessage: null,
+    },
+  });
+
+  if (claim.count !== 1) {
+    const latest = await prisma.emailOutbox.findUnique({
+      where: { id },
+      select: emailOutboxSelect,
+    });
+
+    if (!latest) {
+      throw notFound("Email outbox record not found.");
+    }
+
+    return {
+      ok: false,
+      outbox: latest,
+      errorMessage: `Email is ${latest.status}.`,
     };
   }
 
