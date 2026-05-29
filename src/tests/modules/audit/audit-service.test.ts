@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildAuditLogData,
+  sanitizeAuditMetadata,
   writeAuditLog,
 } from "@/server/modules/audit/audit-service";
 
@@ -50,6 +51,26 @@ describe("audit service", () => {
         targetType: "admin_profile",
         targetId: "user_1",
         metadata: undefined,
+      },
+    });
+  });
+
+  it("redacts sensitive metadata before admin listing", () => {
+    expect(
+      sanitizeAuditMetadata({
+        accountNumber: "1234567890",
+        accountNumberLast4: "7890",
+        publicNote: "safe",
+        nested: {
+          authSecret: "secret",
+        },
+      }),
+    ).toEqual({
+      accountNumber: "[redacted]",
+      accountNumberLast4: "7890",
+      publicNote: "safe",
+      nested: {
+        authSecret: "[redacted]",
       },
     });
   });

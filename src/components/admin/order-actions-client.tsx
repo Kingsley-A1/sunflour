@@ -1,17 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import {
+  getApiErrorMessage,
+  updateAdminOrderNote,
+  updateAdminOrderPaymentStatus,
+  updateAdminOrderStatus,
+} from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { OrderStatus, PaymentStatus } from "@/types/domain";
+import type { DeliveryMethod, OrderStatus, PaymentStatus } from "@/types/domain";
 
 interface OrderActionsClientProps {
   orderNumber: string;
   currentStatus: OrderStatus;
   currentPaymentStatus: PaymentStatus;
+  deliveryMethod: DeliveryMethod;
   adminNote: string | null;
 }
 
@@ -34,10 +40,28 @@ const paymentOptions: PaymentStatus[] = [
   "REJECTED",
 ];
 
+function getAllowedTransitions(
+  currentStatus: OrderStatus,
+  deliveryMethod: DeliveryMethod,
+): OrderStatus[] {
+  return transitionMap[currentStatus].filter((status) => {
+    if (deliveryMethod === "PICKUP") {
+      return status !== "OUT_FOR_DELIVERY";
+    }
+
+    if (deliveryMethod === "DELIVERY") {
+      return status !== "READY_FOR_PICKUP";
+    }
+
+    return true;
+  });
+}
+
 export function OrderActionsClient({
   orderNumber,
   currentStatus,
   currentPaymentStatus,
+  deliveryMethod,
   adminNote,
 }: OrderActionsClientProps) {
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
@@ -45,9 +69,11 @@ export function OrderActionsClient({
   const [reason, setReason] = useState("");
   const [note, setNote] = useState(adminNote ?? "");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const allowedTransitions = getAllowedTransitions(currentStatus, deliveryMethod);
 
   async function updateOrderStatus() {
     if (!nextStatus) {
@@ -60,22 +86,17 @@ export function OrderActionsClient({
     setMessage(null);
 
     try {
-      await apiRequest(`/api/v1/admin/orders/${orderNumber}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          status: nextStatus,
-          reason: reason || undefined,
-          adminNote: note || undefined,
-        }),
+      await updateAdminOrderStatus({
+        orderNumber,
+        status: nextStatus,
+        reason: reason || undefined,
+        adminNote: note || undefined,
       });
       setMessage("Order status updated. Refresh to see the latest timeline.");
       setConfirmOpen(false);
+      setNextStatus("");
     } catch (updateError) {
-      setError(
-        updateError instanceof Error
-          ? updateError.message
-          : "Order status update failed.",
-      );
+      setError(getApiErrorMessage(updateError, "Order status update failed."));
     } finally {
       setIsSaving(false);
     }
@@ -92,20 +113,16 @@ export function OrderActionsClient({
     setMessage(null);
 
     try {
-      await apiRequest(`/api/v1/admin/orders/${orderNumber}/payment-status`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          paymentStatus: nextPaymentStatus,
-          reason: reason || undefined,
-        }),
+      await updateAdminOrderPaymentStatus({
+        orderNumber,
+        paymentStatus: nextPaymentStatus,
+        reason: reason || undefined,
       });
       setMessage("Payment status updated. Refresh to see the latest order state.");
+      setPaymentConfirmOpen(false);
+      setNextPaymentStatus("");
     } catch (updateError) {
-      setError(
-        updateError instanceof Error
-          ? updateError.message
-          : "Payment status update failed.",
-      );
+      setError(getApiErrorMessage(updateError, "Payment status update failed."));
     } finally {
       setIsSaving(false);
     }
@@ -117,15 +134,13 @@ export function OrderActionsClient({
     setMessage(null);
 
     try {
-      await apiRequest(`/api/v1/admin/orders/${orderNumber}/notes`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          adminNote: note || null,
-        }),
+      await updateAdminOrderNote({
+        orderNumber,
+        adminNote: note || null,
       });
       setMessage("Admin note saved.");
-    } catch {
-      setError("Admin note could not be saved.");
+    } catch (noteError) {
+      setError(getApiErrorMessage(noteError, "Admin note could not be saved."));
     } finally {
       setIsSaving(false);
     }
@@ -137,6 +152,8 @@ export function OrderActionsClient({
         <h2 className="m-0 text-xl font-bold">Admin actions</h2>
         <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
           Backend validates transitions and writes status events/audit logs.
+          This is a {deliveryMethod.toLowerCase()} order, so unavailable
+          fulfillment statuses are not offered here.
         </p>
       </div>
       {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]">{error}</p> : null}
@@ -147,7 +164,7 @@ export function OrderActionsClient({
         value={nextStatus}
       >
         <option value="">Choose status</option>
-        {transitionMap[currentStatus].map((status) => (
+        {allowedTransitions.map((status) => (
           <option key={status} value={status}>
             {status.replaceAll("_", " ")}
           </option>
@@ -192,7 +209,7 @@ export function OrderActionsClient({
         <Button
           disabled={!nextPaymentStatus}
           loading={isSaving}
-          onClick={updatePaymentStatus}
+          onClick={() => setPaymentConfirmOpen(true)}
           variant="secondary"
         >
           Update payment
@@ -209,6 +226,21 @@ export function OrderActionsClient({
         onConfirm={updateOrderStatus}
         open={confirmOpen}
         title="Confirm order status update"
+      />
+      <ConfirmDialog
+        confirmLabel={
+          nextPaymentStatus === "REJECTED" ? "Reject payment" : "Update payment"
+        }
+        description={
+          nextPaymentStatus === "REJECTED"
+            ? "Rejected payment closes this order as rejected. Enter a clear reason before confirming."
+            : "This payment change will be validated by the backend and recorded for audit."
+        }
+        loading={isSaving}
+        onCancel={() => setPaymentConfirmOpen(false)}
+        onConfirm={updatePaymentStatus}
+        open={paymentConfirmOpen}
+        title="Confirm payment status update"
       />
     </section>
   );

@@ -28,10 +28,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireRole(SUPER_ADMIN_ROLES);
+    const actor = await requireRole(SUPER_ADMIN_ROLES);
     const input = validateInput(categoryCreateSchema, await readJsonBody(request));
 
-    return apiSuccess(await createCategory(input), { status: 201 });
+    return apiSuccess(await createCategory(input, actor), { status: 201 });
   } catch (error) {
     return apiError(error);
   }

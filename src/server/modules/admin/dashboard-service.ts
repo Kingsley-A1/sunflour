@@ -185,8 +185,44 @@ export async function getDashboardMetrics(
     }),
   ]);
 
+  const rangeMetrics = {
+    ordersInRange,
+    guestOrdersInRange,
+    cancelledOrders,
+    deliveredOrders,
+  };
+  const currentBacklog = {
+    pendingPaymentConfirmation,
+    preparingOrders,
+    totalUsers,
+    outForDeliveryOrders,
+    pendingReviews,
+  };
+  const mappedTopOrderedItems = topOrderedItems.map((item) => ({
+    productName: item.productNameSnapshot,
+    variantName: item.variantNameSnapshot,
+    quantity: item._sum.quantity ?? 0,
+    salesTotal: item._sum.lineTotal ?? 0,
+  }));
+  const mappedSalesEstimate = {
+    label: "Confirmed sales estimate",
+    currency: "NGN",
+    total: salesEstimate._sum.total ?? 0,
+    semantics: "range",
+  };
+
   return {
     range,
+    rangeMetrics: {
+      ...rangeMetrics,
+      salesEstimate: mappedSalesEstimate,
+      topOrderedItems: mappedTopOrderedItems,
+    },
+    currentBacklog: {
+      ...currentBacklog,
+      unavailableProducts,
+      recentPendingReviews,
+    },
     counts: {
       ordersInRange,
       pendingPaymentConfirmation,
@@ -198,17 +234,8 @@ export async function getDashboardMetrics(
       deliveredOrders,
       pendingReviews,
     },
-    salesEstimate: {
-      label: "Confirmed sales estimate",
-      currency: "NGN",
-      total: salesEstimate._sum.total ?? 0,
-    },
-    topOrderedItems: topOrderedItems.map((item) => ({
-      productName: item.productNameSnapshot,
-      variantName: item.variantNameSnapshot,
-      quantity: item._sum.quantity ?? 0,
-      salesTotal: item._sum.lineTotal ?? 0,
-    })),
+    salesEstimate: mappedSalesEstimate,
+    topOrderedItems: mappedTopOrderedItems,
     unavailableProducts,
     recentPendingReviews,
   };

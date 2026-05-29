@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { StatusPill } from "@/components/ui/status-pill";
 import { requireRole } from "@/server/auth/rbac";
@@ -19,6 +20,40 @@ function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function buildPageHref(
+  input: {
+    status?: string;
+    paymentStatus?: string;
+    orderNumber?: string;
+    customerPhone?: string;
+    pageSize: number;
+  },
+  page: number,
+): Route {
+  const searchParams = new URLSearchParams();
+
+  if (input.status) {
+    searchParams.set("status", input.status);
+  }
+
+  if (input.paymentStatus) {
+    searchParams.set("paymentStatus", input.paymentStatus);
+  }
+
+  if (input.orderNumber) {
+    searchParams.set("orderNumber", input.orderNumber);
+  }
+
+  if (input.customerPhone) {
+    searchParams.set("customerPhone", input.customerPhone);
+  }
+
+  searchParams.set("page", String(page));
+  searchParams.set("pageSize", String(input.pageSize));
+
+  return `/admin/orders?${searchParams.toString()}` as Route;
+}
+
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   await requireRole(ADMIN_ROLES);
   const query = await searchParams;
@@ -31,6 +66,8 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     pageSize: "25",
   });
   const { orders, pagination } = await listAdminOrders(input);
+  const previousPage = Math.max(1, pagination.page - 1);
+  const nextPage = Math.min(pagination.pageCount || 1, pagination.page + 1);
 
   return (
     <div className="grid gap-6">
@@ -86,9 +123,30 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           </tbody>
         </table>
       </div>
-      <p className="m-0 text-sm text-[var(--color-text-muted)]">
-        Page {pagination.page} of {pagination.pageCount || 1}. Total orders: {pagination.total}.
-      </p>
+      <nav
+        aria-label="Order pagination"
+        className="flex flex-wrap items-center justify-between gap-3 text-sm"
+      >
+        <p className="m-0 text-[var(--color-text-muted)]">
+          Page {pagination.page} of {pagination.pageCount || 1}. Total orders: {pagination.total}.
+        </p>
+        <div className="flex gap-2">
+          <Link
+            aria-disabled={pagination.page <= 1}
+            className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 font-semibold aria-disabled:pointer-events-none aria-disabled:opacity-50"
+            href={buildPageHref(input, previousPage)}
+          >
+            Previous
+          </Link>
+          <Link
+            aria-disabled={pagination.page >= (pagination.pageCount || 1)}
+            className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 font-semibold aria-disabled:pointer-events-none aria-disabled:opacity-50"
+            href={buildPageHref(input, nextPage)}
+          >
+            Next
+          </Link>
+        </div>
+      </nav>
     </div>
   );
 }

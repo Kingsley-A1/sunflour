@@ -97,6 +97,9 @@ describe("dashboard service", () => {
 
     expect(metrics.counts.ordersInRange).toBe(4);
     expect(metrics.counts.pendingPaymentConfirmation).toBe(2);
+    expect(metrics.rangeMetrics.ordersInRange).toBe(4);
+    expect(metrics.currentBacklog.pendingPaymentConfirmation).toBe(2);
+    expect(metrics.salesEstimate.semantics).toBe("range");
     expect(metrics.salesEstimate.total).toBe(900_000);
     expect(metrics.topOrderedItems[0]).toEqual({
       productName: "Meat Pie",

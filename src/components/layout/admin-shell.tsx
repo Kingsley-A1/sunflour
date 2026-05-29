@@ -6,6 +6,7 @@ import {
   Mail,
   Package,
   Settings,
+  ShieldCheck,
   Truck,
   MessageSquareText,
 } from "lucide-react";
@@ -58,6 +59,12 @@ const adminNavItems = [
     href: "/admin/settings/payment" as Route,
     label: "Payment",
     icon: Settings,
+    minRole: "SUPER_ADMIN" as const,
+  },
+  {
+    href: "/admin/audit-logs" as Route,
+    label: "Audit logs",
+    icon: ShieldCheck,
     minRole: "SUPER_ADMIN" as const,
   },
 ];

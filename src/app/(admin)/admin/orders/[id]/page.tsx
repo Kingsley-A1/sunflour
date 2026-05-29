@@ -74,6 +74,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           adminNote={order.adminNote}
           currentPaymentStatus={order.paymentStatus}
           currentStatus={order.status}
+          deliveryMethod={order.deliveryMethod}
           orderNumber={order.orderNumber}
         />
       </div>

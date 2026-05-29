@@ -23,14 +23,9 @@ export async function POST(
   try {
     const actor = await requireRole(SUPER_ADMIN_ROLES);
     const params = validateInput(mediaIdParamSchema, await context.params);
-    const input = validateInput(
-      completeMediaUploadSchema,
-      await readJsonBody(request),
-    );
+    validateInput(completeMediaUploadSchema, await readJsonBody(request));
 
-    return apiSuccess(
-      await completeMediaAssetUpload(params.id, actor, input.publicUrl),
-    );
+    return apiSuccess(await completeMediaAssetUpload(params.id, actor));
   } catch (error) {
     return apiError(error);
   }

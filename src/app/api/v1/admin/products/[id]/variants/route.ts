@@ -21,14 +21,14 @@ export async function POST(
   context: ProductVariantRouteContext,
 ) {
   try {
-    await requireRole(SUPER_ADMIN_ROLES);
+    const actor = await requireRole(SUPER_ADMIN_ROLES);
     const params = validateInput(idParamSchema, await context.params);
     const input = validateInput(
       productVariantCreateSchema,
       await readJsonBody(request),
     );
 
-    return apiSuccess(await createProductVariant(params.id, input), {
+    return apiSuccess(await createProductVariant(params.id, input, actor), {
       status: 201,
     });
   } catch (error) {

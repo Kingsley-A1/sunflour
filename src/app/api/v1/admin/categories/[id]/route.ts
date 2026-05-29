@@ -21,11 +21,11 @@ interface CategoryRouteContext {
 
 export async function PATCH(request: Request, context: CategoryRouteContext) {
   try {
-    await requireRole(SUPER_ADMIN_ROLES);
+    const actor = await requireRole(SUPER_ADMIN_ROLES);
     const params = validateInput(idParamSchema, await context.params);
     const input = validateInput(categoryUpdateSchema, await readJsonBody(request));
 
-    return apiSuccess(await updateCategory(params.id, input));
+    return apiSuccess(await updateCategory(params.id, input, actor));
   } catch (error) {
     return apiError(error);
   }
@@ -33,10 +33,10 @@ export async function PATCH(request: Request, context: CategoryRouteContext) {
 
 export async function DELETE(_request: Request, context: CategoryRouteContext) {
   try {
-    await requireRole(SUPER_ADMIN_ROLES);
+    const actor = await requireRole(SUPER_ADMIN_ROLES);
     const params = validateInput(idParamSchema, await context.params);
 
-    return apiSuccess(await archiveCategory(params.id));
+    return apiSuccess(await archiveCategory(params.id, actor));
   } catch (error) {
     return apiError(error);
   }
