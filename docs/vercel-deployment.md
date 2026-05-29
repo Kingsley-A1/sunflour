@@ -1,16 +1,17 @@
 # Vercel Deployment Plan - Sunflour Bakery
 
-Status: Phase 13 launch-readiness document. This repository is not currently linked to a Vercel project in local files; owner confirmation is still required before production.
+Status: Backend 2.0 launch-readiness document. This repository is not currently linked to a Vercel project in local files; owner confirmation is still required before production.
 
 ## Current Local Evidence
 
-Checked on 2026-05-27:
+Checked on 2026-05-28:
 
 ```txt
 .vercel/project.json: not present
 vercel.json: not present
-package.json: not present
-Git metadata: not present in this workspace
+.github/workflows/backend-ci.yml: present
+package.json: pnpm scripts present
+Git branch: master tracks origin/master; Backend 2.0 changes are uncommitted locally
 ```
 
 Do not invent Vercel project IDs, team IDs, domains, or secret values. The human maintainer must confirm those values in Vercel.
@@ -26,6 +27,37 @@ Do not invent Vercel project IDs, team IDs, domains, or secret values. The human
 - [ ] Output settings follow Vercel Next.js defaults unless a later phase proves otherwise.
 - [ ] Production domain is confirmed.
 - [ ] Preview deployment URLs are available for pull requests.
+
+## GitHub CI
+
+Default CI is configured in `.github/workflows/backend-ci.yml` for pull requests and pushes to `master`.
+
+Default local-safe job:
+
+```txt
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm db:validate
+pnpm build
+```
+
+Optional CockroachDB integration job:
+
+```txt
+Runs only outside pull requests when COCKROACH_TEST_DATABASE_URL is configured.
+Uses RUN_DB_TESTS=true.
+Runs pnpm db:migrate:deploy, pnpm test, and pnpm db:health.
+Must point at a disposable test database, never production.
+```
+
+Required GitHub Actions secrets for the optional job:
+
+```txt
+COCKROACH_TEST_DATABASE_URL
+COCKROACH_SHADOW_DATABASE_URL optional, only if a workflow later needs shadow DB operations
+```
 
 ## Preview Deployment Workflow
 
@@ -77,6 +109,22 @@ AI agents may document required variable names and usage. AI agents must not cre
 - [ ] `EMAIL_CRON_SECRET` is unique per environment.
 - [ ] Vercel Cron is configured for `/api/v1/webhooks/cron/email-outbox` only after `EMAIL_CRON_SECRET` is set.
 
+## Owner-Controlled Launch Values
+
+These remain launch-blocking until confirmed by the maintainer/Sunflour owner and entered in the correct environment, not committed to Git:
+
+```txt
+- Official Sunflour address.
+- Verified Moniepoint bank name, account name, and account number.
+- WhatsApp proof number.
+- Admin emails and role assignments.
+- Delivery zones and base fees.
+- 6 PM surcharge enabled/disabled policy and close-of-day behavior.
+- Pickup rules and operating hours.
+- Email sender domain/name.
+- R2 bucket, credentials, and public media URL strategy.
+```
+
 ## Production Seed Strategy
 
 Seed only non-secret operational data through `pnpm db:seed`:
@@ -103,7 +151,7 @@ Owner actions before launch:
 
 ## Backend Smoke Test Checklist
 
-Run on Vercel Preview before production:
+Run on Vercel Preview before production. Record the date, tester, commit hash, preview URL, and pass/fail result for each item:
 
 ```txt
 - Public health endpoint returns ok.
@@ -120,6 +168,16 @@ Run on Vercel Preview before production:
 - Dashboard endpoint returns metrics without sensitive settings.
 - Email outbox processing is protected by EMAIL_CRON_SECRET.
 - R2 presign endpoint requires super_admin and validates upload metadata.
+- R2 completion verifies HeadObject content type and byte size before READY.
+```
+
+Current smoke status as of 2026-05-28:
+
+```txt
+Preview URL: not provided
+Commit hash: not remotely confirmed
+Tester: not recorded
+Result: blocked until Vercel Preview environment exists
 ```
 
 ## Hardening Notes
@@ -150,3 +208,20 @@ The in-process rate limiter is suitable as a zero-dependency baseline and testab
 - [ ] Preview payment instruction policy.
 - [ ] Admin owner responsible for Vercel env var changes.
 - [ ] Backup owner for Vercel access.
+
+## Production Launch Gate
+
+Production remains blocked until all owners mark these complete:
+
+| Gate | Owner | Status |
+| --- | --- | --- |
+| Local checks pass: lint, typecheck, test, db:validate, build | Engineering | Passed locally on 2026-05-28 |
+| Local master pushed to remote master | Engineering/Maintainer | Pending |
+| CI green on remote master or pull request | Engineering/Maintainer | Pending |
+| Vercel project connected to correct GitHub repository | Maintainer | Pending |
+| Preview and Production env vars are separated | Maintainer | Pending |
+| Disposable CockroachDB migration deploy passes | Engineering/Maintainer | Pending safe DB |
+| Preview smoke checklist passes | Engineering/Maintainer | Pending Preview URL |
+| Owner confirms payment, delivery, admin, email, and R2 values | Sunflour owner/Maintainer | Pending |
+| Production backup/restore owner confirmed | Maintainer | Pending |
+| Final owner launch approval | Sunflour owner | Pending |

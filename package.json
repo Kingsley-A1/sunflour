@@ -14,6 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:frontend": "vitest run src/tests/frontend",
+    "test:e2e": "playwright test tests/e2e",
+    "test:a11y": "playwright test tests/a11y",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate:dev": "tsx scripts/require-database-url.ts && prisma migrate dev",
@@ -39,6 +42,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.60.0",
     "@prisma/config": "^7.8.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^25.9.1",

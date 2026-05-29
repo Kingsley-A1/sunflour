@@ -1,0 +1,100 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  verify:
+    name: Local-safe backend checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NODE_ENV: test
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3000
+      AUTH_SECRET: 12345678901234567890123456789012
+      AUTH_GOOGLE_ID: ci-google-client-id
+      AUTH_GOOGLE_SECRET: ci-google-client-secret
+      DATABASE_URL: postgresql://ci:ci@localhost:26257/sunflour?sslmode=disable
+      EMAIL_SENDING_ENABLED: "false"
+      RUN_DB_TESTS: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Validate Prisma schema
+        run: pnpm db:validate
+
+      - name: Build
+        run: pnpm build
+
+  cockroachdb-integration:
+    name: Optional CockroachDB integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: ${{ github.event_name != 'pull_request' && secrets.COCKROACH_TEST_DATABASE_URL != '' }}
+    env:
+      NODE_ENV: test
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3000
+      AUTH_SECRET: 12345678901234567890123456789012
+      AUTH_GOOGLE_ID: ci-google-client-id
+      AUTH_GOOGLE_SECRET: ci-google-client-secret
+      DATABASE_URL: ${{ secrets.COCKROACH_TEST_DATABASE_URL }}
+      SHADOW_DATABASE_URL: ${{ secrets.COCKROACH_SHADOW_DATABASE_URL }}
+      EMAIL_SENDING_ENABLED: "false"
+      RUN_DB_TESTS: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy migrations to disposable test database
+        run: pnpm db:migrate:deploy
+
+      - name: Run database tests
+        run: pnpm test
+
+      - name: Check database health
+        run: pnpm db:health
