@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import { getApiErrorMessage, moderateAdminReview } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -34,20 +34,14 @@ export function ReviewModerationClient({ reviews }: ReviewModerationClientProps)
     setError(null);
 
     try {
-      await apiRequest(`/api/v1/admin/reviews/${id}/moderation`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          status,
-          reason: reasonById[id] || undefined,
-        }),
+      await moderateAdminReview({
+        id,
+        status,
+        reason: reasonById[id] || undefined,
       });
       setMessage("Review moderation saved. Refresh to see the latest queue.");
     } catch (moderationError) {
-      setError(
-        moderationError instanceof Error
-          ? moderationError.message
-          : "Review moderation failed.",
-      );
+      setError(getApiErrorMessage(moderationError, "Review moderation failed."));
     }
   }
 

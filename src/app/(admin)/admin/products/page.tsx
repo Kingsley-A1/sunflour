@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 export default async function AdminProductsPage() {
-  await requireRole(ADMIN_ROLES);
+  const user = await requireRole(ADMIN_ROLES);
   const { products, categories, error } = await getAdminCatalogSafe();
 
   return (
@@ -25,7 +25,7 @@ export default async function AdminProductsPage() {
         </p>
       </header>
       {error ? <ErrorState description={error} title="Catalog unavailable" /> : null}
-      <ProductAdminClient categories={categories} products={products} />
+      <ProductAdminClient categories={categories} products={products} role={user.role} />
     </div>
   );
 }

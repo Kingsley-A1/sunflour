@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PriceText } from "@/components/ui/price-text";
+import { SafeImage } from "@/components/ui/safe-image";
 import { StatusPill } from "@/components/ui/status-pill";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import type { PublicProduct } from "@/types/domain";
@@ -24,10 +24,15 @@ export function ProductCard({ product }: ProductCardProps) {
       >
         <div className="relative aspect-[4/3] bg-[var(--color-surface-soft)]">
           {image?.url ? (
-            <Image
+            <SafeImage
               alt={image.altText ?? product.name}
               className="object-cover transition group-hover:scale-[1.02]"
               fill
+              fallback={
+                <div className="grid h-full place-items-center px-4 text-center text-sm font-semibold text-[var(--color-text-muted)]">
+                  Image unavailable
+                </div>
+              }
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw"
               src={image.url}
             />

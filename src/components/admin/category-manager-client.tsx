@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import { createAdminCategory, getApiErrorMessage } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -32,19 +32,21 @@ export function CategoryManagerClient({
     setIsSaving(true);
 
     try {
-      await apiRequest("/api/v1/admin/categories", {
-        method: "POST",
-        body: JSON.stringify({
-          name,
-          description: description || null,
-          isActive: true,
-        }),
+      await createAdminCategory({
+        name,
+        description: description || null,
+        isActive: true,
       });
       setMessage("Category created. Refresh to see the latest list.");
       setName("");
       setDescription("");
-    } catch {
-      setError("Category could not be created. Check permission and validation.");
+    } catch (categoryError) {
+      setError(
+        getApiErrorMessage(
+          categoryError,
+          "Category could not be created. Check permission and validation.",
+        ),
+      );
     } finally {
       setIsSaving(false);
     }

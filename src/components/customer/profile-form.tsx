@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import { getApiErrorMessage, updateCustomerProfile } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { CustomerProfileResponse } from "@/types/domain";
@@ -36,16 +36,18 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     setIsSaving(true);
 
     try {
-      await apiRequest("/api/v1/customer/profile", {
-        method: "PATCH",
-        body: JSON.stringify({
-          fullName,
-          phone,
-        }),
+      await updateCustomerProfile({
+        fullName,
+        phone,
       });
       setMessage("Profile saved.");
-    } catch {
-      setError("Profile could not be saved. Check the values and try again.");
+    } catch (profileError) {
+      setError(
+        getApiErrorMessage(
+          profileError,
+          "Profile could not be saved. Check the values and try again.",
+        ),
+      );
     } finally {
       setIsSaving(false);
     }

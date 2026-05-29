@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
+import type { UseFormSetError } from "react-hook-form";
 import { z } from "zod";
 import { CheckoutStepper } from "@/components/checkout/checkout-stepper";
 import { OrderSummaryCard } from "@/components/checkout/order-summary-card";
@@ -16,11 +17,17 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   createCheckoutOrder,
+  getApiErrorMessage,
+  getApiFieldError,
   getDeliveryZones,
   quoteDelivery,
 } from "@/lib/api/client";
 import { ApiClientError } from "@/types/api";
 import { useCart } from "@/features/cart/cart-store";
+import {
+  buildCheckoutAttemptSignature,
+  createCheckoutIdempotencyKey,
+} from "@/lib/checkout/idempotency";
 import type {
   CheckoutResult,
   DeliveryMethod,
@@ -65,14 +72,40 @@ const checkoutSchema = z
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
-function createIdempotencyKey(): string {
-  return `checkout_${crypto.randomUUID()}`;
+function applyCheckoutFieldErrors(
+  fieldErrors: Record<string, string[]> | undefined,
+  setFormError: UseFormSetError<CheckoutFormValues>,
+): void {
+  const mappings: Array<{
+    field: keyof CheckoutFormValues;
+    apiFields: string[];
+  }> = [
+    { field: "fullName", apiFields: ["customer.fullName", "fullName"] },
+    { field: "phone", apiFields: ["customer.phone", "phone"] },
+    { field: "email", apiFields: ["customer.email", "email"] },
+    { field: "method", apiFields: ["delivery.method", "method"] },
+    { field: "zoneId", apiFields: ["delivery.zoneId", "zoneId"] },
+    { field: "address", apiFields: ["delivery.address", "address"] },
+    { field: "customerNote", apiFields: ["customerNote"] },
+  ];
+
+  mappings.forEach(({ field, apiFields }) => {
+    const message = getApiFieldError(fieldErrors, ...apiFields);
+
+    if (message) {
+      setFormError(field, {
+        type: "server",
+        message,
+      });
+    }
+  });
 }
 
 export function CheckoutPageClient() {
   const cart = useCart();
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [quote, setQuote] = useState<DeliveryQuote | null>(null);
+  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<CheckoutResult | null>(null);
@@ -81,6 +114,7 @@ export function CheckoutPageClient() {
     register,
     control,
     handleSubmit,
+    setError: setFormError,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -100,6 +134,11 @@ export function CheckoutPageClient() {
   const methodField = register("method");
   const zoneIdField = register("zoneId");
   const activeQuote = method === "DELIVERY" && !zoneId ? null : quote;
+  const requiresDeliveryQuote = method === "DELIVERY";
+  const deliveryQuoteBlocking =
+    requiresDeliveryQuote && (!zoneId || isQuoteLoading || !activeQuote);
+  const disableSubmitForQuote =
+    requiresDeliveryQuote && Boolean(zoneId) && isQuoteLoading;
 
   const currentStep = result ? 4 : method === "DELIVERY" ? 2 : 1;
 
@@ -120,14 +159,43 @@ export function CheckoutPageClient() {
       return;
     }
 
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setQuote(null);
+        setQuoteError(null);
+        setIsQuoteLoading(true);
+      }
+    });
+
     quoteDelivery({
       deliveryMethod,
       deliveryZoneId: deliveryMethod === "DELIVERY" ? zoneId : undefined,
     })
-      .then(setQuote)
-      .catch(() =>
-        setQuoteError("Delivery quote failed. Check your delivery choice."),
-      );
+      .then((nextQuote) => {
+        if (!cancelled) {
+          setQuote(nextQuote);
+        }
+      })
+      .catch((quoteRequestError) => {
+        if (!cancelled) {
+          setQuoteError(
+            getApiErrorMessage(
+              quoteRequestError,
+              "Delivery quote failed. Check your delivery choice.",
+            ),
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsQuoteLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [method, zoneId]);
 
   const checkoutItems = useMemo(
@@ -140,6 +208,31 @@ export function CheckoutPageClient() {
     [cart.items],
   );
 
+  const cartAttemptSignature = useMemo(
+    () => buildCheckoutAttemptSignature(checkoutItems),
+    [checkoutItems],
+  );
+
+  const idempotencyKey = useMemo(
+    () => {
+      void cartAttemptSignature;
+      return createCheckoutIdempotencyKey();
+    },
+    [cartAttemptSignature],
+  );
+
+  const fieldErrorSummary = [
+    { href: "#fullName", message: errors.fullName?.message },
+    { href: "#phone", message: errors.phone?.message },
+    { href: "#email", message: errors.email?.message },
+    { href: "#method", message: errors.method?.message },
+    { href: "#zoneId", message: errors.zoneId?.message },
+    { href: "#address", message: errors.address?.message },
+    { href: "#customerNote", message: errors.customerNote?.message },
+  ].filter((item): item is { href: string; message: string } =>
+    Boolean(item.message),
+  );
+
   async function onSubmit(values: CheckoutFormValues) {
     setSubmitError(null);
 
@@ -148,7 +241,7 @@ export function CheckoutPageClient() {
       return;
     }
 
-    if (values.method === "DELIVERY" && !activeQuote) {
+    if (values.method === "DELIVERY" && deliveryQuoteBlocking) {
       setSubmitError("Choose a delivery zone and wait for the delivery quote.");
       return;
     }
@@ -170,14 +263,15 @@ export function CheckoutPageClient() {
           items: checkoutItems,
           customerNote: values.customerNote?.trim() || undefined,
         },
-        createIdempotencyKey(),
+        idempotencyKey,
       );
 
       setResult(checkoutResult);
       cart.clearCart();
     } catch (error) {
       if (error instanceof ApiClientError) {
-        setSubmitError(error.message);
+        applyCheckoutFieldErrors(error.fieldErrors, setFormError);
+        setSubmitError(getApiErrorMessage(error, error.message));
         return;
       }
 
@@ -218,6 +312,29 @@ export function CheckoutPageClient() {
         {submitError ? (
           <ErrorState description={submitError} title="Checkout could not continue" />
         ) : null}
+        {fieldErrorSummary.length > 0 ? (
+          <section
+            aria-labelledby="checkout-error-summary-title"
+            className="grid gap-2 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm"
+            role="alert"
+          >
+            <h2
+              className="m-0 text-base font-bold text-[var(--color-danger)]"
+              id="checkout-error-summary-title"
+            >
+              Fix these checkout details
+            </h2>
+            <ul className="m-0 grid gap-1 pl-5 text-[var(--color-danger)]">
+              {fieldErrorSummary.map((item) => (
+                <li key={item.href}>
+                  <a className="font-semibold underline" href={item.href}>
+                    {item.message}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
           <div>
             <h2 className="m-0 text-xl font-bold">Customer details</h2>
@@ -256,7 +373,7 @@ export function CheckoutPageClient() {
               order is created.
             </p>
           </div>
-          <fieldset className="grid gap-2">
+          <fieldset className="grid gap-2" id="method">
             <legend className="sr-only">Choose pickup or delivery</legend>
             {(["PICKUP", "DELIVERY"] as const).map((option) => (
               <label
@@ -311,10 +428,20 @@ export function CheckoutPageClient() {
             label="Customer note"
             {...register("customerNote")}
           />
+          {isQuoteLoading ? (
+            <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
+              Getting the backend delivery quote...
+            </p>
+          ) : null}
           {quoteError ? <ErrorState description={quoteError} title="Quote issue" /> : null}
         </section>
 
-        <Button loading={isSubmitting} size="lg" type="submit">
+        <Button
+          disabled={disableSubmitForQuote}
+          loading={isSubmitting}
+          size="lg"
+          type="submit"
+        >
           Create order
         </Button>
       </form>

@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  getApiErrorMessage,
+  getApiFieldError,
+  submitPublicReview,
+} from "@/lib/api/client";
+import { ApiClientError } from "@/types/api";
 
 export function ReviewForm() {
   const [rating, setRating] = useState(5);
@@ -12,49 +19,59 @@ export function ReviewForm() {
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function submitReview(event: React.FormEvent<HTMLFormElement>) {
+  async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setMessage(null);
+    setFieldErrors({});
 
     if (name.trim().length < 2) {
-      setError("Enter your name.");
+      setFieldErrors({ customerName: "Enter your name." });
       return;
     }
 
     if (comment.trim().length < 10) {
-      setError("Write at least 10 characters about your experience.");
+      setFieldErrors({
+        comment: "Write at least 10 characters about your experience.",
+      });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/v1/public/reviews", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          customerName: name,
-          rating,
-          comment,
-        }),
+      await submitPublicReview({
+        customerName: name,
+        rating,
+        comment,
       });
-
-      if (!response.ok) {
-        throw new Error("Review API unavailable.");
-      }
 
       setMessage("Review submitted. It will appear after Sunflour approves it.");
       setName("");
       setComment("");
       setRating(5);
-    } catch {
+    } catch (reviewError) {
+      if (reviewError instanceof ApiClientError) {
+        setFieldErrors({
+          customerName:
+            getApiFieldError(
+              reviewError.fieldErrors,
+              "customerName",
+              "name",
+            ) ?? "",
+          comment: getApiFieldError(reviewError.fieldErrors, "comment") ?? "",
+          rating: getApiFieldError(reviewError.fieldErrors, "rating") ?? "",
+        });
+      }
+
       setError(
-        "Review submission is waiting on the backend reviews endpoint. Try again after moderation APIs are enabled.",
+        getApiErrorMessage(
+          reviewError,
+          "Review submission failed. Check the fields and try again.",
+        ),
       );
     } finally {
       setIsSubmitting(false);
@@ -71,12 +88,19 @@ export function ReviewForm() {
       </div>
       {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]">{error}</p> : null}
       {message ? <p className="m-0 text-sm font-semibold text-[var(--color-success)]">{message}</p> : null}
-      <Input label="Name" name="name" onChange={(event) => setName(event.target.value)} value={name} />
+      <Input
+        error={fieldErrors.customerName || undefined}
+        label="Name"
+        name="customerName"
+        onChange={(event) => setName(event.target.value)}
+        value={name}
+      />
       <fieldset className="grid gap-2">
         <legend className="text-sm font-semibold">Rating</legend>
         <div className="flex flex-wrap gap-2">
           {[1, 2, 3, 4, 5].map((value) => (
             <button
+              aria-label={`${value} star${value === 1 ? "" : "s"}`}
               aria-pressed={rating === value}
               className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm font-semibold"
               key={value}
@@ -92,8 +116,14 @@ export function ReviewForm() {
             </button>
           ))}
         </div>
+        {fieldErrors.rating ? (
+          <p className="m-0 text-sm font-medium text-[var(--color-danger)]">
+            {fieldErrors.rating}
+          </p>
+        ) : null}
       </fieldset>
       <Textarea
+        error={fieldErrors.comment || undefined}
         label="Review"
         name="comment"
         onChange={(event) => setComment(event.target.value)}

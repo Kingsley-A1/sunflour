@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import { listEmailTemplates } from "@/lib/api/client";
 import { ErrorState } from "@/components/ui/error-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { EmailTemplate } from "@/types/domain";
@@ -11,8 +11,8 @@ export function EmailSettingsClient() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiRequest<{ templates: EmailTemplate[] }>("/api/v1/admin/email/templates")
-      .then((data) => setTemplates(data.templates))
+    listEmailTemplates()
+      .then(setTemplates)
       .catch(() =>
         setError("Email template settings are unavailable for this account."),
       );

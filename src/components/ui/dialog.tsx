@@ -1,7 +1,10 @@
 "use client";
 
+import { useId } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
+import { useModalFocus } from "@/components/ui/modal-focus";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -26,23 +29,42 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  if (!open) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const { containerRef, isMounted, onKeyDown } =
+    useModalFocus<HTMLDivElement>(open, onCancel);
+
+  if (!open || !isMounted) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div
-      aria-labelledby="confirm-dialog-title"
+      aria-describedby={descriptionId}
+      aria-labelledby={titleId}
       aria-modal="true"
       className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !loading) {
+          onCancel();
+        }
+      }}
       role="dialog"
     >
-      <div className="w-full max-w-md rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-modal)]">
+      <div
+        className="w-full max-w-md rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-modal)]"
+        onKeyDown={onKeyDown}
+        ref={containerRef}
+        tabIndex={-1}
+      >
         <div className="grid gap-3">
-          <h2 className="m-0 text-xl font-bold" id="confirm-dialog-title">
+          <h2 className="m-0 text-xl font-bold" id={titleId}>
             {title}
           </h2>
-          <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
+          <p
+            className="m-0 text-sm leading-6 text-[var(--color-text-muted)]"
+            id={descriptionId}
+          >
             {description}
           </p>
           {children}
@@ -56,6 +78,7 @@ export function ConfirmDialog({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

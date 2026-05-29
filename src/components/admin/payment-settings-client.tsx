@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import {
+  getApiErrorMessage,
+  getPaymentSettings,
+  updatePaymentSettings,
+} from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/dialog";
@@ -24,21 +28,19 @@ export function PaymentSettingsClient() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    apiRequest<{ paymentSettings: PaymentSettings | null }>(
-      "/api/v1/admin/settings/payment",
-    )
+    getPaymentSettings()
       .then((data) => {
-        if (!data.paymentSettings) {
+        if (!data) {
           return;
         }
 
-        setSettings(data.paymentSettings);
-        setBankName(data.paymentSettings.bankName);
-        setAccountName(data.paymentSettings.accountName);
-        setAccountNumber(data.paymentSettings.accountNumber);
-        setInstruction(data.paymentSettings.paymentInstruction);
-        setWhatsappNumber(data.paymentSettings.proofWhatsappNumber);
-        setIsActive(data.paymentSettings.isActive);
+        setSettings(data);
+        setBankName(data.bankName);
+        setAccountName(data.accountName);
+        setAccountNumber(data.accountNumber);
+        setInstruction(data.paymentInstruction);
+        setWhatsappNumber(data.proofWhatsappNumber);
+        setIsActive(data.isActive);
       })
       .catch(() =>
         setError("Payment settings are restricted to super admins."),
@@ -51,25 +53,24 @@ export function PaymentSettingsClient() {
     setMessage(null);
 
     try {
-      const updated = await apiRequest<PaymentSettings>(
-        "/api/v1/admin/settings/payment",
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            bankName,
-            accountName,
-            accountNumber,
-            paymentInstruction: instruction,
-            proofWhatsappNumber: whatsappNumber,
-            isActive,
-          }),
-        },
-      );
+      const updated = await updatePaymentSettings({
+        bankName,
+        accountName,
+        accountNumber,
+        paymentInstruction: instruction,
+        proofWhatsappNumber: whatsappNumber,
+        isActive,
+      });
       setSettings(updated);
       setMessage("Payment settings saved. New orders will snapshot the latest active instruction.");
       setConfirmOpen(false);
-    } catch {
-      setError("Payment settings could not be saved. Check values and permission.");
+    } catch (settingsError) {
+      setError(
+        getApiErrorMessage(
+          settingsError,
+          "Payment settings could not be saved. Check values and permission.",
+        ),
+      );
     } finally {
       setIsSaving(false);
     }

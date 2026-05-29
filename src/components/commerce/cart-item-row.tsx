@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { PriceText } from "@/components/ui/price-text";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
+import { SafeImage } from "@/components/ui/safe-image";
 import type { CartItem } from "@/features/cart/cart-store";
 
 interface CartItemRowProps {
@@ -25,10 +25,15 @@ export function CartItemRow({
     <article className="grid grid-cols-[72px_1fr] gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:grid-cols-[88px_1fr_auto]">
       <div className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)]">
         {item.imageUrl ? (
-          <Image
+          <SafeImage
             alt={item.name}
             className="object-cover"
             fill
+            fallback={
+              <div className="grid h-full place-items-center text-xs font-semibold text-[var(--color-text-muted)]">
+                Image unavailable
+              </div>
+            }
             sizes="88px"
             src={item.imageUrl}
           />

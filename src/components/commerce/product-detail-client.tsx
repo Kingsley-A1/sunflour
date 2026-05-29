@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { Badge } from "@/components/ui/badge";
 import { PriceText } from "@/components/ui/price-text";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
+import { SafeImage } from "@/components/ui/safe-image";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { PublicProduct, PublicProductVariant } from "@/types/domain";
 
@@ -34,10 +34,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
       <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-soft)]">
         {image?.url ? (
-          <Image
+          <SafeImage
             alt={image.altText ?? product.name}
             className="object-cover"
             fill
+            fallback={
+              <div className="grid h-full place-items-center text-lg font-bold text-[var(--color-text-muted)]">
+                Image unavailable
+              </div>
+            }
             priority
             sizes="(min-width: 1024px) 58vw, 100vw"
             src={image.url}

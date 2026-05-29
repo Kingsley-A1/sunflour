@@ -15,9 +15,9 @@ export function CategoryFilter({
   onChange,
 }: CategoryFilterProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Menu categories">
+    <div className="flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Menu categories">
       <button
-        aria-selected={activeSlug === "all"}
+        aria-pressed={activeSlug === "all"}
         className={cn(
           "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition",
           activeSlug === "all"
@@ -25,14 +25,13 @@ export function CategoryFilter({
             : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]",
         )}
         onClick={() => onChange("all")}
-        role="tab"
         type="button"
       >
         All
       </button>
       {categories.map((category) => (
         <button
-          aria-selected={activeSlug === category.slug}
+          aria-pressed={activeSlug === category.slug}
           className={cn(
             "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition",
             activeSlug === category.slug
@@ -41,7 +40,6 @@ export function CategoryFilter({
           )}
           key={category.id}
           onClick={() => onChange(category.slug)}
-          role="tab"
           type="button"
         >
           {category.name}

@@ -3,26 +3,37 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
-import { apiRequest } from "@/lib/api/client";
+import {
+  getApiErrorMessage,
+  updateAdminProductStatus,
+} from "@/lib/api/client";
 import { formatNairaFromKobo } from "@/lib/formatters";
 import { productStatusMeta } from "@/lib/status";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
-import type { AdminCategory, AdminProduct, ProductStatus } from "@/types/domain";
+import type {
+  AdminCategory,
+  AdminProduct,
+  ProductStatus,
+  UserRole,
+} from "@/types/domain";
 
 interface ProductAdminClientProps {
   products: AdminProduct[];
   categories: AdminCategory[];
+  role: UserRole;
 }
 
 export function ProductAdminClient({
   products,
   categories,
+  role,
 }: ProductAdminClientProps) {
   const [categoryId, setCategoryId] = useState("all");
   const [status, setStatus] = useState<ProductStatus | "all">("all");
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const filteredProducts = useMemo(
     () =>
@@ -36,16 +47,34 @@ export function ProductAdminClient({
     [categoryId, products, status],
   );
 
-  async function updateStatus(productId: string, nextStatus: ProductStatus) {
+  const isSuperAdmin = role === "SUPER_ADMIN";
+
+  function statusOptionsFor(product: AdminProduct): ProductStatus[] {
+    if (isSuperAdmin) {
+      return ["ACTIVE", "OUT_OF_STOCK", "HIDDEN"];
+    }
+
+    return product.status === "HIDDEN"
+      ? ["HIDDEN"]
+      : ["ACTIVE", "OUT_OF_STOCK"];
+  }
+
+  async function updateStatus(
+    product: AdminProduct,
+    nextStatus: ProductStatus,
+  ) {
     setMessage(null);
-    await apiRequest(`/api/v1/admin/products/${productId}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({
+    setError(null);
+    try {
+      await updateAdminProductStatus({
+        productId: product.id,
         status: nextStatus,
         reason: "Updated from catalog admin UI.",
-      }),
-    });
-    setMessage("Status update saved. Refresh to see the latest backend state.");
+      });
+      setMessage("Status update saved. Refresh to see the latest backend state.");
+    } catch (statusError) {
+      setError(getApiErrorMessage(statusError, "Status update failed."));
+    }
   }
 
   return (
@@ -77,16 +106,28 @@ export function ProductAdminClient({
             ))}
           </Select>
         </div>
-        <Link
-          className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
-          href="/admin/products/new"
-        >
-          Create product
-        </Link>
+        {isSuperAdmin ? (
+          <Link
+            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
+            href="/admin/products/new"
+          >
+            Create product
+          </Link>
+        ) : (
+          <p className="m-0 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
+            Moderator access can update availability only. Product creation,
+            hiding, price, variant, and image changes require a super admin.
+          </p>
+        )}
       </div>
       {message ? (
         <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]">
           {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]">
+          {error}
         </p>
       ) : null}
       {filteredProducts.length === 0 ? (
@@ -122,25 +163,35 @@ export function ProductAdminClient({
                   </td>
                   <td className="p-3">
                     <select
+                      aria-label={`Update availability for ${product.name}`}
                       className="min-h-10 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-2"
+                      disabled={!isSuperAdmin && product.status === "HIDDEN"}
                       onChange={(event) =>
-                        updateStatus(product.id, event.target.value as ProductStatus)
+                        updateStatus(product, event.target.value as ProductStatus)
                       }
                       value={product.status}
                     >
-                      <option value="ACTIVE">Active</option>
-                      <option value="OUT_OF_STOCK">Out of stock</option>
-                      <option value="HIDDEN">Hidden</option>
+                      {statusOptionsFor(product).map((value) => (
+                        <option key={value} value={value}>
+                          {productStatusMeta[value].label}
+                        </option>
+                      ))}
                     </select>
                   </td>
                   <td className="p-3">
-                    <Link
-                      className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 font-semibold"
-                      href={`/admin/products/${product.id}`}
-                    >
-                      <Pencil className="h-4 w-4" aria-hidden="true" />
-                      Edit
-                    </Link>
+                    {isSuperAdmin ? (
+                      <Link
+                        className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 font-semibold"
+                        href={`/admin/products/${product.id}`}
+                      >
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                        Edit
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-[var(--color-text-muted)]">
+                        Restricted
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

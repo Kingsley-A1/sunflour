@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Save } from "lucide-react";
 import { z } from "zod";
 import { AdminUploadField } from "@/components/admin/admin-upload-field";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { SafeImage } from "@/components/ui/safe-image";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { apiRequest } from "@/lib/api/client";
+import {
+  createAdminProduct,
+  getApiErrorMessage,
+  updateAdminProduct,
+} from "@/lib/api/client";
 import { koboToNairaInput, nairaInputToKobo } from "@/lib/formatters";
 import type { AdminCategory, AdminProduct, ProductStatus } from "@/types/domain";
 
@@ -89,21 +93,20 @@ export function ProductEditorForm({
       };
 
       const saved = product
-        ? await apiRequest<AdminProduct>(`/api/v1/admin/products/${product.id}`, {
-            method: "PATCH",
-            body: JSON.stringify(payload),
-          })
-        : await apiRequest<AdminProduct>("/api/v1/admin/products", {
-            method: "POST",
-            body: JSON.stringify(payload),
-          });
+        ? await updateAdminProduct(product.id, payload)
+        : await createAdminProduct(payload);
 
       setMessage("Product saved. Product price changes affect future orders only; old invoices keep their snapshots.");
       if (!product) {
         window.location.href = `/admin/products/${saved.id}`;
       }
-    } catch {
-      setError("Product could not be saved. Check validation and admin permission.");
+    } catch (productError) {
+      setError(
+        getApiErrorMessage(
+          productError,
+          "Product could not be saved. Check validation and admin permission.",
+        ),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -195,9 +198,14 @@ export function ProductEditorForm({
                   {product.images.map((image) => (
                     <div className="grid gap-2" key={image.id}>
                       {image.mediaAsset.publicUrl ? (
-                        <Image
+                        <SafeImage
                           alt={image.altText ?? product.name}
                           className="aspect-[4/3] rounded-[var(--radius-sm)] object-cover"
+                          fallback={
+                            <div className="grid aspect-[4/3] place-items-center rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] px-3 text-center text-sm font-semibold text-[var(--color-text-muted)]">
+                              Image unavailable
+                            </div>
+                          }
                           height={240}
                           src={image.mediaAsset.publicUrl}
                           width={320}

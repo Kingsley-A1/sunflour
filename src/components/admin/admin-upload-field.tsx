@@ -2,26 +2,17 @@
 
 import { useState } from "react";
 import { Upload } from "lucide-react";
-import { apiRequest } from "@/lib/api/client";
+import {
+  attachProductImage,
+  completeMediaUpload,
+  getApiErrorMessage,
+  presignProductImageUpload,
+} from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface AdminUploadFieldProps {
   productId: string;
-}
-
-interface PresignResponse {
-  mediaAsset: {
-    id: string;
-    publicUrl: string | null;
-  };
-  upload: {
-    method: "PUT";
-    url: string;
-    headers: {
-      "content-type": string;
-    };
-  };
 }
 
 export function AdminUploadField({ productId }: AdminUploadFieldProps) {
@@ -42,18 +33,11 @@ export function AdminUploadField({ productId }: AdminUploadFieldProps) {
     setIsUploading(true);
 
     try {
-      const presign = await apiRequest<PresignResponse>(
-        "/api/v1/admin/media/presign-upload",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            fileName: file.name,
-            contentType: file.type,
-            byteSize: file.size,
-            purpose: "PRODUCT_IMAGE",
-          }),
-        },
-      );
+      const presign = await presignProductImageUpload({
+        fileName: file.name,
+        contentType: file.type,
+        byteSize: file.size,
+      });
 
       setMessage("Uploading image to storage...");
       const uploadResponse = await fetch(presign.upload.url, {
@@ -67,28 +51,24 @@ export function AdminUploadField({ productId }: AdminUploadFieldProps) {
       }
 
       setMessage("Completing media record...");
-      await apiRequest(`/api/v1/admin/media/${presign.mediaAsset.id}/complete`, {
-        method: "POST",
-        body: JSON.stringify({
-          publicUrl: presign.mediaAsset.publicUrl ?? undefined,
-        }),
-      });
+      await completeMediaUpload(presign.mediaAsset.id);
 
-      await apiRequest(`/api/v1/admin/products/${productId}/images`, {
-        method: "POST",
-        body: JSON.stringify({
-          mediaAssetId: presign.mediaAsset.id,
-          altText: altText || null,
-          isPrimary: true,
-        }),
+      await attachProductImage({
+        productId,
+        mediaAssetId: presign.mediaAsset.id,
+        altText: altText || null,
+        isPrimary: true,
       });
 
       setMessage("Image uploaded and attached. Refresh to see it in the gallery.");
       setFile(null);
       setAltText("");
-    } catch {
+    } catch (uploadError) {
       setError(
-        "Image upload failed. Check R2 configuration, file type, size, and admin permission.",
+        getApiErrorMessage(
+          uploadError,
+          "Image upload failed. Check R2 configuration, file type, size, and admin permission.",
+        ),
       );
       setMessage(null);
     } finally {
