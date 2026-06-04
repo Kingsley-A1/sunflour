@@ -85,15 +85,15 @@ export default function ContactPage() {
   return (
     <main>
       <section className="bg-[var(--color-bg-subtle)]">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-12 lg:grid-cols-[1fr_0.8fr] lg:items-end">
+        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-8 lg:grid-cols-[1fr_0.8fr] lg:items-end">
           <div>
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
               Contact
             </p>
-            <h1 className="m-0 mt-2 text-4xl font-extrabold leading-tight sm:text-5xl">
+            <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
               Reach Sunflour without guessing the right channel.
             </h1>
-            <p className="m-0 mt-4 max-w-2xl text-base leading-7 text-[var(--color-text-muted)]">
+            <p className="m-0 mt-3 max-w-2xl text-base leading-7 text-[var(--color-text-muted)]">
               Use the contact options below for orders, payment proof, invoice
               questions, pickup, delivery, and general support.
             </p>

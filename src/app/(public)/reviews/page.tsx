@@ -21,7 +21,7 @@ export default async function ReviewsPage() {
       <section className="grid gap-5">
         <header>
           <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Reviews</p>
-          <h1 className="m-0 mt-2 text-4xl font-extrabold">Customer reviews</h1>
+          <h1 className="m-0 mt-2 text-3xl font-extrabold sm:text-4xl">Customer reviews</h1>
           <p className="m-0 mt-3 text-base leading-7 text-[var(--color-text-muted)]">
             Public reviews will show only after backend moderation approves them.
           </p>

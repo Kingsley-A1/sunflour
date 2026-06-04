@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { Route } from "next";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CategoryFilter } from "@/components/commerce/category-filter";
 import { ProductGrid } from "@/components/commerce/product-grid";
 import { SearchBar } from "@/components/commerce/search-bar";
@@ -11,8 +13,39 @@ interface MenuBrowserProps {
 }
 
 export function MenuBrowser({ menu }: MenuBrowserProps) {
-  const [activeCategory, setActiveCategory] = useState("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const validCategorySlugs = useMemo(
+    () => new Set(menu.categories.map((category) => category.slug)),
+    [menu.categories],
+  );
+  const categoryFromUrl = searchParams.get("category");
+  const initialCategory =
+    categoryFromUrl && validCategorySlugs.has(categoryFromUrl)
+      ? categoryFromUrl
+      : "all";
+  const activeCategory = initialCategory;
   const [query, setQuery] = useState("");
+
+  function updateActiveCategory(nextCategory: string) {
+    const nextActiveCategory = validCategorySlugs.has(nextCategory)
+      ? nextCategory
+      : "all";
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (nextActiveCategory === "all") {
+      params.delete("category");
+    } else {
+      params.set("category", nextActiveCategory);
+    }
+
+    const nextHref = (
+      params.toString() ? `${pathname}?${params.toString()}` : pathname
+    ) as Route;
+
+    router.replace(nextHref, { scroll: false });
+  }
 
   const products = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -41,7 +74,7 @@ export function MenuBrowser({ menu }: MenuBrowserProps) {
         <CategoryFilter
           activeSlug={activeCategory}
           categories={menu.categories}
-          onChange={setActiveCategory}
+          onChange={updateActiveCategory}
         />
         <SearchBar onChange={setQuery} value={query} />
       </div>

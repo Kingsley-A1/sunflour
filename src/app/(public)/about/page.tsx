@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata, Route } from "next";
 import {
@@ -9,7 +8,6 @@ import {
   ShieldCheck,
   Truck,
 } from "lucide-react";
-import bakeryImage from "../../../../menu.jpg";
 
 export const metadata: Metadata = {
   title: "About Sunflour Bakery",
@@ -46,45 +44,35 @@ const orderingSteps = [
 export default function AboutPage() {
   return (
     <main>
-      <section className="relative min-h-[28rem] overflow-hidden">
-        <Image
-          alt="Sunflour Bakery product spread"
-          className="absolute inset-0 h-full w-full object-cover"
-          fill
-          priority
-          sizes="100vw"
-          src={bakeryImage}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-[var(--color-bg)]" />
-        <div className="relative mx-auto flex min-h-[28rem] max-w-6xl items-end px-4 pb-10 pt-20">
-          <div className="max-w-2xl text-white">
-            <p className="m-0 text-sm font-bold uppercase">
+      <section className="bg-[var(--color-bg-subtle)]">
+        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div className="max-w-3xl">
+            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
               About Sunflour
             </p>
-            <h1 className="m-0 mt-3 text-4xl font-extrabold leading-tight sm:text-5xl">
-              A bakery ordering experience built for clarity and trust.
+            <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
+              Fresh bakery ordering, handled with clarity.
             </h1>
-            <p className="m-0 mt-4 max-w-xl text-base leading-7 text-white/85">
-              Sunflour is not treated like a generic restaurant site. The
-              platform is designed around clear menu browsing, transparent
-              delivery fees, manual payment verification, and invoice access.
+            <p className="m-0 mt-3 max-w-2xl text-base leading-7 text-[var(--color-text-muted)]">
+              Sunflour keeps menu browsing, pickup, delivery, payment review,
+              and invoice access understandable from the first tap.
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-5 text-base font-bold text-[var(--color-on-primary)]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-bold text-[var(--color-on-primary)]"
                 href="/menu"
               >
                 Browse menu
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] border border-white/70 px-5 text-base font-bold text-white"
+                className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-bold text-[var(--color-text)]"
                 href={"/contact" as Route}
               >
                 Contact Sunflour
               </Link>
             </div>
-          </div>
         </div>
       </section>
 

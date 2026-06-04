@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { LoadingState } from "@/components/ui/loading-state";
 
 describe("frontend primitives", () => {
   it("renders button loading and disabled state", () => {
@@ -26,5 +27,21 @@ describe("frontend primitives", () => {
     const html = renderToStaticMarkup(<Card>Content</Card>);
 
     expect(html).toContain("Content");
+  });
+
+  it("renders loading state with accessible busy status", () => {
+    const html = renderToStaticMarkup(
+      <LoadingState
+        description="Loading products"
+        label="Loading menu"
+        skeletonCount={2}
+        variant="list"
+      />,
+    );
+
+    expect(html).toContain("aria-busy=\"true\"");
+    expect(html).toContain("role=\"status\"");
+    expect(html).toContain("Loading menu");
+    expect(html).toContain("Loading products");
   });
 });

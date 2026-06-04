@@ -15,7 +15,7 @@ export default async function MenuPage() {
     <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8">
       <header className="max-w-3xl">
         <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Menu</p>
-        <h1 className="m-0 mt-2 text-4xl font-extrabold leading-tight">
+        <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
           Browse Sunflour products
         </h1>
         <p className="m-0 mt-3 text-base leading-7 text-[var(--color-text-muted)]">
