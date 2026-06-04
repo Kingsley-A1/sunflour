@@ -25,6 +25,15 @@
     "db:studio": "tsx scripts/require-database-url.ts && prisma studio",
     "db:health": "tsx scripts/check-db.ts"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1054.0",
     "@aws-sdk/s3-request-presigner": "^3.1054.0",
