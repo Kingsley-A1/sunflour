@@ -50,6 +50,22 @@ export interface PublicProduct {
   images: PublicProductImage[];
 }
 
+export type HeroProductSource =
+  | "ADMIN_SELECTED"
+  | "RECENT"
+  | "MOST_BOUGHT"
+  | "FEATURED_POPULAR"
+  | "CATALOG_FALLBACK";
+
+export interface PublicHeroProduct extends PublicProduct {
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  heroSource: HeroProductSource;
+}
+
 export interface PublicCategory {
   id: string;
   name: string;
@@ -60,6 +76,12 @@ export interface PublicCategory {
 
 export interface PublicMenuResponse {
   categories: PublicCategory[];
+}
+
+export interface PublicCategoryNavigationItem {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export interface DeliveryZone {
@@ -192,6 +214,26 @@ export interface AdminProduct {
   category: AdminCategory;
   variants: AdminProductVariant[];
   images: AdminProductImage[];
+}
+
+export interface AdminHomepageHeroProduct {
+  id: string;
+  productId: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    status: ProductStatus;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  };
 }
 
 export interface AdminDeliveryZone {

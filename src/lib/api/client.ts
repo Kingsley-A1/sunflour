@@ -1,6 +1,7 @@
 import { ApiClientError, type ApiResponse } from "@/types/api";
 import type {
   AdminDeliveryZone,
+  AdminHomepageHeroProduct,
   AdminSurchargeRule,
   AdminProduct,
   CheckoutResult,
@@ -196,9 +197,25 @@ export async function createAdminCategory(input: {
   name: string;
   description?: string | null;
   isActive?: boolean;
+  sortOrder?: number;
 }) {
   return apiRequest("/api/v1/admin/categories", {
     method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateAdminCategory(
+  categoryId: string,
+  input: Partial<{
+    name: string;
+    description: string | null;
+    sortOrder: number;
+    isActive: boolean;
+  }>,
+) {
+  return apiRequest(`/api/v1/admin/categories/${categoryId}`, {
+    method: "PATCH",
     body: JSON.stringify(input),
   });
 }
@@ -232,6 +249,23 @@ export async function updateAdminProduct(
     method: "PATCH",
     body: JSON.stringify(input),
   });
+}
+
+export async function updateAdminHomepageHeroProducts(input: {
+  items: Array<{
+    productId: string;
+    sortOrder: number;
+    isActive?: boolean;
+  }>;
+}): Promise<AdminHomepageHeroProduct[]> {
+  const data = await apiRequest<{
+    heroProducts: AdminHomepageHeroProduct[];
+  }>("/api/v1/admin/homepage/hero-products", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return data.heroProducts;
 }
 
 export async function updateAdminOrderStatus(input: {

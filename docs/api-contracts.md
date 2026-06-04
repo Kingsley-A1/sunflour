@@ -79,6 +79,8 @@ GET    /api/v1/admin/categories
 POST   /api/v1/admin/categories
 PATCH  /api/v1/admin/categories/[id]
 DELETE /api/v1/admin/categories/[id]
+GET    /api/v1/admin/homepage/hero-products
+PATCH  /api/v1/admin/homepage/hero-products
 GET    /api/v1/admin/products
 POST   /api/v1/admin/products
 GET    /api/v1/admin/products/[id]
@@ -578,6 +580,23 @@ Rules:
 - Category create/update/archive writes CATEGORY_CREATE, CATEGORY_UPDATE, and CATEGORY_ARCHIVE audit logs.
 - Product create/update/archive writes PRODUCT_CREATE, PRODUCT_UPDATE, and PRODUCT_ARCHIVE audit logs.
 - Product variant create/archive writes PRODUCT_VARIANT_CREATE and PRODUCT_VARIANT_ARCHIVE audit logs.
+```
+
+### Homepage Merchandising Admin
+
+```txt
+GET   /api/v1/admin/homepage/hero-products       MODERATOR | SUPER_ADMIN
+PATCH /api/v1/admin/homepage/hero-products       SUPER_ADMIN
+```
+
+Rules:
+
+```txt
+- Hero products are explicit ordered placements for the public homepage.
+- Only ACTIVE products from active categories can be saved as hero products.
+- Public homepage fallback selection is backend-owned and deterministic.
+- Missing product-click tracking must not be faked as most-clicked data.
+- PATCH writes HOMEPAGE_HERO_PRODUCTS_UPDATE audit logs.
 ```
 
 ### Media Admin

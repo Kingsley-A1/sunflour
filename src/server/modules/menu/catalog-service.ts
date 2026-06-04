@@ -138,6 +138,23 @@ export async function getPublicMenu() {
   };
 }
 
+export async function listPublicCategoryNavigation() {
+  return prisma.category.findMany({
+    where: {
+      isActive: true,
+      products: {
+        some: publicProductWhere(),
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+    },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+  });
+}
+
 export async function getPublicProductBySlug(slug: string) {
   const product = await prisma.product.findFirst({
     where: {

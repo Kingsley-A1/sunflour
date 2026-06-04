@@ -84,6 +84,37 @@ export const productImageCreateSchema = z
   })
   .strict();
 
+const homepageHeroProductItemSchema = z
+  .object({
+    productId: z.string().min(1),
+    sortOrder: z.number().int().min(0).max(10_000),
+    isActive: z.boolean().optional(),
+  })
+  .strict();
+
+export const homepageHeroProductUpdateSchema = z
+  .object({
+    items: z
+      .array(homepageHeroProductItemSchema)
+      .max(8, "Choose no more than 8 hero product placements."),
+  })
+  .strict()
+  .superRefine((input, context) => {
+    const productIds = new Set<string>();
+
+    input.items.forEach((item, index) => {
+      if (productIds.has(item.productId)) {
+        context.addIssue({
+          code: "custom",
+          message: "Choose each product only once.",
+          path: ["items", index, "productId"],
+        });
+      }
+
+      productIds.add(item.productId);
+    });
+  });
+
 export const idParamSchema = z.object({
   id: z.string().min(1),
 });
@@ -107,6 +138,9 @@ export type ProductStatusUpdateInput = z.infer<
 >;
 export type ProductImageCreateInput = z.infer<
   typeof productImageCreateSchema
+>;
+export type HomepageHeroProductUpdateInput = z.infer<
+  typeof homepageHeroProductUpdateSchema
 >;
 
 export function slugify(value: string): string {

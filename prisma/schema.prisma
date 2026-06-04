@@ -126,6 +126,7 @@ model User {
   paymentSettingsUpdated PaymentSetting[] @relation("PaymentSettingUpdater")
   paymentConfirmationEvents PaymentConfirmationEvent[] @relation("PaymentConfirmationEventActor")
   emailTemplatesUpdated EmailTemplate[] @relation("EmailTemplateUpdater")
+  homepageHeroProductsUpdated HomepageHeroProduct[] @relation("HomepageHeroProductUpdater")
   emailPreference EmailPreference?
 
   @@map("users")
@@ -249,12 +250,30 @@ model Product {
   cartItems CartItem[]
   orderItems OrderItem[]
   reviews Review[]
+  homepageHeroProducts HomepageHeroProduct[]
 
   @@index([categoryId])
   @@index([status, sortOrder])
   @@index([isFeatured])
   @@index([isPopular])
   @@map("products")
+}
+
+model HomepageHeroProduct {
+  id              String   @id @default(cuid())
+  productId       String   @unique @map("product_id")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isActive        Boolean  @default(true) @map("is_active")
+  updatedByUserId String?  @map("updated_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  updatedBy User?   @relation("HomepageHeroProductUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([isActive, sortOrder])
+  @@index([updatedByUserId])
+  @@map("homepage_hero_products")
 }
 
 model ProductVariant {

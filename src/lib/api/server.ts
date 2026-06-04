@@ -2,8 +2,11 @@ import { getPublicMenu, getPublicProductBySlug } from "@/server/modules/menu/cat
 import { getPublicInvoice } from "@/server/modules/invoices/invoice-service";
 import type {
   AdminCategory,
+  AdminHomepageHeroProduct,
   AdminProduct,
   InvoiceResponse,
+  PublicCategoryNavigationItem,
+  PublicHeroProduct,
   PublicMenuResponse,
   PublicProduct,
 } from "@/types/domain";
@@ -12,7 +15,12 @@ import {
   listAdminCategories,
   listAdminProducts,
   getAdminProduct,
+  listPublicCategoryNavigation,
 } from "@/server/modules/menu/catalog-service";
+import {
+  getHomepageHeroProducts,
+  listAdminHomepageHeroProducts,
+} from "@/server/modules/menu/homepage-hero-service";
 
 export async function getPublicMenuSafe(): Promise<{
   menu: PublicMenuResponse | null;
@@ -27,6 +35,36 @@ export async function getPublicMenuSafe(): Promise<{
       menu: null,
       error:
         "Menu data is not available yet. Check the database connection and seed data.",
+    };
+  }
+}
+
+export async function getPublicCategoryNavigationSafe(): Promise<
+  PublicCategoryNavigationItem[]
+> {
+  try {
+    return await listPublicCategoryNavigation();
+  } catch {
+    return [];
+  }
+}
+
+export async function getHomepageHeroProductsSafe(): Promise<{
+  products: PublicHeroProduct[];
+  error: string | null;
+}> {
+  try {
+    const heroProducts = await getHomepageHeroProducts();
+
+    return {
+      products: heroProducts.products as PublicHeroProduct[],
+      error: null,
+    };
+  } catch {
+    return {
+      products: [],
+      error:
+        "Homepage products are not available yet. Check the database connection and catalog setup.",
     };
   }
 }
@@ -150,26 +188,58 @@ function mapAdminProduct(product: AdminProductPayload): AdminProduct {
   };
 }
 
+type AdminHeroProductPayload = Awaited<
+  ReturnType<typeof listAdminHomepageHeroProducts>
+>[number];
+
+function mapAdminHomepageHeroProduct(
+  placement: AdminHeroProductPayload,
+): AdminHomepageHeroProduct {
+  return {
+    id: placement.id,
+    productId: placement.productId,
+    sortOrder: placement.sortOrder,
+    isActive: placement.isActive,
+    createdAt: serializeDate(placement.createdAt),
+    updatedAt: serializeDate(placement.updatedAt),
+    product: {
+      id: placement.product.id,
+      name: placement.product.name,
+      slug: placement.product.slug,
+      status: placement.product.status,
+      category: {
+        id: placement.product.category.id,
+        name: placement.product.category.name,
+        slug: placement.product.category.slug,
+      },
+    },
+  };
+}
+
 export async function getAdminCatalogSafe(): Promise<{
   products: AdminProduct[];
   categories: AdminCategory[];
+  heroProducts: AdminHomepageHeroProduct[];
   error: string | null;
 }> {
   try {
-    const [products, categories] = await Promise.all([
+    const [products, categories, heroProducts] = await Promise.all([
       listAdminProducts(),
       listAdminCategories(),
+      listAdminHomepageHeroProducts(),
     ]);
 
     return {
       products: products.map((product) => mapAdminProduct(product)),
       categories: categories.map(mapAdminCategory),
+      heroProducts: heroProducts.map(mapAdminHomepageHeroProduct),
       error: null,
     };
   } catch {
     return {
       products: [],
       categories: [],
+      heroProducts: [],
       error: "Admin catalog data could not be loaded.",
     };
   }

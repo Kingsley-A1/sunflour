@@ -1,3 +1,4 @@
+import { HomepageHeroProductsClient } from "@/components/admin/homepage-hero-products-client";
 import { ProductAdminClient } from "@/components/admin/product-admin-client";
 import { ErrorState } from "@/components/ui/error-state";
 import { getAdminCatalogSafe } from "@/lib/api/server";
@@ -12,7 +13,8 @@ export const metadata = {
 
 export default async function AdminProductsPage() {
   const user = await requireRole(ADMIN_ROLES);
-  const { products, categories, error } = await getAdminCatalogSafe();
+  const { products, categories, heroProducts, error } =
+    await getAdminCatalogSafe();
 
   return (
     <div className="grid gap-6">
@@ -25,6 +27,11 @@ export default async function AdminProductsPage() {
         </p>
       </header>
       {error ? <ErrorState description={error} title="Catalog unavailable" /> : null}
+      <HomepageHeroProductsClient
+        heroProducts={heroProducts}
+        products={products}
+        role={user.role}
+      />
       <ProductAdminClient categories={categories} products={products} role={user.role} />
     </div>
   );
