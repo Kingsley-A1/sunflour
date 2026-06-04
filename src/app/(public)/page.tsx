@@ -32,18 +32,11 @@ export default async function HomePage() {
   return (
     <main>
       <section className="bg-[var(--color-bg-subtle)]">
-        <div className="mx-auto grid max-w-6xl gap-7 px-4 py-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:py-10">
+        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5 lg:grid-cols-[0.56fr_1.44fr] lg:items-center lg:py-7">
           <div className="max-w-2xl">
-            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
-              Fresh from Sunflour Bakery
-            </p>
-            <h1 className="m-0 mt-2 text-4xl font-extrabold leading-tight sm:text-5xl">
-              Warm bakes, ready for pickup or delivery.
+            <h1 className="m-0 text-xl font-extrabold leading-snug text-[var(--color-text)] sm:text-2xl">
+              Warm bakes, ready to order.
             </h1>
-            <p className="m-0 mt-4 max-w-xl text-base leading-7 text-[var(--color-text-muted)]">
-              Choose from real menu products, review your cart, and place a
-              clear order without a surprise login wall.
-            </p>
           </div>
 
           <div className="grid gap-3">
@@ -81,41 +74,36 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 py-8 md:grid-cols-4">
+      <section className="mx-auto grid max-w-6xl grid-cols-2 gap-3 px-4 py-6 md:grid-cols-4">
         {[
           {
             icon: Leaf,
-            title: "Fresh from the bakery",
-            body: "Bakes are presented as food first, with clear names and prices.",
+            title: "Fresh bakes",
           },
           {
             icon: HeartHandshake,
             title: "Warm service",
-            body: "Ordering stays simple for guests, families, and returning customers.",
           },
           {
             icon: Truck,
-            title: "Pickup or delivery",
-            body: "Choose the fulfilment option that fits your day before checkout.",
+            title: "Pickup & delivery",
           },
           {
             icon: PackageCheck,
             title: "Prepared with care",
-            body: "Portions, availability, and payment state are kept honest.",
           },
         ].map((item) => {
           const Icon = item.icon;
 
           return (
             <article
-              className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+              className="grid min-h-28 content-between rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
               key={item.title}
             >
               <Icon className="h-5 w-5 text-[var(--color-primary)]" aria-hidden="true" />
-              <h2 className="m-0 mt-3 text-base font-bold">{item.title}</h2>
-              <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-                {item.body}
-              </p>
+              <h2 className="m-0 text-sm font-extrabold leading-snug sm:text-base">
+                {item.title}
+              </h2>
             </article>
           );
         })}
