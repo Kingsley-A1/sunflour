@@ -45,9 +45,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               "flex items-start gap-3 rounded-[var(--radius-md)] border bg-[var(--color-surface)] p-3 text-sm shadow-[var(--shadow-card)]",
               toast.tone === "success" && "border-[var(--color-success)]",
               toast.tone === "error" && "border-[var(--color-danger)]",
-              toast.tone === "info" && "border-[var(--color-focus)]",
+              toast.tone === "info" && "border-[var(--color-info)]",
             )}
             key={toast.id}
+            role={toast.tone === "error" ? "alert" : "status"}
           >
             {toast.tone === "success" ? (
               <CheckCircle className="mt-0.5 h-4 w-4 text-[var(--color-success)]" aria-hidden="true" />
@@ -56,7 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <XCircle className="mt-0.5 h-4 w-4 text-[var(--color-danger)]" aria-hidden="true" />
             ) : null}
             {toast.tone === "info" ? (
-              <Info className="mt-0.5 h-4 w-4 text-[var(--color-focus)]" aria-hidden="true" />
+              <Info className="mt-0.5 h-4 w-4 text-[var(--color-info)]" aria-hidden="true" />
             ) : null}
             <p className="m-0 text-[var(--color-text)]">{toast.message}</p>
           </div>

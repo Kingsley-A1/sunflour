@@ -23,7 +23,7 @@ export function PublicShell({ children }: PublicShellProps) {
   return (
     <CartProvider>
       <div className="min-h-svh bg-[var(--color-bg)] text-[var(--color-text)]">
-        <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-bg)]/92 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link className="flex min-w-0 items-center gap-3" href="/">
               <Image
@@ -58,7 +58,7 @@ export function PublicShell({ children }: PublicShellProps) {
                 Account
               </Link>
               <Link
-                className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm font-semibold text-[var(--color-on-primary)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:bg-[var(--color-surface-soft)]"
                 href="/cart"
               >
                 <ShoppingBag className="h-4 w-4" aria-hidden="true" />
@@ -72,7 +72,7 @@ export function PublicShell({ children }: PublicShellProps) {
           >
             {navItems.map((item) => (
               <Link
-                className="min-h-10 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
+                className="min-h-11 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
                 href={item.href}
                 key={item.href}
               >
@@ -80,7 +80,7 @@ export function PublicShell({ children }: PublicShellProps) {
               </Link>
             ))}
             <Link
-              className="min-h-10 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
+              className="min-h-11 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
               href="/account"
             >
               Account

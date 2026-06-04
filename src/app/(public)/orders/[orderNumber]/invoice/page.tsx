@@ -54,7 +54,7 @@ export default async function InvoicePage({
         </div>
       </Card>
       <iframe
-        className="min-h-[72rem] w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white"
+        className="min-h-[36rem] w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white sm:min-h-[52rem] lg:min-h-[72rem]"
         srcDoc={invoice.htmlSnapshot}
         title={`Invoice ${invoice.invoiceNumber}`}
       />

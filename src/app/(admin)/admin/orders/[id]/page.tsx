@@ -43,7 +43,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
             </dl>
           </Card>
           <Card className="overflow-x-auto p-0">
-            <table className="min-w-full text-left text-sm">
+            <table className="min-w-[36rem] text-left text-sm">
               <thead className="bg-[var(--color-surface-soft)]">
                 <tr><th className="p-3">Item</th><th className="p-3">Qty</th><th className="p-3">Total</th></tr>
               </thead>

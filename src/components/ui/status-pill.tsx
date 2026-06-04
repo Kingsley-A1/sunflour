@@ -9,7 +9,11 @@ export function StatusPill({ status }: StatusPillProps) {
   const meta = getStatusMeta(status);
 
   return (
-    <Badge tone={meta.tone} title={meta.helper}>
+    <Badge
+      aria-label={`${meta.label}: ${meta.helper}`}
+      tone={meta.tone}
+      title={meta.helper}
+    >
       {meta.label}
     </Badge>
   );

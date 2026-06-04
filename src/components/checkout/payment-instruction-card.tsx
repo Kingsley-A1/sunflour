@@ -22,25 +22,27 @@ function invoicePageUrl(result: CheckoutResult): string {
 
 export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
   return (
-    <Card className="grid gap-5 border-[var(--color-success)] p-5">
+    <Card className="grid gap-5 p-5">
       <div className="grid gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill status={result.paymentStatus} />
           <StatusPill status={result.status} />
         </div>
-        <h2 className="m-0 text-2xl font-extrabold">Order created</h2>
+        <h2 className="m-0 text-2xl font-extrabold">Order created, payment pending</h2>
         <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
           Order {result.orderNumber} is waiting for manual Moniepoint transfer
           verification. Payment is not confirmed until Sunflour staff verifies it.
         </p>
       </div>
-      <div className="rounded-[var(--radius-md)] bg-[var(--color-surface-soft)] p-4">
-        <p className="m-0 text-sm text-[var(--color-text-muted)]">Amount to transfer</p>
+      <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4">
+        <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
+          Amount to transfer
+        </p>
         <PriceText amount={result.total} className="text-3xl" />
       </div>
-      <section className="grid gap-2">
+      <section className="grid gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4">
         <h3 className="m-0 text-base font-bold">Bank transfer instruction</h3>
-        <p className="m-0 whitespace-pre-line text-sm leading-6 text-[var(--color-text)]">
+        <p className="m-0 whitespace-pre-line break-words text-sm leading-6 text-[var(--color-text)] [overflow-wrap:anywhere]">
           {result.paymentInstruction}
         </p>
       </section>

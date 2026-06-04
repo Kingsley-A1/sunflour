@@ -8,7 +8,7 @@ const steps = ["Details", "Delivery", "Review", "Payment"];
 
 export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
   return (
-    <ol className="grid grid-cols-4 gap-2" aria-label="Checkout progress">
+    <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Checkout progress">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
         const isActive = stepNumber === currentStep;
@@ -24,7 +24,7 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
             )}
             key={step}
           >
-            <span className="block text-[0.7rem]">Step {stepNumber}</span>
+            <span className="block text-xs">Step {stepNumber}</span>
             {step}
           </li>
         );

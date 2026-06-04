@@ -1,7 +1,7 @@
 "use client";
 
 import { ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useCart } from "@/features/cart/cart-store";
 import type { PublicProduct, PublicProductVariant } from "@/types/domain";
@@ -11,6 +11,7 @@ interface AddToCartButtonProps {
   variant?: PublicProductVariant;
   quantity?: number;
   className?: string;
+  buttonVariant?: ButtonProps["variant"];
 }
 
 export function AddToCartButton({
@@ -18,6 +19,7 @@ export function AddToCartButton({
   variant,
   quantity = 1,
   className,
+  buttonVariant = "primary",
 }: AddToCartButtonProps) {
   const cart = useCart();
   const { notify } = useToast();
@@ -30,6 +32,7 @@ export function AddToCartButton({
       className={className}
       disabled={disabled}
       icon={<ShoppingCart className="h-4 w-4" aria-hidden="true" />}
+      variant={buttonVariant}
       onClick={() => {
         cart.addItem({
           productId: product.id,

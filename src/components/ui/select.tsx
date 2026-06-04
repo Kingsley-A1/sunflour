@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import type { SelectHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   { id, label, error, helpText, className, children, ...props },
   ref,
 ) {
-  const selectId = id ?? props.name;
+  const generatedId = useId();
+  const selectId = id ?? props.name ?? generatedId;
   const describedBy = [
     helpText ? `${selectId}-help` : null,
     error ? `${selectId}-error` : null,
@@ -35,9 +36,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         aria-invalid={Boolean(error)}
         className={cn(
           "min-h-11 rounded-[var(--radius-sm)] border bg-[var(--color-surface)] px-3 text-[var(--color-text)] shadow-sm outline-none transition",
+          "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
           error
             ? "border-[var(--color-danger)]"
-            : "border-[var(--color-border)] focus:border-[var(--color-focus)]",
+            : "border-[var(--color-border)] focus:border-[var(--color-focus)] focus-visible:border-[var(--color-focus)]",
           className,
         )}
         id={selectId}

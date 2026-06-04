@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import type { TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,8 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   function Textarea({ id, label, error, helpText, className, ...props }, ref) {
-  const textareaId = id ?? props.name;
+  const generatedId = useId();
+  const textareaId = id ?? props.name ?? generatedId;
   const describedBy = [
     helpText ? `${textareaId}-help` : null,
     error ? `${textareaId}-error` : null,
@@ -33,9 +34,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         aria-invalid={Boolean(error)}
         className={cn(
           "min-h-28 rounded-[var(--radius-sm)] border bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] shadow-sm outline-none transition placeholder:text-[var(--color-text-soft)]",
+          "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
           error
             ? "border-[var(--color-danger)]"
-            : "border-[var(--color-border)] focus:border-[var(--color-focus)]",
+            : "border-[var(--color-border)] focus:border-[var(--color-focus)] focus-visible:border-[var(--color-focus)]",
           className,
         )}
         id={textareaId}

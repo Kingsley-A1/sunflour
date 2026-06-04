@@ -18,7 +18,7 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="relative min-h-[calc(100svh-8rem)] overflow-hidden">
+      <section className="relative min-h-[clamp(28rem,calc(100svh-8rem),42rem)] overflow-hidden">
         <Image
           alt="Sunflour Bakery menu selection"
           className="absolute inset-0 h-full w-full object-cover"
@@ -28,9 +28,9 @@ export default async function HomePage() {
           src={heroImage}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/35 to-[var(--color-bg)]" />
-        <div className="relative mx-auto flex min-h-[calc(100svh-8rem)] max-w-6xl items-end px-4 pb-10 pt-16">
+        <div className="relative mx-auto flex min-h-[clamp(28rem,calc(100svh-8rem),42rem)] max-w-6xl items-end px-4 pb-10 pt-16">
           <div className="max-w-2xl text-white">
-            <p className="m-0 text-sm font-bold uppercase tracking-[0.08em]">
+            <p className="m-0 text-sm font-bold uppercase">
               Welcome to Sunflour
             </p>
             <h1 className="m-0 mt-3 text-4xl font-extrabold leading-tight sm:text-5xl">

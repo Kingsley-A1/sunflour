@@ -19,10 +19,10 @@ export function CategoryFilter({
       <button
         aria-pressed={activeSlug === "all"}
         className={cn(
-          "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition",
+          "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-normal)] ease-[var(--ease-standard)]",
           activeSlug === "all"
             ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)]"
-            : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]",
+            : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]",
         )}
         onClick={() => onChange("all")}
         type="button"
@@ -33,10 +33,10 @@ export function CategoryFilter({
         <button
           aria-pressed={activeSlug === category.slug}
           className={cn(
-            "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition",
+            "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-normal)] ease-[var(--ease-standard)]",
             activeSlug === category.slug
               ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)]"
-              : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]",
+              : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]",
           )}
           key={category.id}
           onClick={() => onChange(category.slug)}

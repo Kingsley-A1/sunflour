@@ -16,7 +16,7 @@ const toneClasses: Record<StatusTone, string> = {
   danger:
     "border-[var(--color-danger)] bg-[var(--color-danger-soft)] text-[var(--color-danger)]",
   info:
-    "border-[var(--color-focus)] bg-[var(--color-surface-soft)] text-[var(--color-focus)]",
+    "border-[var(--color-info)] bg-[var(--color-info-soft)] text-[var(--color-info)]",
 };
 
 export function Badge({ className, tone = "neutral", ...props }: BadgeProps) {

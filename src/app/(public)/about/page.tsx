@@ -58,7 +58,7 @@ export default function AboutPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-[var(--color-bg)]" />
         <div className="relative mx-auto flex min-h-[28rem] max-w-6xl items-end px-4 pb-10 pt-20">
           <div className="max-w-2xl text-white">
-            <p className="m-0 text-sm font-bold uppercase tracking-[0.08em]">
+            <p className="m-0 text-sm font-bold uppercase">
               About Sunflour
             </p>
             <h1 className="m-0 mt-3 text-4xl font-extrabold leading-tight sm:text-5xl">

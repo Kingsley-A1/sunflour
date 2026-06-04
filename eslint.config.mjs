@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "coverage/**",
     "node_modules/**",
+    "Sunflour Bakery Design System/**",
     "src/generated/prisma/**",
   ]),
 ]);

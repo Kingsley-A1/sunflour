@@ -16,17 +16,17 @@ export function ProductCard({ product }: ProductCardProps) {
   const hasVariants = product.variants.length > 0;
 
   return (
-    <Card className="grid overflow-hidden">
+    <Card className="grid overflow-hidden transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-card)]">
       <Link
         className="group block"
         href={`/products/${product.slug}`}
         aria-label={`View ${product.name}`}
       >
-        <div className="relative aspect-[4/3] bg-[var(--color-surface-soft)]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-surface-soft)]">
           {image?.url ? (
             <SafeImage
               alt={image.altText ?? product.name}
-              className="object-cover transition group-hover:scale-[1.02]"
+              className="object-cover transition duration-[var(--motion-slow)] ease-[var(--ease-standard)] group-hover:scale-[1.02]"
               fill
               fallback={
                 <div className="grid h-full place-items-center px-4 text-center text-sm font-semibold text-[var(--color-text-muted)]">
@@ -50,7 +50,10 @@ export function ProductCard({ product }: ProductCardProps) {
             <StatusPill status={product.status} />
           </div>
           <div className="grid gap-1">
-            <Link className="text-lg font-bold leading-snug hover:underline" href={`/products/${product.slug}`}>
+            <Link
+              className="text-lg font-bold leading-snug text-[var(--color-text)] hover:underline"
+              href={`/products/${product.slug}`}
+            >
               {product.name}
             </Link>
             {product.description ? (
@@ -66,7 +69,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <PriceText amount={product.basePrice} />
           </p>
         </div>
-        <AddToCartButton product={product} />
+        <AddToCartButton buttonVariant="secondary" product={product} />
       </div>
     </Card>
   );

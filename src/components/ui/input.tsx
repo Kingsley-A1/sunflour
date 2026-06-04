@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import type { InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { id, label, error, helpText, className, ...props },
   ref,
 ) {
-  const inputId = id ?? props.name;
+  const generatedId = useId();
+  const inputId = id ?? props.name ?? generatedId;
   const describedBy = [
     helpText ? `${inputId}-help` : null,
     error ? `${inputId}-error` : null,
@@ -35,9 +36,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-invalid={Boolean(error)}
         className={cn(
           "min-h-11 rounded-[var(--radius-sm)] border bg-[var(--color-surface)] px-3 text-[var(--color-text)] shadow-sm outline-none transition placeholder:text-[var(--color-text-soft)]",
+          "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
           error
             ? "border-[var(--color-danger)]"
-            : "border-[var(--color-border)] focus:border-[var(--color-focus)]",
+            : "border-[var(--color-border)] focus:border-[var(--color-focus)] focus-visible:border-[var(--color-focus)]",
           className,
         )}
         id={inputId}
