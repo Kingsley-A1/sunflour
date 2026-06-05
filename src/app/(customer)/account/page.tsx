@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProfileForm } from "@/components/customer/profile-form";
@@ -22,9 +23,9 @@ export default async function AccountPage() {
           action={
             <Link
               className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
-              href="/api/auth/signin"
+              href={"/sign-in?callbackUrl=/account" as Route}
             >
-              Sign in with Google
+              Sign in
             </Link>
           }
           description="Sign in to reuse profile details and view authenticated order history. Guest checkout remains available."

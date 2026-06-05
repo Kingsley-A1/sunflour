@@ -64,6 +64,10 @@ GET    /api/v1/public/invoices/[orderNumber]?token=...
 POST   /api/v1/public/orders/lookup
 GET    /api/v1/public/reviews
 POST   /api/v1/public/reviews
+POST   /api/v1/public/auth/register
+POST   /api/v1/public/auth/admin-register
+POST   /api/v1/public/auth/password-reset/request
+POST   /api/v1/public/auth/password-reset/confirm
 
 GET    /api/v1/customer/profile
 PATCH  /api/v1/customer/profile
@@ -939,7 +943,7 @@ Side effects:
 
 ```txt
 GET /api/v1/customer/orders/[orderNumber]/invoice     authenticated customer owner
-GET /api/v1/admin/orders/[orderNumber]/invoice        MODERATOR | SUPER_ADMIN
+GET /api/v1/admin/orders/[orderNumber]/invoice        ATTENDANT | MODERATOR | SUPER_ADMIN
 ```
 
 Rules:
@@ -954,9 +958,9 @@ Rules:
 ### Email Admin And Outbox
 
 ```txt
-GET  /api/v1/admin/email/templates                  MODERATOR | SUPER_ADMIN
+GET  /api/v1/admin/email/templates                  SUPER_ADMIN
 PATCH /api/v1/admin/email/templates/[key]           SUPER_ADMIN
-GET  /api/v1/admin/email/outbox                     MODERATOR | SUPER_ADMIN
+GET  /api/v1/admin/email/outbox                     SUPER_ADMIN
 POST /api/v1/admin/email/outbox/process             SUPER_ADMIN
 POST /api/v1/admin/email/outbox/[id]/retry          SUPER_ADMIN
 POST /api/v1/admin/email/manual                     SUPER_ADMIN
@@ -1007,15 +1011,110 @@ Rules:
 
 ### `GET|POST /api/auth/[...nextauth]`
 
-Purpose: Auth.js/NextAuth Google OAuth session handling.
+Purpose: Auth.js/NextAuth session handling for Google OAuth and credentials login.
 
 Rules:
 
 ```txt
-- Google OAuth is the v1 login provider.
-- Sessions are database-backed through Prisma.
-- Allowlisted admin emails are promoted to MODERATOR or SUPER_ADMIN on sign-in.
+- Google OAuth remains available when AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET are configured.
+- Email/password credentials are supported for customers and admin/staff accounts.
+- Sessions use JWT strategy because NextAuth v4 Credentials Provider does not persist database sessions.
+- JWT/session callbacks carry id, email, name, and role only.
 - Admin API access still requires active admin_profiles server-side.
+- ADMIN_ALLOWLIST_EMAILS provisioning is restricted to verified Google OAuth sign-ins only.
+- Public credentials self-registration never grants admin role from allowlist alone.
+```
+
+### `POST /api/v1/public/auth/register`
+
+Purpose: Create a customer email/password account.
+
+Request:
+
+```ts
+{
+  fullName: string;
+  email: string;
+  password: string;
+}
+```
+
+Rules:
+
+```txt
+- Email is normalized to lowercase.
+- User.name stores fullName for personalization.
+- Password is hashed with bcrypt cost 12.
+- Duplicate email returns 409 CONFLICT.
+- Response never includes password hash or lockout metadata.
+```
+
+### `POST /api/v1/public/auth/admin-register`
+
+Purpose: Create an admin/staff account after role-code validation.
+
+Request:
+
+```ts
+{
+  fullName: string;
+  email: string;
+  password: string;
+  role: "SUPER_ADMIN" | "MODERATOR" | "ATTENDANT" | "MEDIA_MANAGER";
+  registrationCode: string;
+}
+```
+
+Rules:
+
+```txt
+- Code is 6 digits, generated from ADMIN_REGISTRATION_CODE_SECRET, role, and the current 7-day UTC window.
+- Valid registration creates users and active admin_profiles in one transaction.
+- Registration writes ADMIN_REGISTERED_WITH_CODE audit log.
+- Endpoint is rate-limited per client IP.
+- Residual risk: weekly 6-digit codes must be treated as sensitive operational secrets and rotated immediately if exposed.
+```
+
+### `POST /api/v1/public/auth/password-reset/request`
+
+Purpose: Queue a transactional password reset email without revealing account existence.
+
+Request:
+
+```ts
+{
+  email: string;
+}
+```
+
+Rules:
+
+```txt
+- Always returns a generic success message.
+- Existing password accounts receive AUTH_PASSWORD_RESET through the email outbox.
+- Reset tokens are random, hashed with SHA-256, stored in verification_tokens, and expire after 1 hour.
+```
+
+### `POST /api/v1/public/auth/password-reset/confirm`
+
+Purpose: Consume a valid reset token and set a new password.
+
+Request:
+
+```ts
+{
+  email: string;
+  token: string;
+  password: string;
+}
+```
+
+Rules:
+
+```txt
+- Token is checked by hashed value and expiry.
+- Successful reset updates password_hash, password_updated_at, clears lockout counters, and consumes all active reset tokens for that email.
+- Invalid or expired token returns 400 VALIDATION_ERROR.
 ```
 
 ## Error Code Registry

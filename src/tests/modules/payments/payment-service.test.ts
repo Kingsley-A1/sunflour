@@ -54,6 +54,13 @@ const superAdmin = {
   role: UserRole.SUPER_ADMIN,
 };
 
+const attendant = {
+  ...superAdmin,
+  id: "attendant_1",
+  email: "floor@example.com",
+  role: UserRole.ATTENDANT,
+};
+
 const paymentSetting = {
   id: "payment_settings_1",
   settingKey: "default",
@@ -175,6 +182,22 @@ describe("payment service", () => {
         PaymentStatus.REJECTED,
       ),
     ).toThrow("Enter the rejection reason.");
+  });
+
+  it("prevents attendants from confirming or rejecting payments", async () => {
+    await expect(
+      updateOrderPaymentStatus(
+        "SFB-20260101-ABC123",
+        {
+          paymentStatus: PaymentStatus.CONFIRMED,
+        },
+        attendant,
+      ),
+    ).rejects.toMatchObject({
+      status: 403,
+      code: ERROR_CODES.FORBIDDEN,
+    });
+    expect(mocks.orderFindUnique).not.toHaveBeenCalled();
   });
 
   it("confirms payment manually and records event, order status, and audit log", async () => {

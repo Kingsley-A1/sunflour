@@ -1,4 +1,4 @@
-import { ADMIN_ROLES } from "@/server/auth/roles";
+import { SUPER_ADMIN_ROLES } from "@/server/auth/roles";
 import { requireRole } from "@/server/auth/rbac";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { validateInput } from "@/server/lib/validation/zod";
@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   try {
-    await requireRole(ADMIN_ROLES);
+    await requireRole(SUPER_ADMIN_ROLES);
     const searchParams = new URL(request.url).searchParams;
     const input = validateInput(emailOutboxListQuerySchema, {
       status: searchParams.get("status") ?? undefined,

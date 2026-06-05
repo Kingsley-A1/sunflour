@@ -48,6 +48,10 @@ export function ProductAdminClient({
   );
 
   const isSuperAdmin = role === "SUPER_ADMIN";
+  const canEditProductContent =
+    role === "SUPER_ADMIN" || role === "MEDIA_MANAGER";
+  const canUpdateAvailability =
+    role === "SUPER_ADMIN" || role === "MODERATOR";
 
   function statusOptionsFor(product: AdminProduct): ProductStatus[] {
     if (isSuperAdmin) {
@@ -115,8 +119,9 @@ export function ProductAdminClient({
           </Link>
         ) : (
           <p className="m-0 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
-            Moderator access can update availability only. Product creation,
-            hiding, price, variant, and image changes require a super admin.
+            Staff permissions are least-privilege: moderators update
+            availability, media managers update product content and images, and
+            super admins control pricing and creation.
           </p>
         )}
       </div>
@@ -165,7 +170,10 @@ export function ProductAdminClient({
                     <select
                       aria-label={`Update availability for ${product.name}`}
                       className="min-h-10 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-2"
-                      disabled={!isSuperAdmin && product.status === "HIDDEN"}
+                      disabled={
+                        !canUpdateAvailability ||
+                        (!isSuperAdmin && product.status === "HIDDEN")
+                      }
                       onChange={(event) =>
                         updateStatus(product, event.target.value as ProductStatus)
                       }
@@ -179,7 +187,7 @@ export function ProductAdminClient({
                     </select>
                   </td>
                   <td className="p-3">
-                    {isSuperAdmin ? (
+                    {canEditProductContent ? (
                       <Link
                         className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 font-semibold"
                         href={`/admin/products/${product.id}`}

@@ -43,6 +43,12 @@ const moderator = {
   image: null,
   role: UserRole.MODERATOR,
 };
+const attendant = {
+  ...moderator,
+  id: "attendant_1",
+  email: "floor@example.com",
+  role: UserRole.ATTENDANT,
+};
 
 describe("order service", () => {
   beforeEach(() => {
@@ -171,5 +177,23 @@ describe("order service", () => {
       }),
       expect.anything(),
     );
+  });
+
+  it("prevents attendants from confirming payment through order status", async () => {
+    await expect(
+      updateAdminOrderStatus(
+        "SFB-20260101-ABC123",
+        {
+          status: OrderStatus.PAYMENT_CONFIRMED,
+          reason: "Payment verified.",
+        },
+        attendant,
+        timestamp,
+      ),
+    ).rejects.toMatchObject({
+      status: 403,
+      code: ERROR_CODES.FORBIDDEN,
+    });
+    expect(mocks.orderFindUnique).not.toHaveBeenCalled();
   });
 });

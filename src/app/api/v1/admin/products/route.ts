@@ -1,5 +1,5 @@
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES, SUPER_ADMIN_ROLES } from "@/server/auth/roles";
+import { PRODUCT_ADMIN_ROLES, SUPER_ADMIN_ROLES } from "@/server/auth/roles";
 import { readJsonBody } from "@/server/lib/api/request";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { validateInput } from "@/server/lib/validation/zod";
@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    await requireRole(ADMIN_ROLES);
+    await requireRole(PRODUCT_ADMIN_ROLES);
 
     return apiSuccess({
       products: await listAdminProducts(),

@@ -3,7 +3,7 @@ import type { Route } from "next";
 import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { StatusPill } from "@/components/ui/status-pill";
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES } from "@/server/auth/roles";
+import { ORDER_ADMIN_ROLES } from "@/server/auth/roles";
 import { adminOrderListQuerySchema, listAdminOrders } from "@/server/modules/orders";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ function buildPageHref(
 }
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
-  await requireRole(ADMIN_ROLES);
+  await requireRole(ORDER_ADMIN_ROLES);
   const query = await searchParams;
   const input = adminOrderListQuerySchema.parse({
     status: first(query.status),

@@ -1,5 +1,5 @@
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES } from "@/server/auth/roles";
+import { ORDER_ADMIN_ROLES } from "@/server/auth/roles";
 import { readJsonBody } from "@/server/lib/api/request";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { validateInput } from "@/server/lib/validation/zod";
@@ -21,7 +21,7 @@ export async function PATCH(
   context: AdminOrderStatusRouteContext,
 ) {
   try {
-    const actor = await requireRole(ADMIN_ROLES);
+    const actor = await requireRole(ORDER_ADMIN_ROLES);
     const params = validateInput(
       orderNumberParamSchema,
       await context.params,

@@ -1,5 +1,9 @@
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES, SUPER_ADMIN_ROLES } from "@/server/auth/roles";
+import {
+  PRODUCT_ADMIN_ROLES,
+  PRODUCT_CONTENT_ROLES,
+  SUPER_ADMIN_ROLES,
+} from "@/server/auth/roles";
 import { readJsonBody } from "@/server/lib/api/request";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { validateInput } from "@/server/lib/validation/zod";
@@ -22,7 +26,7 @@ interface ProductRouteContext {
 
 export async function GET(_request: Request, context: ProductRouteContext) {
   try {
-    await requireRole(ADMIN_ROLES);
+    await requireRole(PRODUCT_ADMIN_ROLES);
     const params = validateInput(idParamSchema, await context.params);
 
     return apiSuccess(await getAdminProduct(params.id));
@@ -33,7 +37,7 @@ export async function GET(_request: Request, context: ProductRouteContext) {
 
 export async function PATCH(request: Request, context: ProductRouteContext) {
   try {
-    const actor = await requireRole(SUPER_ADMIN_ROLES);
+    const actor = await requireRole(PRODUCT_CONTENT_ROLES);
     const params = validateInput(idParamSchema, await context.params);
     const input = validateInput(productUpdateSchema, await readJsonBody(request));
 

@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES } from "@/server/auth/roles";
+import { ORDER_ADMIN_ROLES } from "@/server/auth/roles";
 import { getAdminOrderDetail } from "@/server/modules/orders";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ interface AdminOrderDetailPageProps {
 }
 
 export default async function AdminOrderDetailPage({ params }: AdminOrderDetailPageProps) {
-  await requireRole(ADMIN_ROLES);
+  const user = await requireRole(ORDER_ADMIN_ROLES);
   const { id } = await params;
   const order = await getAdminOrderDetail(id);
 
@@ -76,6 +76,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           currentStatus={order.status}
           deliveryMethod={order.deliveryMethod}
           orderNumber={order.orderNumber}
+          role={user.role}
         />
       </div>
     </div>

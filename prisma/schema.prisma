@@ -9,6 +9,8 @@ datasource db {
 
 enum UserRole {
   CUSTOMER
+  ATTENDANT
+  MEDIA_MANAGER
   MODERATOR
   SUPER_ADMIN
 }
@@ -107,6 +109,10 @@ model User {
   emailVerified DateTime? @map("email_verified")
   image         String?
   phone         String?
+  passwordHash  String?   @map("password_hash")
+  passwordUpdatedAt DateTime? @map("password_updated_at")
+  failedLoginCount Int     @default(0) @map("failed_login_count")
+  lockedUntil   DateTime? @map("locked_until")
   role          UserRole  @default(CUSTOMER)
   lastLoginAt   DateTime? @map("last_login_at")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -129,6 +135,7 @@ model User {
   homepageHeroProductsUpdated HomepageHeroProduct[] @relation("HomepageHeroProductUpdater")
   emailPreference EmailPreference?
 
+  @@index([lockedUntil])
   @@map("users")
 }
 

@@ -8,12 +8,14 @@ import { UserRole } from "@/server/auth/roles";
 describe("admin allowlist", () => {
   it("parses allowed admin emails and roles", () => {
     const entries = parseAdminAllowlist(
-      "OWNER@EXAMPLE.COM:SUPER_ADMIN, manager@example.com:moderator",
+      "OWNER@EXAMPLE.COM:SUPER_ADMIN, manager@example.com:moderator, media@example.com:media_manager, floor@example.com:attendant",
     );
 
     expect(entries).toEqual([
       { email: "owner@example.com", role: UserRole.SUPER_ADMIN },
       { email: "manager@example.com", role: UserRole.MODERATOR },
+      { email: "media@example.com", role: UserRole.MEDIA_MANAGER },
+      { email: "floor@example.com", role: UserRole.ATTENDANT },
     ]);
   });
 

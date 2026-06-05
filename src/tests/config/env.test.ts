@@ -50,14 +50,44 @@ describe("environment validation", () => {
     ).toThrow(EnvValidationError);
   });
 
+  it("requires the admin registration code secret in production", () => {
+    expect(() =>
+      getServerEnv({
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://user:pass@example.com:26257/sunflour",
+        AUTH_SECRET: "12345678901234567890123456789012",
+      }),
+    ).toThrow(EnvValidationError);
+  });
+
+  it("allows Google OAuth to be intentionally disabled", () => {
+    const env = getServerEnv({
+      NODE_ENV: "production",
+      DATABASE_URL: "postgresql://user:pass@example.com:26257/sunflour",
+      AUTH_SECRET: "12345678901234567890123456789012",
+      ADMIN_REGISTRATION_CODE_SECRET: "12345678901234567890123456789012",
+    });
+
+    expect(env.AUTH_GOOGLE_ID).toBeUndefined();
+    expect(env.AUTH_GOOGLE_SECRET).toBeUndefined();
+  });
+
+  it("requires paired Google OAuth credentials when enabled", () => {
+    expect(() =>
+      getServerEnv({
+        AUTH_GOOGLE_ID: "google-client-id",
+      }),
+    ).toThrow(EnvValidationError);
+  });
+
   it("rejects placeholder production auth values", () => {
     expect(() =>
       getServerEnv({
         NODE_ENV: "production",
         DATABASE_URL: "postgresql://user:pass@example.com:26257/sunflour",
         AUTH_SECRET: "<generate-with-openssl-rand-base64-32>",
-        AUTH_GOOGLE_ID: "<google-oauth-client-id>",
-        AUTH_GOOGLE_SECRET: "missing-google-client-secret",
+        ADMIN_REGISTRATION_CODE_SECRET:
+          "<generate-with-openssl-rand-base64-32>",
       }),
     ).toThrow(EnvValidationError);
   });
@@ -67,6 +97,7 @@ describe("environment validation", () => {
       NODE_ENV: "production",
       DATABASE_URL: "postgresql://user:pass@example.com:26257/sunflour",
       AUTH_SECRET: "12345678901234567890123456789012",
+      ADMIN_REGISTRATION_CODE_SECRET: "12345678901234567890123456789012",
       AUTH_GOOGLE_ID: "google-client-id",
       AUTH_GOOGLE_SECRET: "google-client-secret",
     });

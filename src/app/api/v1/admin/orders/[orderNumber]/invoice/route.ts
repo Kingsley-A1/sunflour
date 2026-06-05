@@ -1,5 +1,5 @@
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES } from "@/server/auth/roles";
+import { ORDER_ADMIN_ROLES } from "@/server/auth/roles";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { validateInput } from "@/server/lib/validation/zod";
 import {
@@ -19,7 +19,7 @@ export async function GET(
   context: AdminInvoiceRouteContext,
 ) {
   try {
-    await requireRole(ADMIN_ROLES);
+    await requireRole(ORDER_ADMIN_ROLES);
     const params = validateInput(
       invoiceOrderNumberParamSchema,
       await context.params,

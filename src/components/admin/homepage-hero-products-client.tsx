@@ -58,7 +58,8 @@ export function HomepageHeroProductsClient({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const isSuperAdmin = role === "SUPER_ADMIN";
+  const canManageHeroProducts =
+    role === "SUPER_ADMIN" || role === "MEDIA_MANAGER";
   const selectableProducts = useMemo(
     () =>
       products
@@ -165,14 +166,14 @@ export function HomepageHeroProductsClient({
             homepage. Empty slots fall back to recent and popular catalog items.
           </p>
         </div>
-        {isSuperAdmin ? (
+        {canManageHeroProducts ? (
           <Button loading={isSaving} onClick={saveHeroProducts}>
             Save hero products
           </Button>
         ) : (
           <p className="m-0 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
-            Moderator access can view this merchandising setup. Super admin
-            access is required to change homepage hero products.
+            This merchandising setup is managed by super admins and media
+            managers.
           </p>
         )}
       </div>
@@ -207,7 +208,7 @@ export function HomepageHeroProductsClient({
               >
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-end">
                   <Select
-                    disabled={!isSuperAdmin}
+                    disabled={!canManageHeroProducts}
                     label={`Slot ${index + 1}`}
                     onChange={(event) =>
                       updateSlot(index, { productId: event.target.value })
@@ -230,7 +231,7 @@ export function HomepageHeroProductsClient({
                   </Select>
                   <Checkbox
                     checked={slot.isActive}
-                    disabled={!isSuperAdmin || !slot.productId}
+                    disabled={!canManageHeroProducts || !slot.productId}
                     label="Show slot"
                     onChange={(event) =>
                       updateSlot(index, { isActive: event.target.checked })
@@ -240,7 +241,7 @@ export function HomepageHeroProductsClient({
                 <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                   {product ? <StatusPill status={product.status} /> : null}
                   <Button
-                    disabled={!isSuperAdmin || index === 0}
+                    disabled={!canManageHeroProducts || index === 0}
                     icon={<ArrowUp className="h-4 w-4" aria-hidden="true" />}
                     onClick={() => moveSlot(index, -1)}
                     size="sm"
@@ -249,7 +250,7 @@ export function HomepageHeroProductsClient({
                     Up
                   </Button>
                   <Button
-                    disabled={!isSuperAdmin || index === slots.length - 1}
+                    disabled={!canManageHeroProducts || index === slots.length - 1}
                     icon={
                       <ArrowDown className="h-4 w-4" aria-hidden="true" />
                     }
@@ -260,7 +261,7 @@ export function HomepageHeroProductsClient({
                     Down
                   </Button>
                   <Button
-                    disabled={!isSuperAdmin || !slot.productId}
+                    disabled={!canManageHeroProducts || !slot.productId}
                     onClick={() =>
                       updateSlot(index, { productId: "", isActive: true })
                     }

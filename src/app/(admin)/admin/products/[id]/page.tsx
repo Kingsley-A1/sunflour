@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ProductEditorForm } from "@/components/admin/product-editor-form";
 import { getAdminProductSafe } from "@/lib/api/server";
 import { requireRole } from "@/server/auth/rbac";
-import { SUPER_ADMIN_ROLES } from "@/server/auth/roles";
+import { PRODUCT_CONTENT_ROLES } from "@/server/auth/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ interface AdminProductEditPageProps {
 export default async function AdminProductEditPage({
   params,
 }: AdminProductEditPageProps) {
-  await requireRole(SUPER_ADMIN_ROLES);
+  const user = await requireRole(PRODUCT_CONTENT_ROLES);
   const { id } = await params;
   const { product, categories } = await getAdminProductSafe(id);
 
@@ -31,7 +31,7 @@ export default async function AdminProductEditPage({
         <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Catalog</p>
         <h1 className="m-0 mt-2 text-3xl font-extrabold">Edit product</h1>
       </header>
-      <ProductEditorForm categories={categories} product={product} />
+      <ProductEditorForm categories={categories} product={product} role={user.role} />
     </div>
   );
 }

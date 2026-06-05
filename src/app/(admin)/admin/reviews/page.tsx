@@ -1,7 +1,7 @@
 import { ReviewModerationClient } from "@/components/admin/review-moderation-client";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES } from "@/server/auth/roles";
+import { REVIEW_ADMIN_ROLES } from "@/server/auth/roles";
 import { listAdminReviews } from "@/server/modules/reviews";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 export default async function AdminReviewsPage() {
-  await requireRole(ADMIN_ROLES);
+  await requireRole(REVIEW_ADMIN_ROLES);
   const { reviews } = await listAdminReviews({ page: 1, pageSize: 25 });
 
   return (

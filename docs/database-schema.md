@@ -31,6 +31,8 @@ Do not build schema that depends on frontend-submitted prices or totals.
 ```txt
 UserRole:
 CUSTOMER
+ATTENDANT
+MEDIA_MANAGER
 MODERATOR
 SUPER_ADMIN
 
@@ -156,7 +158,7 @@ Old invoices must not change when products, prices, delivery zones, surcharge ru
 ### Users and Roles
 
 - [x] `users` supports authenticated customer and admin identities.
-- [x] `users.role` supports `CUSTOMER`, `MODERATOR`, and `SUPER_ADMIN`.
+- [x] `users.role` supports `CUSTOMER`, `ATTENDANT`, `MEDIA_MANAGER`, `MODERATOR`, and `SUPER_ADMIN`.
 - [x] `admin_profiles` can mark admin access active/inactive.
 - [x] Moderator restrictions are enforceable server-side.
 - [x] `customer_profiles` stores authenticated customer name and phone for profile convenience.
@@ -181,6 +183,10 @@ users.email
 users.email_verified
 users.image
 users.phone
+users.password_hash
+users.password_updated_at
+users.failed_login_count
+users.locked_until
 users.role
 users.last_login_at
 users.created_at
@@ -200,6 +206,8 @@ customer_profiles.phone
 customer_profiles.created_at
 customer_profiles.updated_at
 ```
+
+Password reset uses `verification_tokens` with a `password-reset:<email>` identifier and a hashed reset token. Reset tokens expire after 1 hour and are consumed on successful password change.
 
 ### Catalog
 

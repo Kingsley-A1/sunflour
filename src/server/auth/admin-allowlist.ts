@@ -8,6 +8,8 @@ export interface AdminAllowlistEntry {
 }
 
 const adminRoleSchema = z.enum([
+  UserRole.ATTENDANT,
+  UserRole.MEDIA_MANAGER,
   UserRole.MODERATOR,
   UserRole.SUPER_ADMIN,
 ]);

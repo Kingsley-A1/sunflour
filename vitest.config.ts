@@ -16,6 +16,7 @@ export default defineConfig({
       AUTH_GOOGLE_ID: "test-google-client-id",
       AUTH_GOOGLE_SECRET: "test-google-client-secret",
       AUTH_SECRET: "12345678901234567890123456789012",
+      ADMIN_REGISTRATION_CODE_SECRET: "12345678901234567890123456789012",
       DATABASE_URL:
         "postgresql://test:test@localhost:26257/sunflour_test?sslmode=disable",
       EMAIL_SENDING_ENABLED: "false",

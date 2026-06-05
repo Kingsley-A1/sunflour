@@ -23,58 +23,62 @@ const adminNavItems = [
     href: "/admin" as Route,
     label: "Dashboard",
     icon: LayoutDashboard,
-    minRole: "MODERATOR" as const,
+    allowedRoles: [
+      "ATTENDANT",
+      "MEDIA_MANAGER",
+      "MODERATOR",
+      "SUPER_ADMIN",
+    ] as const,
   },
   {
     href: "/admin/orders" as Route,
     label: "Orders",
     icon: ClipboardList,
-    minRole: "MODERATOR" as const,
+    allowedRoles: ["ATTENDANT", "MODERATOR", "SUPER_ADMIN"] as const,
   },
   {
     href: "/admin/products" as Route,
     label: "Products",
     icon: Package,
-    minRole: "MODERATOR" as const,
+    allowedRoles: ["MEDIA_MANAGER", "MODERATOR", "SUPER_ADMIN"] as const,
   },
   {
     href: "/admin/delivery" as Route,
     label: "Delivery",
     icon: Truck,
-    minRole: "SUPER_ADMIN" as const,
+    allowedRoles: ["SUPER_ADMIN"] as const,
   },
   {
     href: "/admin/reviews" as Route,
     label: "Reviews",
     icon: MessageSquareText,
-    minRole: "MODERATOR" as const,
+    allowedRoles: ["MODERATOR", "SUPER_ADMIN"] as const,
   },
   {
     href: "/admin/settings/email" as Route,
     label: "Email",
     icon: Mail,
-    minRole: "SUPER_ADMIN" as const,
+    allowedRoles: ["SUPER_ADMIN"] as const,
   },
   {
     href: "/admin/settings/payment" as Route,
     label: "Payment",
     icon: Settings,
-    minRole: "SUPER_ADMIN" as const,
+    allowedRoles: ["SUPER_ADMIN"] as const,
   },
   {
     href: "/admin/audit-logs" as Route,
     label: "Audit logs",
     icon: ShieldCheck,
-    minRole: "SUPER_ADMIN" as const,
+    allowedRoles: ["SUPER_ADMIN"] as const,
   },
 ];
 
-function canSee(role: UserRole, minRole: UserRole) {
-  if (role === "SUPER_ADMIN") {
-    return true;
-  }
-
-  return minRole !== "SUPER_ADMIN";
+function canSee(
+  role: UserRole,
+  allowedRoles: readonly Exclude<UserRole, "CUSTOMER">[],
+) {
+  return allowedRoles.includes(role as Exclude<UserRole, "CUSTOMER">);
 }
 
 export function AdminShell({ role, children }: AdminShellProps) {
@@ -90,7 +94,7 @@ export function AdminShell({ role, children }: AdminShellProps) {
           </p>
           <nav className="flex gap-2 overflow-x-auto lg:grid" aria-label="Admin navigation">
             {adminNavItems
-              .filter((item) => canSee(role, item.minRole))
+              .filter((item) => canSee(role, item.allowedRoles))
               .map((item) => {
                 const Icon = item.icon;
 

@@ -13,6 +13,7 @@ import {
   MessageSquareText,
   Phone,
   ShoppingCart,
+  UserPlus,
   UserRound,
   Utensils,
 } from "lucide-react";
@@ -30,6 +31,8 @@ export const publicMobileNavItems: PublicMobileNavItem[] = [
   { href: "/menu" as Route, label: "Menu", icon: Utensils },
   { href: "/cart" as Route, label: "Cart", icon: ShoppingCart },
   { href: "/checkout" as Route, label: "Checkout", icon: CreditCard },
+  { href: "/sign-in" as Route, label: "Sign in", icon: UserRound },
+  { href: "/register" as Route, label: "Register", icon: UserPlus },
   { href: "/account" as Route, label: "Account", icon: UserRound },
   { href: "/account/orders" as Route, label: "Orders", icon: ClipboardList },
   { href: "/reviews" as Route, label: "Reviews", icon: MessageSquareText },

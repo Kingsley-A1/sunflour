@@ -1,5 +1,5 @@
 import { requireRole } from "@/server/auth/rbac";
-import { SUPER_ADMIN_ROLES } from "@/server/auth/roles";
+import { PRODUCT_CONTENT_ROLES } from "@/server/auth/roles";
 import { readJsonBody } from "@/server/lib/api/request";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { enforceRateLimit } from "@/server/lib/rate-limit";
@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireRole(SUPER_ADMIN_ROLES);
+    const actor = await requireRole(PRODUCT_CONTENT_ROLES);
     enforceRateLimit({
       key: `media-presign:${actor.id}`,
       limit: 30,

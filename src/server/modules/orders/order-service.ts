@@ -1,5 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { DeliveryMethod, OrderStatus } from "@/generated/prisma/enums";
+import { DeliveryMethod, OrderStatus, UserRole } from "@/generated/prisma/enums";
 import type {
   DeliveryMethod as DeliveryMethodValue,
   OrderStatus as OrderStatusValue,
@@ -202,6 +202,15 @@ function invalidFulfillmentTransition(
   });
 }
 
+function forbiddenOrderStatusForRole(): AppError {
+  return new AppError({
+    code: ERROR_CODES.FORBIDDEN,
+    publicMessage:
+      "Attendants cannot mark payment as confirmed through order status updates.",
+    status: 403,
+  });
+}
+
 function isTerminalOrderStatus(status: OrderStatusValue): boolean {
   return terminalOrderStatuses.includes(
     status as (typeof terminalOrderStatuses)[number],
@@ -349,6 +358,13 @@ export async function updateAdminOrderStatus(
   actor: AuthenticatedUser,
   now = new Date(),
 ) {
+  if (
+    actor.role === UserRole.ATTENDANT &&
+    input.status === OrderStatus.PAYMENT_CONFIRMED
+  ) {
+    throw forbiddenOrderStatusForRole();
+  }
+
   const order = await prisma.order.findUnique({
     where: { orderNumber },
     select: {

@@ -17,7 +17,27 @@ export type PaymentStatus =
   | "CONFIRMED"
   | "REJECTED";
 export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
-export type UserRole = "CUSTOMER" | "MODERATOR" | "SUPER_ADMIN";
+export type UserRole =
+  | "CUSTOMER"
+  | "ATTENDANT"
+  | "MEDIA_MANAGER"
+  | "MODERATOR"
+  | "SUPER_ADMIN";
+
+export interface SafeAuthUser {
+  id: string;
+  name: string | null;
+  email: string | null;
+  role: UserRole;
+}
+
+export interface AdminRegistrationResult {
+  user: SafeAuthUser;
+  adminProfile: {
+    role: UserRole;
+    status: "ACTIVE" | "SUSPENDED" | "REVOKED";
+  };
+}
 
 export interface PublicProductImage {
   id: string;

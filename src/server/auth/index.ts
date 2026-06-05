@@ -1,5 +1,14 @@
 export { authOptions } from "./options";
 export { requireAuth, requireRole } from "./rbac";
 export type { AuthenticatedUser } from "./rbac";
-export { UserRole, ADMIN_ROLES, SUPER_ADMIN_ROLES } from "./roles";
+export {
+  UserRole,
+  ADMIN_ROLES,
+  ORDER_ADMIN_ROLES,
+  PRODUCT_ADMIN_ROLES,
+  PRODUCT_AVAILABILITY_ROLES,
+  PRODUCT_CONTENT_ROLES,
+  REVIEW_ADMIN_ROLES,
+  SUPER_ADMIN_ROLES,
+} from "./roles";
 export type { AdminRole, Role } from "./roles";

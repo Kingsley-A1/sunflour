@@ -1,6 +1,7 @@
 import { ApiClientError, type ApiResponse } from "@/types/api";
 import type {
   AdminDeliveryZone,
+  AdminRegistrationResult,
   AdminHomepageHeroProduct,
   AdminSurchargeRule,
   AdminProduct,
@@ -13,6 +14,8 @@ import type {
   PaymentSettings,
   ProductStatus,
   ReviewStatus,
+  SafeAuthUser,
+  UserRole,
 } from "@/types/domain";
 
 interface ApiRequestOptions extends RequestInit {
@@ -119,6 +122,58 @@ export function getApiFieldError(
   }
 
   return undefined;
+}
+
+export async function registerCustomerAccount(input: {
+  fullName: string;
+  email: string;
+  password: string;
+}): Promise<SafeAuthUser> {
+  const data = await apiRequest<{ user: SafeAuthUser }>(
+    "/api/v1/public/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+  return data.user;
+}
+
+export async function registerAdminAccount(input: {
+  fullName: string;
+  email: string;
+  password: string;
+  role: Exclude<UserRole, "CUSTOMER">;
+  registrationCode: string;
+}): Promise<AdminRegistrationResult> {
+  return apiRequest<AdminRegistrationResult>(
+    "/api/v1/public/auth/admin-register",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function requestPasswordReset(input: {
+  email: string;
+}): Promise<{ message: string }> {
+  return apiRequest("/api/v1/public/auth/password-reset/request", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function confirmPasswordReset(input: {
+  email: string;
+  token: string;
+  password: string;
+}): Promise<{ message: string }> {
+  return apiRequest("/api/v1/public/auth/password-reset/confirm", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function getDeliveryZones(): Promise<DeliveryZone[]> {

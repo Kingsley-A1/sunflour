@@ -11,7 +11,12 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { DeliveryMethod, OrderStatus, PaymentStatus } from "@/types/domain";
+import type {
+  DeliveryMethod,
+  OrderStatus,
+  PaymentStatus,
+  UserRole,
+} from "@/types/domain";
 
 interface OrderActionsClientProps {
   orderNumber: string;
@@ -19,6 +24,7 @@ interface OrderActionsClientProps {
   currentPaymentStatus: PaymentStatus;
   deliveryMethod: DeliveryMethod;
   adminNote: string | null;
+  role: UserRole;
 }
 
 const transitionMap: Record<OrderStatus, OrderStatus[]> = {
@@ -63,6 +69,7 @@ export function OrderActionsClient({
   currentPaymentStatus,
   deliveryMethod,
   adminNote,
+  role,
 }: OrderActionsClientProps) {
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
   const [nextPaymentStatus, setNextPaymentStatus] = useState<PaymentStatus | "">("");
@@ -74,6 +81,10 @@ export function OrderActionsClient({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const allowedTransitions = getAllowedTransitions(currentStatus, deliveryMethod);
+  const allowedPaymentOptions =
+    role === "ATTENDANT"
+      ? (["PROOF_SENT_ON_WHATSAPP", "UNDER_REVIEW"] satisfies PaymentStatus[])
+      : paymentOptions;
 
   async function updateOrderStatus() {
     if (!nextStatus) {
@@ -178,7 +189,7 @@ export function OrderActionsClient({
         value={nextPaymentStatus}
       >
         <option value="">Choose payment status</option>
-        {paymentOptions
+        {allowedPaymentOptions
           .filter((status) => status !== currentPaymentStatus)
           .map((status) => (
             <option key={status} value={status}>

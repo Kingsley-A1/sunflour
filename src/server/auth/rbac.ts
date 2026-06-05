@@ -2,7 +2,7 @@ import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { AdminProfileStatus } from "@/generated/prisma/enums";
 import { authOptions } from "@/server/auth/options";
-import { UserRole, isRoleAllowed } from "@/server/auth/roles";
+import { UserRole, isAdminRole, isRoleAllowed } from "@/server/auth/roles";
 import type { Role } from "@/server/auth/roles";
 import { prisma } from "@/server/db/prisma";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
@@ -107,9 +107,7 @@ export async function requireRole(
 ): Promise<AuthenticatedUser> {
   const user = await requireAuth(options);
 
-  const requiresAdminProfile = allowedRoles.some(
-    (role) => role === UserRole.MODERATOR || role === UserRole.SUPER_ADMIN,
-  );
+  const requiresAdminProfile = allowedRoles.some(isAdminRole);
 
   if (!requiresAdminProfile && isRoleAllowed(user.role, allowedRoles)) {
     return user;

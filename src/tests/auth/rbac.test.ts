@@ -1,7 +1,13 @@
 import type { Session } from "next-auth";
 import { describe, expect, it } from "vitest";
 import { AdminProfileStatus } from "@/generated/prisma/enums";
-import { ADMIN_ROLES, SUPER_ADMIN_ROLES, UserRole } from "@/server/auth/roles";
+import {
+  ADMIN_ROLES,
+  ORDER_ADMIN_ROLES,
+  PRODUCT_CONTENT_ROLES,
+  SUPER_ADMIN_ROLES,
+  UserRole,
+} from "@/server/auth/roles";
 import { requireAuth, requireRole } from "@/server/auth/rbac";
 
 function sessionFor(role: UserRole, userId = "user_1"): Session {
@@ -65,6 +71,58 @@ describe("RBAC helpers", () => {
 
     expect(user.id).toBe("mod_1");
     expect(user.role).toBe(UserRole.MODERATOR);
+  });
+
+  it("allows attendants only through order admin role groups", async () => {
+    const user = await requireRole(ORDER_ADMIN_ROLES, {
+      getSession: async () => sessionFor(UserRole.ATTENDANT, "attendant_1"),
+      getAdminAuthorization: async () => ({
+        role: UserRole.ATTENDANT,
+        status: AdminProfileStatus.ACTIVE,
+      }),
+    });
+
+    expect(user.role).toBe(UserRole.ATTENDANT);
+
+    await expect(
+      requireRole(PRODUCT_CONTENT_ROLES, {
+        getSession: async () => sessionFor(UserRole.ATTENDANT, "attendant_1"),
+        getAdminAuthorization: async () => ({
+          role: UserRole.ATTENDANT,
+          status: AdminProfileStatus.ACTIVE,
+        }),
+      }),
+    ).rejects.toMatchObject({
+      status: 403,
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("allows media managers through product content role groups only", async () => {
+    const user = await requireRole(PRODUCT_CONTENT_ROLES, {
+      getSession: async () =>
+        sessionFor(UserRole.MEDIA_MANAGER, "media_manager_1"),
+      getAdminAuthorization: async () => ({
+        role: UserRole.MEDIA_MANAGER,
+        status: AdminProfileStatus.ACTIVE,
+      }),
+    });
+
+    expect(user.role).toBe(UserRole.MEDIA_MANAGER);
+
+    await expect(
+      requireRole(ORDER_ADMIN_ROLES, {
+        getSession: async () =>
+          sessionFor(UserRole.MEDIA_MANAGER, "media_manager_1"),
+        getAdminAuthorization: async () => ({
+          role: UserRole.MEDIA_MANAGER,
+          status: AdminProfileStatus.ACTIVE,
+        }),
+      }),
+    ).rejects.toMatchObject({
+      status: 403,
+      code: "FORBIDDEN",
+    });
   });
 
   it("rejects moderators from super admin actions", async () => {

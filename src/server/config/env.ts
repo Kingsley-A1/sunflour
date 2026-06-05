@@ -70,6 +70,7 @@ const envSchema = z
     AUTH_SECRET: optionalString(z.string().min(32)),
     AUTH_GOOGLE_ID: optionalSecret,
     AUTH_GOOGLE_SECRET: optionalSecret,
+    ADMIN_REGISTRATION_CODE_SECRET: optionalString(z.string().min(32)),
     ADMIN_ALLOWLIST_EMAILS: z.string().optional().default(""),
     RESEND_API_KEY: optionalSecret,
     EMAIL_FROM_ADDRESS: optionalEmail,
@@ -107,26 +108,33 @@ const envSchema = z
       });
     }
 
-    if (env.NODE_ENV === "production" && !env.AUTH_GOOGLE_ID) {
+    if (env.NODE_ENV === "production" && !env.ADMIN_REGISTRATION_CODE_SECRET) {
       context.addIssue({
         code: "custom",
-        path: ["AUTH_GOOGLE_ID"],
-        message: "AUTH_GOOGLE_ID is required in production.",
+        path: ["ADMIN_REGISTRATION_CODE_SECRET"],
+        message: "ADMIN_REGISTRATION_CODE_SECRET is required in production.",
       });
     }
 
-    if (env.NODE_ENV === "production" && !env.AUTH_GOOGLE_SECRET) {
+    if (env.AUTH_GOOGLE_ID && !env.AUTH_GOOGLE_SECRET) {
       context.addIssue({
         code: "custom",
         path: ["AUTH_GOOGLE_SECRET"],
-        message: "AUTH_GOOGLE_SECRET is required in production.",
+        message: "AUTH_GOOGLE_SECRET is required when Google OAuth is enabled.",
+      });
+    }
+
+    if (env.AUTH_GOOGLE_SECRET && !env.AUTH_GOOGLE_ID) {
+      context.addIssue({
+        code: "custom",
+        path: ["AUTH_GOOGLE_ID"],
+        message: "AUTH_GOOGLE_ID is required when Google OAuth is enabled.",
       });
     }
 
     for (const key of [
       "AUTH_SECRET",
-      "AUTH_GOOGLE_ID",
-      "AUTH_GOOGLE_SECRET",
+      "ADMIN_REGISTRATION_CODE_SECRET",
     ] as const) {
       if (env.NODE_ENV === "production" && isPlaceholderValue(env[key])) {
         context.addIssue({

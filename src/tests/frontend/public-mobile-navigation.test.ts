@@ -7,6 +7,8 @@ describe("public mobile navigation", () => {
       "Menu",
       "Cart",
       "Checkout",
+      "Sign in",
+      "Register",
       "Account",
       "Orders",
       "Reviews",

@@ -3,7 +3,7 @@ import { ProductAdminClient } from "@/components/admin/product-admin-client";
 import { ErrorState } from "@/components/ui/error-state";
 import { getAdminCatalogSafe } from "@/lib/api/server";
 import { requireRole } from "@/server/auth/rbac";
-import { ADMIN_ROLES } from "@/server/auth/roles";
+import { PRODUCT_ADMIN_ROLES } from "@/server/auth/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default async function AdminProductsPage() {
-  const user = await requireRole(ADMIN_ROLES);
+  const user = await requireRole(PRODUCT_ADMIN_ROLES);
   const { products, categories, heroProducts, error } =
     await getAdminCatalogSafe();
 

@@ -16,11 +16,17 @@ import {
   updateAdminProduct,
 } from "@/lib/api/client";
 import { koboToNairaInput, nairaInputToKobo } from "@/lib/formatters";
-import type { AdminCategory, AdminProduct, ProductStatus } from "@/types/domain";
+import type {
+  AdminCategory,
+  AdminProduct,
+  ProductStatus,
+  UserRole,
+} from "@/types/domain";
 
 interface ProductEditorFormProps {
   categories: AdminCategory[];
   product?: AdminProduct;
+  role: UserRole;
 }
 
 const productFormSchema = z.object({
@@ -33,6 +39,7 @@ const productFormSchema = z.object({
 export function ProductEditorForm({
   categories,
   product,
+  role,
 }: ProductEditorFormProps) {
   const [name, setName] = useState(product?.name ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
@@ -50,6 +57,8 @@ export function ProductEditorForm({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const isSuperAdmin = role === "SUPER_ADMIN";
+  const isMediaManager = role === "MEDIA_MANAGER";
 
   async function saveProduct() {
     setError(null);
@@ -57,9 +66,9 @@ export function ProductEditorForm({
 
     const parsed = productFormSchema.safeParse({
       name,
-      categoryId,
-      basePrice: nairaInputToKobo(basePrice),
-      status,
+      categoryId: isMediaManager ? product?.categoryId : categoryId,
+      basePrice: isMediaManager ? product?.basePrice : nairaInputToKobo(basePrice),
+      status: isMediaManager ? product?.status : status,
     });
 
     if (!parsed.success) {
@@ -70,27 +79,32 @@ export function ProductEditorForm({
     setIsSaving(true);
 
     try {
-      const payload = {
-        categoryId,
+      const contentPayload = {
         name,
         slug: slug || undefined,
         description: description || null,
-        basePrice: nairaInputToKobo(basePrice),
-        status,
-        showWhenOutOfStock,
         isFeatured,
         isPopular,
-        variants:
-          !product && variantName
-            ? [
-                {
-                  name: variantName,
-                  price: nairaInputToKobo(variantPrice),
-                  isActive: true,
-                },
-              ]
-            : undefined,
       };
+      const payload = isMediaManager
+        ? contentPayload
+        : {
+            ...contentPayload,
+            categoryId,
+            basePrice: nairaInputToKobo(basePrice),
+            status,
+            showWhenOutOfStock,
+            variants:
+              !product && variantName
+                ? [
+                    {
+                      name: variantName,
+                      price: nairaInputToKobo(variantPrice),
+                      isActive: true,
+                    },
+                  ]
+                : undefined,
+          };
 
       const saved = product
         ? await updateAdminProduct(product.id, payload)
@@ -118,8 +132,9 @@ export function ProductEditorForm({
         <div>
           <h2 className="m-0 text-xl font-bold">{product ? "Edit product" : "Create product"}</h2>
           <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-            Backend validation remains authoritative. Prices are stored in
-            minor units and old invoices do not change after edits.
+            {isMediaManager
+              ? "Media manager access can update product content and images only."
+              : "Backend validation remains authoritative. Prices are stored in minor units and old invoices do not change after edits."}
           </p>
         </div>
         {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]">{error}</p> : null}
@@ -131,7 +146,12 @@ export function ProductEditorForm({
           onChange={(event) => setSlug(event.target.value)}
           value={slug}
         />
-        <Select label="Category" onChange={(event) => setCategoryId(event.target.value)} value={categoryId}>
+        <Select
+          disabled={!isSuperAdmin}
+          label="Category"
+          onChange={(event) => setCategoryId(event.target.value)}
+          value={categoryId}
+        >
           <option value="">Choose category</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -140,12 +160,18 @@ export function ProductEditorForm({
           ))}
         </Select>
         <Input
+          disabled={!isSuperAdmin}
           inputMode="decimal"
           label="Base price in naira"
           onChange={(event) => setBasePrice(event.target.value)}
           value={basePrice}
         />
-        <Select label="Status" onChange={(event) => setStatus(event.target.value as ProductStatus)} value={status}>
+        <Select
+          disabled={!isSuperAdmin}
+          label="Status"
+          onChange={(event) => setStatus(event.target.value as ProductStatus)}
+          value={status}
+        >
           <option value="ACTIVE">Active</option>
           <option value="OUT_OF_STOCK">Out of stock</option>
           <option value="HIDDEN">Hidden</option>
@@ -153,6 +179,7 @@ export function ProductEditorForm({
         <Textarea label="Description" onChange={(event) => setDescription(event.target.value)} value={description} />
         <Checkbox
           checked={showWhenOutOfStock}
+          disabled={!isSuperAdmin}
           label="Show when out of stock"
           onChange={(event) => setShowWhenOutOfStock(event.target.checked)}
         />
@@ -166,7 +193,7 @@ export function ProductEditorForm({
           label="Popular product"
           onChange={(event) => setIsPopular(event.target.checked)}
         />
-        {!product ? (
+        {!product && isSuperAdmin ? (
           <div className="grid gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] p-3">
             <h3 className="m-0 text-base font-bold">Optional first variant</h3>
             <Input label="Variant name" onChange={(event) => setVariantName(event.target.value)} value={variantName} />

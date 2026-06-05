@@ -21,7 +21,7 @@ export default async function AdminNewProductPage() {
         <h1 className="m-0 mt-2 text-3xl font-extrabold">Create product</h1>
       </header>
       {error ? <ErrorState description={error} title="Catalog unavailable" /> : null}
-      <ProductEditorForm categories={categories} />
+      <ProductEditorForm categories={categories} role="SUPER_ADMIN" />
     </div>
   );
 }

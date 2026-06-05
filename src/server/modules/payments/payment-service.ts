@@ -5,6 +5,7 @@ import type {
   PaymentStatus as PaymentStatusValue,
 } from "@/generated/prisma/enums";
 import type { AuthenticatedUser } from "@/server/auth/rbac";
+import { UserRole } from "@/server/auth/roles";
 import { prisma } from "@/server/db/prisma";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
@@ -94,6 +95,15 @@ function missingRejectionReason(): AppError {
     fieldErrors: {
       reason: ["Enter the rejection reason."],
     },
+  });
+}
+
+function forbiddenPaymentStatusForRole(): AppError {
+  return new AppError({
+    code: ERROR_CODES.FORBIDDEN,
+    publicMessage:
+      "Attendants can review payment proof but cannot confirm or reject payments.",
+    status: 403,
   });
 }
 
@@ -283,6 +293,14 @@ export async function updateOrderPaymentStatus(
   input: PaymentStatusUpdateInput,
   actor: AuthenticatedUser,
 ): Promise<PaymentStatusUpdateResult> {
+  if (
+    actor.role === UserRole.ATTENDANT &&
+    input.paymentStatus !== PaymentStatus.PROOF_SENT_ON_WHATSAPP &&
+    input.paymentStatus !== PaymentStatus.UNDER_REVIEW
+  ) {
+    throw forbiddenPaymentStatusForRole();
+  }
+
   const order = await prisma.order.findUnique({
     where: { orderNumber },
     select: {

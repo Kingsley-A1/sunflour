@@ -68,6 +68,32 @@ function forbidden(message: string): AppError {
   });
 }
 
+function enforceProductUpdatePermission(
+  input: ProductUpdateInput,
+  actor: AuthenticatedUser,
+): void {
+  if (actor.role !== UserRole.MEDIA_MANAGER) {
+    return;
+  }
+
+  const allowedFields = new Set([
+    "name",
+    "slug",
+    "description",
+    "isFeatured",
+    "isPopular",
+  ]);
+  const restrictedFields = Object.keys(input).filter(
+    (field) => !allowedFields.has(field),
+  );
+
+  if (restrictedFields.length > 0) {
+    throw forbidden(
+      "Media managers can update product content and images only.",
+    );
+  }
+}
+
 function mapPublicImage(
   image: Prisma.ProductImageGetPayload<{
     include: { mediaAsset: true };
@@ -374,6 +400,8 @@ export async function updateProduct(
   input: ProductUpdateInput,
   actor: AuthenticatedUser,
 ) {
+  enforceProductUpdatePermission(input, actor);
+
   const before = await prisma.product.findUnique({
     where: { id },
     select: {
