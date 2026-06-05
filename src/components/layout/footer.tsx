@@ -8,6 +8,7 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  ReceiptText,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -109,10 +110,17 @@ export function Footer() {
             </span>
           </Link>
           <p className="m-0 mt-4 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
-            Fresh bakery orders with clear pickup, delivery, and manual
-            Moniepoint payment guidance.
+            Fresh bakery orders with clear pickup, delivery, invoice, and manual
+            Moniepoint payment guidance from checkout to confirmation.
           </p>
           <div className="mt-5 grid gap-3 text-sm text-[var(--color-text-muted)] sm:grid-cols-2 lg:grid-cols-1">
+            <p className="m-0 flex gap-2">
+              <ReceiptText
+                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                aria-hidden="true"
+              />
+              Invoices stay tied to the order details shown at checkout.
+            </p>
             <p className="m-0 flex gap-2">
               <ShieldCheck
                 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
