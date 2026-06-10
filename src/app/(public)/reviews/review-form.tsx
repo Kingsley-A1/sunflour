@@ -13,6 +13,10 @@ import {
 } from "@/lib/api/client";
 import { ApiClientError } from "@/types/api";
 
+function containsHtmlMarkup(value: string): boolean {
+  return /<[^>]*>/.test(value);
+}
+
 export function ReviewForm() {
   const [rating, setRating] = useState(5);
   const [name, setName] = useState("");
@@ -33,9 +37,23 @@ export function ReviewForm() {
       return;
     }
 
+    if (containsHtmlMarkup(name)) {
+      setFieldErrors({
+        customerName: "Enter your name without HTML or scripts.",
+      });
+      return;
+    }
+
     if (comment.trim().length < 10) {
       setFieldErrors({
         comment: "Write at least 10 characters about your experience.",
+      });
+      return;
+    }
+
+    if (containsHtmlMarkup(comment)) {
+      setFieldErrors({
+        comment: "Write your review as plain text, without HTML or scripts.",
       });
       return;
     }

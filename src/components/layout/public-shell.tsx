@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { ShoppingBag, UserRound } from "lucide-react";
 import logoAsset from "../../../logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
@@ -12,6 +13,7 @@ import type { PublicCategoryNavigationItem } from "@/types/domain";
 interface PublicShellProps {
   categories: PublicCategoryNavigationItem[];
   children: React.ReactNode;
+  isSignedIn: boolean;
 }
 
 const navItems = [
@@ -22,7 +24,11 @@ const navItems = [
   { href: "/reviews" as Route, label: "Reviews" },
 ];
 
-export function PublicShell({ categories, children }: PublicShellProps) {
+export function PublicShell({
+  categories,
+  children,
+  isSignedIn,
+}: PublicShellProps) {
   const categoryLinks =
     categories.length > 0
       ? categories
@@ -65,6 +71,9 @@ export function PublicShell({ categories, children }: PublicShellProps) {
                 <UserRound className="h-4 w-4" aria-hidden="true" />
                 Account
               </Link>
+              {isSignedIn ? (
+                <SignOutButton className="hidden md:inline-flex" />
+              ) : null}
               <Link
                 aria-label="Review cart"
                 className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:bg-[var(--color-surface-soft)]"
@@ -73,7 +82,7 @@ export function PublicShell({ categories, children }: PublicShellProps) {
                 <ShoppingBag className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">Cart</span>
               </Link>
-              <PublicMobileNavigation />
+              <PublicMobileNavigation isSignedIn={isSignedIn} />
             </div>
           </div>
           <nav

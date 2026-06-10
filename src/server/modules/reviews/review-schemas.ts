@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ReviewStatus } from "@/generated/prisma/enums";
+import { containsHtmlMarkup, stripHtmlTags } from "@/server/lib/text/sanitize";
 
 const reviewStatusSchema = z.enum([
   ReviewStatus.PENDING,
@@ -17,9 +18,25 @@ export const publicReviewListQuerySchema = z
 
 export const publicReviewCreateSchema = z
   .object({
-    customerName: z.string().trim().min(2).max(120),
+    customerName: z
+      .string()
+      .trim()
+      .min(2)
+      .max(120)
+      .refine((value) => !containsHtmlMarkup(value), {
+        message: "Enter your name without HTML or scripts.",
+      })
+      .transform(stripHtmlTags),
     rating: z.number().int().min(1).max(5),
-    comment: z.string().trim().min(10).max(1_000),
+    comment: z
+      .string()
+      .trim()
+      .min(10)
+      .max(1_000)
+      .refine((value) => !containsHtmlMarkup(value), {
+        message: "Write your review as plain text, without HTML or scripts.",
+      })
+      .transform(stripHtmlTags),
     productId: z.string().trim().min(1).max(120).optional(),
   })
   .strict();

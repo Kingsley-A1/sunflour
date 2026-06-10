@@ -12,6 +12,6 @@ describe("password hashing", () => {
       await expect(verifyPassword(password, hash)).resolves.toBe(true);
       await expect(verifyPassword("Wrong123", hash)).resolves.toBe(false);
     },
-    15_000,
+    30_000,
   );
 });

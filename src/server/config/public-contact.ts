@@ -18,12 +18,18 @@ export interface PublicContactConfig {
 
 function readPublicEnv(...keys: string[]): string | null {
   for (const key of keys) {
-    const value = process.env[key]?.trim();
+    const value = normalizePublicEnvValue(process.env[key]);
 
     if (value && !value.startsWith("<")) return value;
   }
 
   return null;
+}
+
+function normalizePublicEnvValue(value: string | undefined): string | null {
+  const normalized = value?.trim().replace(/^["']+|["']+$/g, "").trim();
+
+  return normalized || null;
 }
 
 function toPhoneHref(value: string | null): string | null {
@@ -44,7 +50,11 @@ function toWhatsAppHref(value: string | null): string | null {
 function toEmailHref(value: string | null): string | null {
   if (!value) return null;
 
-  return `mailto:${value}`;
+  const normalized = value.replace(/"/g, "").trim();
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)
+    ? `mailto:${normalized}`
+    : null;
 }
 
 function toMapsHref(value: string | null): string | null {

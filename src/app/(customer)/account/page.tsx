@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProfileForm } from "@/components/customer/profile-form";
@@ -63,12 +64,15 @@ export default async function AccountPage() {
         </dl>
       </Card>
       <ProfileForm profile={profile} />
-      <Link
-        className="inline-flex min-h-11 w-fit items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-semibold"
-        href="/account/orders"
-      >
-        View order history
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          className="inline-flex min-h-11 w-fit items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-semibold"
+          href="/account/orders"
+        >
+          View order history
+        </Link>
+        <SignOutButton />
+      </div>
     </main>
   );
 }

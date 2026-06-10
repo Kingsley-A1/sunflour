@@ -13,11 +13,13 @@ import {
   MessageSquareText,
   Phone,
   ShoppingCart,
+  LogOut,
   UserPlus,
   UserRound,
   Utensils,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { IconButton } from "@/components/ui/icon-button";
 import { Sheet } from "@/components/ui/sheet";
 
@@ -42,7 +44,7 @@ export const publicMobileNavItems: PublicMobileNavItem[] = [
   { href: "/terms" as Route, label: "Terms", icon: FileText },
 ];
 
-export function PublicMobileNavigation() {
+export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -79,6 +81,21 @@ export function PublicMobileNavigation() {
                 </li>
               );
             })}
+            {isSignedIn ? (
+              <li>
+                <button
+                  className="flex min-h-12 w-full items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-left text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  type="button"
+                >
+                  <LogOut
+                    className="h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                    aria-hidden="true"
+                  />
+                  Sign out
+                </button>
+              </li>
+            ) : null}
           </ul>
         </nav>
       </Sheet>
