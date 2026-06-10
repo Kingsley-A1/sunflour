@@ -1,6 +1,7 @@
 import { ApiClientError, type ApiResponse } from "@/types/api";
 import type {
   AdminDeliveryZone,
+  AdminRegistrationCodePanel,
   AdminRegistrationResult,
   AdminHomepageHeroProduct,
   AdminSurchargeRule,
@@ -154,6 +155,27 @@ export async function registerAdminAccount(input: {
       body: JSON.stringify(input),
     },
   );
+}
+
+export async function getAdminRegistrationCodes(): Promise<AdminRegistrationCodePanel> {
+  const data = await apiRequest<{
+    registrationCodes: AdminRegistrationCodePanel;
+  }>("/api/v1/admin/admin-registration-codes");
+
+  return data.registrationCodes;
+}
+
+export async function rotateAdminRegistrationCodes(): Promise<AdminRegistrationCodePanel> {
+  const data = await apiRequest<{
+    registrationCodes: AdminRegistrationCodePanel;
+  }>("/api/v1/admin/admin-registration-codes", {
+    method: "POST",
+    body: JSON.stringify({
+      confirmation: "ROTATE_ADMIN_REGISTRATION_CODES",
+    }),
+  });
+
+  return data.registrationCodes;
 }
 
 export async function requestPasswordReset(input: {

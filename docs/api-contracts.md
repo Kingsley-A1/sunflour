@@ -79,6 +79,8 @@ GET    /api/v1/admin/health
 GET    /api/v1/admin/super-admin/health
 GET    /api/v1/admin/dashboard
 GET    /api/v1/admin/audit-logs
+GET    /api/v1/admin/admin-registration-codes
+POST   /api/v1/admin/admin-registration-codes
 GET    /api/v1/admin/categories
 POST   /api/v1/admin/categories
 PATCH  /api/v1/admin/categories/[id]
@@ -1075,6 +1077,64 @@ Rules:
 - Registration writes ADMIN_REGISTERED_WITH_CODE audit log.
 - Endpoint is rate-limited per client IP.
 - Residual risk: weekly 6-digit codes must be treated as sensitive operational secrets and rotated immediately if exposed.
+```
+
+### `GET /api/v1/admin/admin-registration-codes`
+
+Purpose: Let super admins view the active role-scoped admin registration codes.
+
+Auth: `SUPER_ADMIN`.
+
+Response:
+
+```ts
+{
+  registrationCodes: {
+    version: number;
+    window: number;
+    expiresAt: string;
+    generatedAt: string;
+    rotatedAt: string | null;
+    rotatedByUserId: string | null;
+    codes: Array<{
+      role: "SUPER_ADMIN" | "MODERATOR" | "ATTENDANT" | "MEDIA_MANAGER";
+      label: string;
+      code: string;
+    }>;
+  };
+}
+```
+
+Rules:
+
+```txt
+- Endpoint is visible only to active super admins.
+- Response never exposes ADMIN_REGISTRATION_CODE_SECRET or the database rotation nonce.
+- Codes are generated from ADMIN_REGISTRATION_CODE_SECRET, role, current 7-day UTC window, and the current database rotation nonce.
+```
+
+### `POST /api/v1/admin/admin-registration-codes`
+
+Purpose: Regenerate all role-scoped admin registration codes without changing deployment environment secrets.
+
+Auth: `SUPER_ADMIN`.
+
+Request:
+
+```ts
+{
+  confirmation: "ROTATE_ADMIN_REGISTRATION_CODES";
+}
+```
+
+Rules:
+
+```txt
+- Updates only the database rotation nonce/version in site_settings.
+- Does not change ADMIN_REGISTRATION_CODE_SECRET.
+- Does not require a redeploy.
+- Immediately invalidates previous role codes.
+- Writes ADMIN_REGISTRATION_CODES_ROTATED audit log without storing generated codes, nonce, or secret.
 ```
 
 ### `POST /api/v1/public/auth/password-reset/request`

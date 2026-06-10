@@ -12,11 +12,13 @@ export function getAdminRegistrationWindow(date = new Date()): number {
 export function generateAdminRegistrationCode(input: {
   role: AdminRole;
   secret: string;
+  rotationNonce?: string;
   date?: Date;
 }): string {
   const window = getAdminRegistrationWindow(input.date);
+  const rotationScope = input.rotationNonce ? `:${input.rotationNonce}` : "";
   const digest = createHmac("sha256", input.secret)
-    .update(`sunflour-admin-registration:${input.role}:${window}`)
+    .update(`sunflour-admin-registration:${input.role}:${window}${rotationScope}`)
     .digest();
   const numericCode = digest.readUInt32BE(0) % CODE_MODULUS;
 
@@ -27,6 +29,7 @@ export function verifyAdminRegistrationCode(input: {
   role: AdminRole;
   code: string;
   secret?: string;
+  rotationNonce?: string;
   date?: Date;
 }): boolean {
   const secret = input.secret ?? getServerEnv().ADMIN_REGISTRATION_CODE_SECRET;
@@ -38,6 +41,7 @@ export function verifyAdminRegistrationCode(input: {
   const expected = generateAdminRegistrationCode({
     role: input.role,
     secret,
+    rotationNonce: input.rotationNonce,
     date: input.date,
   });
   const expectedBuffer = Buffer.from(expected);

@@ -39,6 +39,35 @@ export interface AdminRegistrationResult {
   };
 }
 
+export interface AdminRegistrationCodePanel {
+  version: number;
+  window: number;
+  expiresAt: string;
+  generatedAt: string;
+  rotatedAt: string | null;
+  rotatedByUserId: string | null;
+  codes: Array<{
+    role: Exclude<UserRole, "CUSTOMER">;
+    label: string;
+    code: string;
+  }>;
+}
+
+export interface AdminUserListItem {
+  id: string;
+  role: Exclude<UserRole, "CUSTOMER">;
+  status: "ACTIVE" | "SUSPENDED";
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: UserRole;
+    lastLoginAt: string | null;
+  };
+}
+
 export interface PublicProductImage {
   id: string;
   url: string | null;

@@ -287,6 +287,7 @@ Acceptance:
 | `/admin/products/new` | Create product | SUPER_ADMIN | ProductEditorForm |
 | `/admin/products/[id]` | Edit product | SUPER_ADMIN, limited moderator availability controls if approved | ProductEditorForm |
 | `/admin/categories` | Category manager | SUPER_ADMIN | CategoryEditorForm |
+| `/admin/users` | Admin users and registration code panel | SUPER_ADMIN | AdminRegistrationCodesClient, staff account list |
 | `/admin/delivery` | Delivery zones and 6 PM surcharge | SUPER_ADMIN for rule changes | DeliveryZoneTable, SurchargeRuleForm |
 | `/admin/reviews` | Review moderation | MODERATOR | ReviewModerationList |
 | `/admin/settings/payment` | Moniepoint/payment settings | SUPER_ADMIN | PaymentSettingsForm |

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminProfileStatus, UserRole } from "@/generated/prisma/enums";
-import { verifyAdminRegistrationCode } from "@/server/auth/admin-registration-codes";
+import { verifyActiveAdminRegistrationCode } from "@/server/auth/admin-registration-code-service";
 import { hashPassword, verifyPassword } from "@/server/auth/password";
 import {
   authorizeCredentials,
@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => {
     transactionRunner: vi.fn((callback) => callback(transaction)),
     hashPassword: vi.fn(),
     verifyPassword: vi.fn(),
-    verifyAdminRegistrationCode: vi.fn(),
+    verifyActiveAdminRegistrationCode: vi.fn(),
     writeAuditLog: vi.fn(),
   };
 });
@@ -46,8 +46,8 @@ vi.mock("@/server/auth/password", () => ({
   verifyPassword: mocks.verifyPassword,
 }));
 
-vi.mock("@/server/auth/admin-registration-codes", () => ({
-  verifyAdminRegistrationCode: mocks.verifyAdminRegistrationCode,
+vi.mock("@/server/auth/admin-registration-code-service", () => ({
+  verifyActiveAdminRegistrationCode: mocks.verifyActiveAdminRegistrationCode,
 }));
 
 vi.mock("@/server/modules/audit/audit-service", () => ({
@@ -57,8 +57,8 @@ vi.mock("@/server/modules/audit/audit-service", () => ({
 const mockedPrisma = vi.mocked(prisma);
 const mockedHashPassword = vi.mocked(hashPassword);
 const mockedVerifyPassword = vi.mocked(verifyPassword);
-const mockedVerifyAdminRegistrationCode = vi.mocked(
-  verifyAdminRegistrationCode,
+const mockedVerifyActiveAdminRegistrationCode = vi.mocked(
+  verifyActiveAdminRegistrationCode,
 );
 const mockedWriteAuditLog = vi.mocked(writeAuditLog);
 
@@ -121,7 +121,7 @@ describe("registration service", () => {
 
   it("creates active admin profiles only with valid role codes", async () => {
     mocks.userFindUnique.mockResolvedValueOnce(null);
-    mockedVerifyAdminRegistrationCode.mockReturnValueOnce(true);
+    mockedVerifyActiveAdminRegistrationCode.mockResolvedValueOnce(true);
     mockedHashPassword.mockResolvedValueOnce("hashed-password");
     mocks.transaction.user.create.mockResolvedValueOnce({
       id: "admin_1",
@@ -170,7 +170,7 @@ describe("registration service", () => {
 
   it("rejects invalid admin registration codes before hashing", async () => {
     mocks.userFindUnique.mockResolvedValueOnce(null);
-    mockedVerifyAdminRegistrationCode.mockReturnValueOnce(false);
+    mockedVerifyActiveAdminRegistrationCode.mockResolvedValueOnce(false);
 
     await expect(
       registerAdmin({

@@ -50,4 +50,32 @@ describe("admin registration codes", () => {
       }),
     ).toBe(false);
   });
+
+  it("changes active codes when a rotation nonce is used", () => {
+    const date = new Date("2026-06-01T00:00:00.000Z");
+    const firstCode = generateAdminRegistrationCode({
+      role: UserRole.SUPER_ADMIN,
+      secret,
+      date,
+      rotationNonce: "rotation-one",
+    });
+    const secondCode = generateAdminRegistrationCode({
+      role: UserRole.SUPER_ADMIN,
+      secret,
+      date,
+      rotationNonce: "rotation-two",
+    });
+
+    expect(secondCode).toMatch(/^[0-9]{6}$/);
+    expect(secondCode).not.toBe(firstCode);
+    expect(
+      verifyAdminRegistrationCode({
+        role: UserRole.SUPER_ADMIN,
+        code: firstCode,
+        secret,
+        date,
+        rotationNonce: "rotation-two",
+      }),
+    ).toBe(false);
+  });
 });

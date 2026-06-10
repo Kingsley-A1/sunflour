@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Truck,
   MessageSquareText,
+  UsersRound,
 } from "lucide-react";
 import type { UserRole } from "@/types/domain";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,12 @@ const adminNavItems = [
     href: "/admin/delivery" as Route,
     label: "Delivery",
     icon: Truck,
+    allowedRoles: ["SUPER_ADMIN"] as const,
+  },
+  {
+    href: "/admin/users" as Route,
+    label: "Users",
+    icon: UsersRound,
     allowedRoles: ["SUPER_ADMIN"] as const,
   },
   {

@@ -1,7 +1,7 @@
 import { AdminProfileStatus, UserRole } from "@/generated/prisma/enums";
 import type { User } from "next-auth";
 import { normalizeEmail } from "@/server/auth/admin-allowlist";
-import { verifyAdminRegistrationCode } from "@/server/auth/admin-registration-codes";
+import { verifyActiveAdminRegistrationCode } from "@/server/auth/admin-registration-code-service";
 import type {
   AdminRegistrationInput,
   CredentialsLoginInput,
@@ -108,10 +108,10 @@ export async function registerAdmin(
   await ensureEmailAvailable(email);
 
   if (
-    !verifyAdminRegistrationCode({
+    !(await verifyActiveAdminRegistrationCode({
       role: input.role,
       code: input.registrationCode,
-    })
+    }))
   ) {
     throw invalidAdminCodeError();
   }

@@ -1,43 +1,13 @@
 import "dotenv/config";
 
-import {
-  generateAdminRegistrationCode,
-  getAdminRegistrationWindow,
-} from "@/server/auth/admin-registration-codes";
-import type { AdminRole } from "@/server/auth/roles";
-import { UserRole } from "@/server/auth/roles";
-import { getServerEnv } from "@/server/config/env";
+import { getAdminRegistrationCodePanel } from "@/server/auth/admin-registration-code-service";
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-
-const roles: Array<{ role: AdminRole; label: string }> = [
-  { role: UserRole.SUPER_ADMIN, label: "Founder / super admin" },
-  { role: UserRole.MODERATOR, label: "Manager / moderator" },
-  { role: UserRole.ATTENDANT, label: "Supervisor / attendant" },
-  { role: UserRole.MEDIA_MANAGER, label: "Media manager" },
-];
-
-const env = getServerEnv();
-const secret = env.ADMIN_REGISTRATION_CODE_SECRET;
-
-if (!secret) {
-  throw new Error("ADMIN_REGISTRATION_CODE_SECRET is required.");
-}
-
-const now = new Date();
-const window = getAdminRegistrationWindow(now);
-const expiresAt = new Date((window + 1) * WEEK_MS);
-
+const panel = await getAdminRegistrationCodePanel();
 console.log("Sunflour admin registration codes");
-console.log(`Window: ${window}`);
-console.log(`Expires: ${expiresAt.toISOString()}`);
+console.log(`Version: ${panel.version}`);
+console.log(`Window: ${panel.window}`);
+console.log(`Expires: ${panel.expiresAt}`);
 
-for (const item of roles) {
-  const code = generateAdminRegistrationCode({
-    role: item.role,
-    secret,
-    date: now,
-  });
-
-  console.log(`${item.label}: ${code}`);
+for (const item of panel.codes) {
+  console.log(`${item.label}: ${item.code}`);
 }
