@@ -6,32 +6,13 @@ import { prisma } from "@/server/db/prisma";
 import { applyAdminAllowlistRole } from "@/server/auth/provisioning";
 import { credentialsLoginSchema } from "@/server/auth/auth-schemas";
 import { authorizeCredentials } from "@/server/auth/registration-service";
+import { getGoogleProviderCredentials } from "@/server/auth/google-oauth";
 import { UserRole } from "@/server/auth/roles";
 import { getServerEnv } from "@/server/config/env";
 import { enforceRateLimit } from "@/server/lib/rate-limit";
 
-export interface GoogleProviderCredentials {
-  clientId: string;
-  clientSecret: string;
-}
-
 function getOptionalSecret(): string | undefined {
   return getServerEnv().AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
-}
-
-export function getGoogleProviderCredentials(
-  input: Record<string, string | undefined> = process.env,
-): GoogleProviderCredentials | null {
-  const env = getServerEnv(input);
-
-  if (!env.AUTH_GOOGLE_ID || !env.AUTH_GOOGLE_SECRET) {
-    return null;
-  }
-
-  return {
-    clientId: env.AUTH_GOOGLE_ID,
-    clientSecret: env.AUTH_GOOGLE_SECRET,
-  };
 }
 
 function headerValue(
@@ -75,39 +56,37 @@ export function shouldApplyAdminAllowlist(input: {
 }
 
 const googleCredentials = getGoogleProviderCredentials();
-const providers: NextAuthOptions["providers"] = [
-  CredentialsProvider({
-    name: "Email and password",
-    credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" },
-    },
-    async authorize(credentials, request) {
-      const parsedCredentials = credentialsLoginSchema.safeParse(credentials);
+const credentialsProvider = CredentialsProvider({
+  name: "Email and password",
+  credentials: {
+    email: { label: "Email", type: "email" },
+    password: { label: "Password", type: "password" },
+  },
+  async authorize(credentials, request) {
+    const parsedCredentials = credentialsLoginSchema.safeParse(credentials);
 
-      if (!parsedCredentials.success) {
-        return null;
-      }
+    if (!parsedCredentials.success) {
+      return null;
+    }
 
-      enforceRateLimit({
-        key: `credentials:${getCredentialsRequestIp(request)}:${parsedCredentials.data.email}`,
-        limit: 10,
-        windowMs: 15 * 60_000,
-      });
+    enforceRateLimit({
+      key: `credentials:${getCredentialsRequestIp(request)}:${parsedCredentials.data.email}`,
+      limit: 10,
+      windowMs: 15 * 60_000,
+    });
 
-      return authorizeCredentials(parsedCredentials.data);
-    },
-  }),
-];
-
-if (googleCredentials) {
-  providers.push(
-    GoogleProvider({
-      clientId: googleCredentials.clientId,
-      clientSecret: googleCredentials.clientSecret,
-    }),
-  );
-}
+    return authorizeCredentials(parsedCredentials.data);
+  },
+});
+const providers: NextAuthOptions["providers"] = googleCredentials
+  ? [
+      GoogleProvider({
+        clientId: googleCredentials.clientId,
+        clientSecret: googleCredentials.clientSecret,
+      }),
+      credentialsProvider,
+    ]
+  : [credentialsProvider];
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(

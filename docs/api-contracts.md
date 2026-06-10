@@ -1069,6 +1069,8 @@ Rules:
 
 ```txt
 - Code is 6 digits, generated from ADMIN_REGISTRATION_CODE_SECRET, role, and the current 7-day UTC window.
+- ADMIN_REGISTRATION_CODE_SECRET is the long signing secret, not the 6-digit code. It must be at least 32 characters.
+- Use pnpm auth:admin-codes to print the current role-specific 6-digit codes for the configured secret.
 - Valid registration creates users and active admin_profiles in one transaction.
 - Registration writes ADMIN_REGISTERED_WITH_CODE audit log.
 - Endpoint is rate-limited per client IP.

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { ShoppingBag, UserRound } from "lucide-react";
+import { CreditCard, ShoppingBag, UserPlus, UserRound } from "lucide-react";
 import logoAsset from "../../../logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -64,16 +64,42 @@ export function PublicShell({
               ))}
             </nav>
             <div className="flex items-center gap-2">
-              <Link
-                className="hidden min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold sm:inline-flex"
-                href="/account"
-              >
-                <UserRound className="h-4 w-4" aria-hidden="true" />
-                Account
-              </Link>
+              {isSignedIn ? (
+                <Link
+                  className="hidden min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold sm:inline-flex"
+                  href="/account"
+                >
+                  <UserRound className="h-4 w-4" aria-hidden="true" />
+                  Account
+                </Link>
+              ) : (
+                <div className="hidden items-center gap-2 md:flex">
+                  <Link
+                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold"
+                    href="/sign-in"
+                  >
+                    <UserRound className="h-4 w-4" aria-hidden="true" />
+                    Sign in
+                  </Link>
+                  <Link
+                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold"
+                    href="/register"
+                  >
+                    <UserPlus className="h-4 w-4" aria-hidden="true" />
+                    Register
+                  </Link>
+                </div>
+              )}
               {isSignedIn ? (
                 <SignOutButton className="hidden md:inline-flex" />
               ) : null}
+              <Link
+                className="hidden min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm font-semibold text-[var(--color-on-primary)] md:inline-flex"
+                href="/checkout"
+              >
+                <CreditCard className="h-4 w-4" aria-hidden="true" />
+                Checkout
+              </Link>
               <Link
                 aria-label="Review cart"
                 className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:bg-[var(--color-surface-soft)]"

@@ -33,10 +33,6 @@ export const publicMobileNavItems: PublicMobileNavItem[] = [
   { href: "/menu" as Route, label: "Menu", icon: Utensils },
   { href: "/cart" as Route, label: "Cart", icon: ShoppingCart },
   { href: "/checkout" as Route, label: "Checkout", icon: CreditCard },
-  { href: "/sign-in" as Route, label: "Sign in", icon: UserRound },
-  { href: "/register" as Route, label: "Register", icon: UserPlus },
-  { href: "/account" as Route, label: "Account", icon: UserRound },
-  { href: "/account/orders" as Route, label: "Orders", icon: ClipboardList },
   { href: "/reviews" as Route, label: "Reviews", icon: MessageSquareText },
   { href: "/about" as Route, label: "About", icon: Info },
   { href: "/contact" as Route, label: "Contact", icon: Phone },
@@ -44,8 +40,21 @@ export const publicMobileNavItems: PublicMobileNavItem[] = [
   { href: "/terms" as Route, label: "Terms", icon: FileText },
 ];
 
+export const signedOutMobileNavItems: PublicMobileNavItem[] = [
+  { href: "/sign-in" as Route, label: "Sign in", icon: UserRound },
+  { href: "/register" as Route, label: "Register", icon: UserPlus },
+];
+
+export const signedInMobileNavItems: PublicMobileNavItem[] = [
+  { href: "/account" as Route, label: "Account", icon: UserRound },
+  { href: "/account/orders" as Route, label: "Orders", icon: ClipboardList },
+];
+
 export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) {
   const [open, setOpen] = useState(false);
+  const authItems = isSignedIn
+    ? signedInMobileNavItems
+    : signedOutMobileNavItems;
 
   return (
     <>
@@ -62,7 +71,7 @@ export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) 
       >
         <nav aria-label="Mobile public page navigation">
           <ul className="m-0 grid list-none gap-2 p-0">
-            {publicMobileNavItems.map((item) => {
+            {[...publicMobileNavItems, ...authItems].map((item) => {
               const Icon = item.icon;
 
               return (

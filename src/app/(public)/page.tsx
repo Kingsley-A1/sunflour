@@ -32,8 +32,8 @@ export default async function HomePage() {
   return (
     <main>
       <section className="bg-[var(--color-bg-subtle)]">
-        <div className="mx-auto grid max-w-6xl gap-7 px-4 py-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:py-10">
-          <div className="max-w-2xl">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:py-10">
+          <div className="max-w-3xl">
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
               Fresh from Sunflour Bakery
             </p>
@@ -46,37 +46,35 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-3">
-            {heroError ? (
-              <ErrorState description={heroError} title="Hero products unavailable" />
-            ) : heroProducts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {heroProducts.map((product) => (
-                  <HeroProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <ErrorState
-                description="Add active products in the admin catalog to show homepage hero products."
-                title="No products to show yet"
-              />
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                className="inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm font-bold text-[var(--color-on-primary)] sm:text-base"
-                href="/menu"
-              >
-                View menu
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link
-                className="inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-soft)] sm:text-base"
-                href="/cart"
-              >
-                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-                Review cart
-              </Link>
+          {heroError ? (
+            <ErrorState description={heroError} title="Hero products unavailable" />
+          ) : heroProducts.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {heroProducts.map((product) => (
+                <HeroProductCard key={product.id} product={product} />
+              ))}
             </div>
+          ) : (
+            <ErrorState
+              description="Add active products in the admin catalog to show homepage hero products."
+              title="No products to show yet"
+            />
+          )}
+          <div className="grid grid-cols-2 gap-2 sm:max-w-xl">
+            <Link
+              className="inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm font-bold text-[var(--color-on-primary)] sm:text-base"
+              href="/menu"
+            >
+              View menu
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <Link
+              className="inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-soft)] sm:text-base"
+              href="/cart"
+            >
+              <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+              Review cart
+            </Link>
           </div>
         </div>
       </section>

@@ -4,39 +4,69 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  getApiFieldError,
   getApiErrorMessage,
   registerCustomerAccount,
 } from "@/lib/api/client";
+import { ApiClientError } from "@/types/api";
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  callbackUrl: string;
+  isGoogleAuthEnabled: boolean;
+}
+
+export function RegisterForm({
+  callbackUrl,
+  isGoogleAuthEnabled,
+}: RegisterFormProps) {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+  }>({});
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submitRegistration(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setFieldErrors({});
     setIsSubmitting(true);
 
     try {
       await registerCustomerAccount({ fullName, email, password });
-      await signIn("credentials", {
+      const result = await signIn("credentials", {
         email,
         password,
-        callbackUrl: "/account",
+        callbackUrl,
         redirect: false,
       });
-      router.push("/account" as Route);
+
+      if (result?.error) {
+        setError("Account was created, but sign in failed. Sign in with your email and password.");
+        return;
+      }
+
+      router.push((result?.url ?? callbackUrl) as Route);
       router.refresh();
     } catch (registrationError) {
+      if (registrationError instanceof ApiClientError) {
+        setFieldErrors({
+          fullName: getApiFieldError(registrationError.fieldErrors, "fullName"),
+          email: getApiFieldError(registrationError.fieldErrors, "email"),
+          password: getApiFieldError(registrationError.fieldErrors, "password"),
+        });
+      }
+
       setError(
         getApiErrorMessage(
           registrationError,
@@ -55,9 +85,28 @@ export function RegisterForm() {
           {error}
         </p>
       ) : null}
+      {isGoogleAuthEnabled ? (
+        <Button
+          className="w-full"
+          icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
+          onClick={() => signIn("google", { callbackUrl })}
+          size="lg"
+          variant="secondary"
+        >
+          Continue with Google
+        </Button>
+      ) : null}
+      {isGoogleAuthEnabled ? (
+        <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+          <span>Email account</span>
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+        </div>
+      ) : null}
       <form className="grid gap-4" onSubmit={submitRegistration}>
         <Input
           autoComplete="name"
+          error={fieldErrors.fullName}
           label="Full name"
           onChange={(event) => setFullName(event.target.value)}
           required
@@ -65,6 +114,7 @@ export function RegisterForm() {
         />
         <Input
           autoComplete="email"
+          error={fieldErrors.email}
           label="Email"
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -73,6 +123,7 @@ export function RegisterForm() {
         />
         <Input
           autoComplete="new-password"
+          error={fieldErrors.password}
           helpText="Use at least 8 characters with uppercase, lowercase, and a number."
           label="Password"
           onChange={(event) => setPassword(event.target.value)}

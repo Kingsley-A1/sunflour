@@ -4,16 +4,20 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { LogIn } from "lucide-react";
+import { LogIn, Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface SignInFormProps {
   callbackUrl: string;
+  isGoogleAuthEnabled: boolean;
 }
 
-export function SignInForm({ callbackUrl }: SignInFormProps) {
+export function SignInForm({
+  callbackUrl,
+  isGoogleAuthEnabled,
+}: SignInFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +56,24 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
           {error}
         </p>
       ) : null}
+      {isGoogleAuthEnabled ? (
+        <Button
+          className="w-full"
+          icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
+          onClick={() => signIn("google", { callbackUrl })}
+          size="lg"
+          variant="secondary"
+        >
+          Continue with Google
+        </Button>
+      ) : null}
+      {isGoogleAuthEnabled ? (
+        <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+          <span>Email sign in</span>
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+        </div>
+      ) : null}
       <form className="grid gap-4" onSubmit={submitCredentials}>
         <Input
           autoComplete="email"
@@ -70,19 +92,13 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
           value={password}
         />
         <Button
-          icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
+          icon={<Mail className="h-4 w-4" aria-hidden="true" />}
           loading={isSigningIn}
           type="submit"
         >
           Sign in
         </Button>
       </form>
-      <Button
-        onClick={() => signIn("google", { callbackUrl })}
-        variant="secondary"
-      >
-        Continue with Google
-      </Button>
       <p className="m-0 text-sm text-[var(--color-text-muted)]">
         Forgot password?{" "}
         <Link
