@@ -46,6 +46,15 @@ function hasVerifiedGoogleEmail(profile: unknown): boolean {
   );
 }
 
+export function parseCredentialsProviderInput(
+  credentials: Record<string, unknown> | undefined,
+) {
+  return credentialsLoginSchema.safeParse({
+    email: credentials?.email,
+    password: credentials?.password,
+  });
+}
+
 export function shouldApplyAdminAllowlist(input: {
   accountProvider?: string;
   profile?: unknown;
@@ -63,7 +72,7 @@ const credentialsProvider = CredentialsProvider({
     password: { label: "Password", type: "password" },
   },
   async authorize(credentials, request) {
-    const parsedCredentials = credentialsLoginSchema.safeParse(credentials);
+    const parsedCredentials = parseCredentialsProviderInput(credentials);
 
     if (!parsedCredentials.success) {
       return null;

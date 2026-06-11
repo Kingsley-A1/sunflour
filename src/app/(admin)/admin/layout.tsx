@@ -23,6 +23,7 @@ export default async function AdminLayout({
               <Link
                 className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
                 href="/api/auth/signin"
+                style={{ color: "var(--color-on-primary)" }}
               >
                 Sign in
               </Link>

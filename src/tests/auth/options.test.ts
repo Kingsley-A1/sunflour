@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { authOptions, shouldApplyAdminAllowlist } from "@/server/auth/options";
+import {
+  authOptions,
+  parseCredentialsProviderInput,
+  shouldApplyAdminAllowlist,
+} from "@/server/auth/options";
 import { getGoogleProviderCredentials } from "@/server/auth/google-oauth";
 
 describe("NextAuth options helpers", () => {
@@ -27,6 +31,22 @@ describe("NextAuth options helpers", () => {
         AUTH_GOOGLE_ID: "google-client-id",
       }),
     ).toThrow();
+  });
+
+  it("parses only email and password from NextAuth credentials payloads", () => {
+    const result = parseCredentialsProviderInput({
+      email: " ADMIN@Example.com ",
+      password: "Sunflour@2026",
+      csrfToken: "csrf-token",
+      callbackUrl: "/admin",
+      json: "true",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      email: "admin@example.com",
+      password: "Sunflour@2026",
+    });
   });
 
   it("allows admin allowlist provisioning only for verified Google OAuth", () => {
