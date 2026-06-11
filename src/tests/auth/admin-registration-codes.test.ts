@@ -51,6 +51,33 @@ describe("admin registration codes", () => {
     ).toBe(false);
   });
 
+  it("rejects a code at the exact next window boundary", () => {
+    const validUntilBoundary = new Date("2026-06-03T23:59:59.999Z");
+    const nextWindowBoundary = new Date("2026-06-04T00:00:00.000Z");
+    const code = generateAdminRegistrationCode({
+      role: UserRole.ATTENDANT,
+      secret,
+      date: validUntilBoundary,
+    });
+
+    expect(
+      verifyAdminRegistrationCode({
+        role: UserRole.ATTENDANT,
+        code,
+        secret,
+        date: validUntilBoundary,
+      }),
+    ).toBe(true);
+    expect(
+      verifyAdminRegistrationCode({
+        role: UserRole.ATTENDANT,
+        code,
+        secret,
+        date: nextWindowBoundary,
+      }),
+    ).toBe(false);
+  });
+
   it("changes active codes when a rotation nonce is used", () => {
     const date = new Date("2026-06-01T00:00:00.000Z");
     const firstCode = generateAdminRegistrationCode({

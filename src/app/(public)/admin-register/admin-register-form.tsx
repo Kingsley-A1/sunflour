@@ -7,6 +7,7 @@ import { ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Select } from "@/components/ui/select";
 import {
   getApiErrorMessage,
@@ -49,13 +50,21 @@ export function AdminRegisterForm() {
         role,
         registrationCode,
       });
-      await signIn("credentials", {
+      const result = await signIn("credentials", {
         email,
         password,
         callbackUrl: "/admin",
         redirect: false,
       });
-      router.push("/admin" as Route);
+
+      if (result?.error) {
+        setError(
+          "Staff account was created, but sign in failed. Sign in with your email and password.",
+        );
+        return;
+      }
+
+      router.push((result?.url ?? "/admin") as Route);
       router.refresh();
     } catch (registrationError) {
       setError(
@@ -72,7 +81,10 @@ export function AdminRegisterForm() {
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       {error ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]">
+        <p
+          className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
@@ -92,13 +104,12 @@ export function AdminRegisterForm() {
           type="email"
           value={email}
         />
-        <Input
+        <PasswordInput
           autoComplete="new-password"
           helpText="Use at least 8 characters with uppercase, lowercase, and a number."
           label="Password"
           onChange={(event) => setPassword(event.target.value)}
           required
-          type="password"
           value={password}
         />
         <Select

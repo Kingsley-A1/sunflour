@@ -72,6 +72,23 @@ async function ensureEmailAvailable(email: string): Promise<void> {
   }
 }
 
+async function auditRejectedAdminRegistrationCode(input: {
+  email: string;
+  role: UserRole;
+}): Promise<void> {
+  await writeAuditLog({
+    actorUserId: null,
+    action: "ADMIN_REGISTRATION_CODE_REJECTED",
+    targetType: "admin_registration",
+    targetId: input.email,
+    metadata: {
+      email: input.email,
+      role: input.role,
+      reason: "invalid_or_expired_code",
+    },
+  });
+}
+
 export async function registerCustomer(
   input: CustomerRegistrationInput,
 ): Promise<SafeAuthUser> {
@@ -113,6 +130,7 @@ export async function registerAdmin(
       code: input.registrationCode,
     }))
   ) {
+    await auditRejectedAdminRegistrationCode({ email, role: input.role });
     throw invalidAdminCodeError();
   }
 

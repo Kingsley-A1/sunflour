@@ -185,6 +185,18 @@ describe("registration service", () => {
       code: "FORBIDDEN",
     });
     expect(mockedHashPassword).not.toHaveBeenCalled();
+    expect(mockedWriteAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "ADMIN_REGISTRATION_CODE_REJECTED",
+        targetType: "admin_registration",
+        targetId: "manager@example.com",
+        metadata: {
+          email: "manager@example.com",
+          role: UserRole.MODERATOR,
+          reason: "invalid_or_expired_code",
+        },
+      }),
+    );
   });
 
   it("authorizes valid credentials and resets lockout counters", async () => {

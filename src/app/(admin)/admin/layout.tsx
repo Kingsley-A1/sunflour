@@ -17,6 +17,7 @@ export default async function AdminLayout({
     return (
       <main className="grid min-h-svh place-items-center bg-[var(--color-bg)] p-4">
         <div className="w-full max-w-lg">
+          <h1 className="sr-only">Admin access required</h1>
           <ErrorState
             action={
               <Link

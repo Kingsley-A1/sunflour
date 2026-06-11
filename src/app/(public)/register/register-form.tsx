@@ -4,10 +4,11 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { LogIn, UserPlus } from "lucide-react";
+import { Globe2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   getApiFieldError,
   getApiErrorMessage,
@@ -81,14 +82,17 @@ export function RegisterForm({
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       {error ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]">
+        <p
+          className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
       {isGoogleAuthEnabled ? (
         <Button
           className="w-full"
-          icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
+          icon={<Globe2 className="h-4 w-4" aria-hidden="true" />}
           onClick={() => signIn("google", { callbackUrl })}
           size="lg"
           variant="secondary"
@@ -121,14 +125,13 @@ export function RegisterForm({
           type="email"
           value={email}
         />
-        <Input
+        <PasswordInput
           autoComplete="new-password"
           error={fieldErrors.password}
           helpText="Use at least 8 characters with uppercase, lowercase, and a number."
           label="Password"
           onChange={(event) => setPassword(event.target.value)}
           required
-          type="password"
           value={password}
         />
         <Button

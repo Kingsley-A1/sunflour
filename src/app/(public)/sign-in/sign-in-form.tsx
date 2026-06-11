@@ -4,10 +4,11 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { LogIn, Mail } from "lucide-react";
+import { Globe2, Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 interface SignInFormProps {
   callbackUrl: string;
@@ -52,14 +53,17 @@ export function SignInForm({
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       {error ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]">
+        <p
+          className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
       {isGoogleAuthEnabled ? (
         <Button
           className="w-full"
-          icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
+          icon={<Globe2 className="h-4 w-4" aria-hidden="true" />}
           onClick={() => signIn("google", { callbackUrl })}
           size="lg"
           variant="secondary"
@@ -83,12 +87,11 @@ export function SignInForm({
           type="email"
           value={email}
         />
-        <Input
+        <PasswordInput
           autoComplete="current-password"
           label="Password"
           onChange={(event) => setPassword(event.target.value)}
           required
-          type="password"
           value={password}
         />
         <Button

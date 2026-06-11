@@ -35,7 +35,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         aria-describedby={describedBy || undefined}
         aria-invalid={Boolean(error)}
         className={cn(
-          "min-h-11 rounded-[var(--radius-sm)] border bg-[var(--color-surface)] px-3 text-[var(--color-text)] shadow-sm outline-none transition",
+          "min-h-11 rounded-[var(--radius-sm)] border bg-[var(--color-bg)] px-3 text-[var(--color-text)] outline-none transition",
           "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
           error
             ? "border-[var(--color-danger)]"

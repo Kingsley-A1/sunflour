@@ -4,7 +4,6 @@ import type { Route } from "next";
 import { CreditCard, ShoppingBag, UserPlus, UserRound } from "lucide-react";
 import logoAsset from "../../../logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
@@ -90,9 +89,6 @@ export function PublicShell({
                   </Link>
                 </div>
               )}
-              {isSignedIn ? (
-                <SignOutButton className="hidden md:inline-flex" />
-              ) : null}
               <Link
                 className="hidden min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm font-semibold text-[var(--color-on-primary)] md:inline-flex"
                 href="/checkout"
