@@ -8,6 +8,7 @@ import {
 describe("public mobile navigation", () => {
   it("keeps public page links in customer priority order", () => {
     expect(publicMobileNavItems.map((item) => item.label)).toEqual([
+      "Home",
       "Menu",
       "Cart",
       "Checkout",

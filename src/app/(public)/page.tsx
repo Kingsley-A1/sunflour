@@ -41,8 +41,8 @@ export default async function HomePage() {
               Warm bakes, ready for pickup or delivery.
             </h1>
             <p className="m-0 mt-4 max-w-xl text-base leading-7 text-[var(--color-text-muted)]">
-              Choose from real menu products, review your cart, and place a
-              clear order without a surprise login wall.
+              Browse fresh bread, cakes, and pastries, then choose pickup or
+              delivery at checkout.
             </p>
           </div>
 
@@ -79,44 +79,52 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 py-8 md:grid-cols-4">
-        {[
-          {
-            icon: Leaf,
-            title: "Fresh from the bakery",
-            body: "Bakes are presented as food first, with clear names and prices.",
-          },
-          {
-            icon: HeartHandshake,
-            title: "Warm service",
-            body: "Ordering stays simple for guests, families, and returning customers.",
-          },
-          {
-            icon: Truck,
-            title: "Pickup or delivery",
-            body: "Choose the fulfilment option that fits your day before checkout.",
-          },
-          {
-            icon: PackageCheck,
-            title: "Prepared with care",
-            body: "Portions, availability, and payment state are kept honest.",
-          },
-        ].map((item) => {
-          const Icon = item.icon;
+      <section
+        aria-label="Why order from Sunflour"
+        className="border-y border-[var(--color-border)] bg-[var(--color-surface)]"
+      >
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px bg-[var(--color-border)] md:grid-cols-4">
+          {[
+            {
+              icon: Leaf,
+              title: "Fresh bakes",
+              body: "Clear products and prices.",
+            },
+            {
+              icon: HeartHandshake,
+              title: "Warm service",
+              body: "Simple ordering for every customer.",
+            },
+            {
+              icon: Truck,
+              title: "Pickup or delivery",
+              body: "Choose what fits your day.",
+            },
+            {
+              icon: PackageCheck,
+              title: "Prepared with care",
+              body: "Honest availability and payment status.",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
 
-          return (
-            <article
-              className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
-              key={item.title}
-            >
-              <Icon className="h-5 w-5 text-[var(--color-primary)]" aria-hidden="true" />
-              <h2 className="m-0 mt-3 text-base font-bold">{item.title}</h2>
-              <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-                {item.body}
-              </p>
-            </article>
-          );
-        })}
+            return (
+              <article
+                className="min-w-0 bg-[var(--color-surface)] px-4 py-6 md:px-5"
+                key={item.title}
+              >
+                <Icon
+                  className="h-5 w-5 text-[var(--color-primary)]"
+                  aria-hidden="true"
+                />
+                <h2 className="m-0 mt-3 text-base font-bold">{item.title}</h2>
+                <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
+                  {item.body}
+                </p>
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-8">
@@ -174,7 +182,7 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
         <h2 className="m-0 line-clamp-2 text-sm font-extrabold leading-snug text-[var(--color-text)] sm:text-base">
           {product.name}
         </h2>
-        <p className="m-0 text-sm text-[var(--color-text-muted)]">
+        <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
           {hasVariants ? "From " : ""}
           <PriceText amount={product.basePrice} />
         </p>
