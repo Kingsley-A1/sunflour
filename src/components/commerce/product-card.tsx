@@ -64,7 +64,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <p className="m-0 text-sm text-[var(--color-text-muted)]">
+          <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
             {hasVariants ? "From " : ""}
             <PriceText amount={product.basePrice} />
           </p>

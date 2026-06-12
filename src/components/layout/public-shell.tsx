@@ -35,7 +35,7 @@ export function PublicShell({
 
   return (
     <CartProvider>
-      <div className="min-h-svh bg-[var(--color-bg)] text-[var(--color-text)]">
+      <div className="flex min-h-svh flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
         <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link className="flex min-w-0 items-center gap-3" href="/">
@@ -126,7 +126,7 @@ export function PublicShell({
             ))}
           </nav>
         </header>
-        {children}
+        <div className="flex-grow">{children}</div>
         <Footer />
         <StickyCartBar />
       </div>

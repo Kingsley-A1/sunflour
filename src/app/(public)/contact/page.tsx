@@ -1,17 +1,20 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
-  Camera,
   ExternalLink,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
   ReceiptText,
-  Sparkles,
 } from "lucide-react";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  TikTokIcon,
+  WhatsAppIcon,
+} from "@/components/ui/brand-icons";
 import { getPublicContactConfig } from "@/server/config/public-contact";
 
 export const metadata: Metadata = {
@@ -25,7 +28,7 @@ interface ContactAction {
   body: string;
   value: string | null;
   href: string | null;
-  icon: LucideIcon;
+  icon: ReactNode;
   external?: boolean;
 }
 
@@ -37,14 +40,14 @@ export default function ContactPage() {
       body: "Call Sunflour for direct ordering or order support.",
       value: contact.phoneNumber,
       href: contact.phoneHref,
-      icon: Phone,
+      icon: <Phone className="h-5 w-5" aria-hidden="true" />,
     },
     {
       title: "WhatsApp",
       body: "Send payment proof or ask for help after checkout.",
       value: contact.whatsappNumber,
       href: contact.whatsappHref,
-      icon: MessageCircle,
+      icon: <WhatsAppIcon className="h-5 w-5" />,
       external: true,
     },
     {
@@ -52,7 +55,7 @@ export default function ContactPage() {
       body: "Use email for invoice, account, or business questions.",
       value: contact.emailAddress,
       href: contact.emailHref,
-      icon: Mail,
+      icon: <Mail className="h-5 w-5" aria-hidden="true" />,
     },
   ];
   const socialActions: ContactAction[] = [
@@ -61,7 +64,7 @@ export default function ContactPage() {
       body: "Follow Sunflour updates and product posts.",
       value: contact.instagram,
       href: contact.instagramHref,
-      icon: Camera,
+      icon: <InstagramIcon className="h-5 w-5" />,
       external: true,
     },
     {
@@ -69,7 +72,7 @@ export default function ContactPage() {
       body: "Watch quick product and bakery updates.",
       value: contact.tiktok,
       href: contact.tiktokHref,
-      icon: Sparkles,
+      icon: <TikTokIcon className="h-5 w-5" />,
       external: true,
     },
     {
@@ -77,10 +80,16 @@ export default function ContactPage() {
       body: "Find Sunflour on Facebook.",
       value: contact.facebook,
       href: contact.facebookHref,
-      icon: ExternalLink,
+      icon: <FacebookIcon className="h-5 w-5" />,
       external: true,
     },
   ];
+  const availablePrimaryActions = primaryActions.filter(
+    (action) => action.href && action.value,
+  );
+  const availableSocialActions = socialActions.filter(
+    (action) => action.href && action.value,
+  );
 
   return (
     <main>
@@ -117,53 +126,57 @@ export default function ContactPage() {
       {!contact.hasAnyContact ? (
         <section className="mx-auto max-w-6xl px-4 pt-8">
           <div className="rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning-soft)] p-4 text-sm leading-6 text-[var(--color-text)]">
-            Contact details are not configured yet. Add the public contact
-            values in the environment file so this page can show live business
-            details.
+            Contact details are temporarily unavailable. Browse the menu or try
+            again later.
           </div>
         </section>
       ) : null}
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-3">
-        {primaryActions.map((action) => (
-          <ContactCard action={action} key={action.title} />
-        ))}
-      </section>
-
-      <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-10 lg:grid-cols-[1fr_1fr]">
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
-          <MapPin className="h-6 w-6 text-[var(--color-primary)]" aria-hidden="true" />
-          <h2 className="m-0 mt-4 text-2xl font-extrabold">Address</h2>
-          {contact.address ? (
-            <p className="m-0 mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
-              {contact.address}
-            </p>
-          ) : (
-            <p className="m-0 mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
-              Address is not configured yet.
-            </p>
-          )}
-          {contact.mapsHref ? (
-            <a
-              className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-bold hover:bg-[var(--color-surface-soft)]"
-              href={contact.mapsHref}
-              rel="noreferrer"
-              target="_blank"
-            >
-              Open in maps
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            </a>
-          ) : null}
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-          {socialActions.map((action) => (
-            <ContactCard action={action} compact key={action.title} />
+      {availablePrimaryActions.length > 0 ? (
+        <section className="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-3">
+          {availablePrimaryActions.map((action) => (
+            <ContactCard action={action} key={action.title} />
           ))}
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="mx-auto grid max-w-6xl gap-5 px-4 pb-12 md:grid-cols-[1fr_auto] md:items-center">
+      {contact.address || availableSocialActions.length > 0 ? (
+        <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-10 lg:grid-cols-[1fr_1fr]">
+          {contact.address ? (
+            <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+              <MapPin
+                className="h-6 w-6 text-[var(--color-primary)]"
+                aria-hidden="true"
+              />
+              <h2 className="m-0 mt-4 text-2xl font-extrabold">Address</h2>
+              <p className="m-0 mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                {contact.address}
+              </p>
+              {contact.mapsHref ? (
+                <a
+                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-bold hover:bg-[var(--color-surface-soft)]"
+                  href={contact.mapsHref}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Open in maps
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+
+          {availableSocialActions.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+              {availableSocialActions.map((action) => (
+                <ContactCard action={action} compact key={action.title} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="mx-auto grid max-w-6xl gap-5 px-4 pb-12 pt-8 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <h2 className="m-0 text-2xl font-extrabold">Ready to order?</h2>
           <p className="m-0 mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
@@ -190,11 +203,9 @@ function ContactCard({
   action: ContactAction;
   compact?: boolean;
 }) {
-  const Icon = action.icon;
-
   return (
     <article className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
-      <Icon className="h-5 w-5 text-[var(--color-primary)]" aria-hidden="true" />
+      <div className="text-[var(--color-primary)]">{action.icon}</div>
       <h2 className="m-0 mt-4 text-lg font-extrabold">{action.title}</h2>
       <p className="m-0 mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
         {action.body}
@@ -211,11 +222,7 @@ function ContactCard({
             <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
           ) : null}
         </a>
-      ) : (
-        <p className="m-0 mt-4 text-sm font-semibold text-[var(--color-text-soft)]">
-          Not configured
-        </p>
-      )}
+      ) : null}
     </article>
   );
 }

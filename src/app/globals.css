@@ -24,7 +24,7 @@
   --color-text-muted: #6f5842;
   --color-text-soft: #8a735b;
   --color-text-inverse: #ffffff;
-  --color-primary: #e60000;
+  --color-primary: #dc0000;
   --color-primary-hover: #c91414;
   --color-primary-pressed: #a80f0f;
   --color-on-primary: #ffffff;
@@ -163,9 +163,11 @@ textarea {
   font: inherit;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 :focus-visible {

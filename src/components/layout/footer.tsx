@@ -1,19 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import {
-  Camera,
-  ExternalLink,
-  Mail,
-  MapPin,
-  MessageCircle,
-  Phone,
-  ReceiptText,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import type { ReactNode } from "react";
+import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import logoAsset from "../../../logo.png";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  TikTokIcon,
+} from "@/components/ui/brand-icons";
 import { getPublicContactConfig } from "@/server/config/public-contact";
 
 interface FooterLink {
@@ -70,33 +66,16 @@ export function Footer() {
       href: contact.emailHref,
       icon: Mail,
     },
-    {
-      label: "Instagram",
-      value: contact.instagram,
-      href: contact.instagramHref,
-      icon: Camera,
-      external: true,
-    },
-    {
-      label: "TikTok",
-      value: contact.tiktok,
-      href: contact.tiktokHref,
-      icon: Sparkles,
-      external: true,
-    },
-    {
-      label: "Facebook",
-      value: contact.facebook,
-      href: contact.facebookHref,
-      icon: ExternalLink,
-      external: true,
-    },
-  ];
+  ].filter((item) => item.href && item.value);
+  const hasDirectContact = contactLinks.length > 0 || Boolean(contact.address);
 
   return (
     <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 md:grid-cols-2 lg:grid-cols-[1.25fr_0.75fr_0.75fr_1fr] lg:py-10">
-        <section aria-labelledby="footer-brand">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-8 lg:grid-cols-[1.4fr_0.8fr_0.8fr_1.2fr] lg:py-10">
+        <section
+          aria-labelledby="footer-brand"
+          className="col-span-2 lg:col-span-1"
+        >
           <Link className="inline-flex items-center gap-3" href="/">
             <Image
               alt="Sunflour Bakery logo"
@@ -110,73 +89,86 @@ export function Footer() {
             </span>
           </Link>
           <p className="m-0 mt-4 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
-            Fresh bakery orders with clear pickup, delivery, invoice, and manual
-            Moniepoint payment guidance from checkout to confirmation.
+            Fresh bakes for pickup or delivery, with clear ordering and verified
+            transfer payments.
           </p>
-          <div className="mt-5 grid gap-3 text-sm text-[var(--color-text-muted)] sm:grid-cols-2 lg:grid-cols-1">
-            <p className="m-0 flex gap-2">
-              <ReceiptText
-                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
-                aria-hidden="true"
+          <div className="mt-5 flex flex-wrap gap-2">
+            {contact.instagramHref ? (
+              <SocialLink
+                href={contact.instagramHref}
+                icon={<InstagramIcon className="h-5 w-5" />}
+                label="Sunflour Bakery on Instagram"
               />
-              Invoices stay tied to the order details shown at checkout.
-            </p>
-            <p className="m-0 flex gap-2">
-              <ShieldCheck
-                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
-                aria-hidden="true"
+            ) : null}
+            {contact.tiktokHref ? (
+              <SocialLink
+                href={contact.tiktokHref}
+                icon={<TikTokIcon className="h-5 w-5" />}
+                label="Sunflour Bakery on TikTok"
               />
-              Transfer payments are confirmed only after staff verification.
-            </p>
+            ) : null}
+            {contact.facebookHref ? (
+              <SocialLink
+                href={contact.facebookHref}
+                icon={<FacebookIcon className="h-5 w-5" />}
+                label="Sunflour Bakery on Facebook"
+              />
+            ) : null}
           </div>
         </section>
 
-        <div className="grid grid-cols-2 gap-5 md:col-span-2 lg:contents">
-          <FooterNav title="Explore" links={exploreLinks} />
+        <FooterNav title="Explore" links={exploreLinks} />
+        <FooterNav title="Ordering" links={supportLinks} />
 
-          <section aria-labelledby="footer-contact">
-            <h2 id="footer-contact" className="m-0 text-sm font-extrabold">
-              Contacts
-            </h2>
+        <section
+          aria-labelledby="footer-contact"
+          className="col-span-2 lg:col-span-1"
+        >
+          <h2 id="footer-contact" className="m-0 text-sm font-extrabold">
+            Contact
+          </h2>
+          {hasDirectContact ? (
             <ul className="m-0 mt-3 grid list-none gap-2 p-0">
               {contactLinks.map((item) => (
                 <ContactItem item={item} key={item.label} />
               ))}
-              <li className="flex min-w-0 gap-2 rounded-[var(--radius-sm)] px-0 py-1.5 text-sm text-[var(--color-text-muted)]">
-                <MapPin
-                  className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
-                  aria-hidden="true"
-                />
-                <span className="min-w-0">
-                  <span className="block font-semibold text-[var(--color-text)]">
-                    Address
+              {contact.address ? (
+                <li className="flex min-w-0 gap-2 rounded-[var(--radius-sm)] px-0 py-1.5 text-sm text-[var(--color-text-muted)]">
+                  <MapPin
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0">
+                    {contact.mapsHref ? (
+                      <a
+                        className="inline max-w-full break-all hover:text-[var(--color-primary)] hover:underline"
+                        href={contact.mapsHref}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {contact.address}
+                      </a>
+                    ) : (
+                      <span>{contact.address}</span>
+                    )}
                   </span>
-                  {contact.mapsHref ? (
-                    <a
-                      className="inline max-w-full break-all hover:text-[var(--color-primary)] hover:underline"
-                      href={contact.mapsHref}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      {contact.address}
-                    </a>
-                  ) : (
-                    <span>Not configured</span>
-                  )}
-                </span>
-              </li>
+                </li>
+              ) : null}
             </ul>
-          </section>
-        </div>
-
-        <FooterNav title="Ordering" links={supportLinks} />
+          ) : (
+            <Link
+              className="mt-3 inline-flex min-h-9 items-center text-sm font-semibold text-[var(--color-primary)] hover:underline"
+              href="/contact"
+            >
+              View contact page
+            </Link>
+          )}
+        </section>
       </div>
 
       <div className="border-t border-[var(--color-border)]">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 text-sm text-[var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between">
-          <p className="m-0">
-            Copyright {currentYear} Sunflour Bakery. All rights reserved.
-          </p>
+          <p className="m-0">&copy; {currentYear} Sunflour Bakery</p>
           <nav aria-label="Legal navigation" className="flex flex-wrap gap-x-4 gap-y-2">
             {legalLinks.map((link) => (
               <Link
@@ -236,10 +228,30 @@ function ContactItem({ item }: { item: ContactLink }) {
           >
             {item.value}
           </a>
-        ) : (
-          <span>Not configured</span>
-        )}
+        ) : null}
       </span>
     </li>
+  );
+}
+
+function SocialLink({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <a
+      aria-label={label}
+      className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)]"
+      href={href}
+      rel="noreferrer"
+      target="_blank"
+    >
+      {icon}
+    </a>
   );
 }

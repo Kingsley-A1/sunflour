@@ -147,7 +147,7 @@ Place these in `src/styles/tokens.css` when the app foundation exists.
   --color-text-soft: #8a735b;
   --color-text-inverse: #ffffff;
 
-  --color-primary: #e60000;
+  --color-primary: #dc0000;
   --color-primary-hover: #c91414;
   --color-primary-pressed: #a80f0f;
   --color-on-primary: #ffffff;
