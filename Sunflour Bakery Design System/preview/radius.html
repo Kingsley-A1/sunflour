@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:22px}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;text-align:center}
+  .sq{background:var(--color-surface);border:1px solid var(--color-border-strong);margin:0 auto;width:70px;height:56px}
+  .nm{font-size:11px;font-weight:700;margin-top:8px}
+  .px{font-size:10px;color:var(--color-text-soft)}
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div><div class="sq" style="border-radius:6px"></div><div class="nm">xs</div><div class="px">6px</div></div>
+    <div><div class="sq" style="border-radius:10px"></div><div class="nm">sm</div><div class="px">10px · buttons</div></div>
+    <div><div class="sq" style="border-radius:14px"></div><div class="nm">md</div><div class="px">14px · cards</div></div>
+    <div><div class="sq" style="border-radius:18px"></div><div class="nm">lg</div><div class="px">18px</div></div>
+    <div><div class="sq" style="border-radius:24px"></div><div class="nm">xl</div><div class="px">24px</div></div>
+    <div><div class="sq" style="border-radius:999px"></div><div class="nm">pill</div><div class="px">badges</div></div>
+  </div>
+</body>
+</html>

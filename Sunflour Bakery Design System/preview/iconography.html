@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:22px}
+  .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:14px;text-align:center}
+  .ic{display:grid;gap:6px;justify-items:center}
+  .ic i{width:24px;height:24px;color:var(--color-text)}
+  .nm{font-size:10px;color:var(--color-text-soft)}
+  .note{margin-top:16px;font-size:12px;color:var(--color-text-muted)}
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="ic"><i data-lucide="shopping-bag"></i><span class="nm">shopping-bag</span></div>
+    <div class="ic"><i data-lucide="user-round"></i><span class="nm">user-round</span></div>
+    <div class="ic"><i data-lucide="arrow-right"></i><span class="nm">arrow-right</span></div>
+    <div class="ic"><i data-lucide="truck"></i><span class="nm">truck</span></div>
+    <div class="ic"><i data-lucide="receipt-text"></i><span class="nm">receipt-text</span></div>
+    <div class="ic"><i data-lucide="shield-check"></i><span class="nm">shield-check</span></div>
+    <div class="ic"><i data-lucide="clock"></i><span class="nm">clock</span></div>
+    <div class="ic"><i data-lucide="file-text"></i><span class="nm">file-text</span></div>
+    <div class="ic"><i data-lucide="minus"></i><span class="nm">minus</span></div>
+    <div class="ic"><i data-lucide="plus"></i><span class="nm">plus</span></div>
+    <div class="ic"><i data-lucide="trash-2"></i><span class="nm">trash-2</span></div>
+    <div class="ic"><i data-lucide="layout-dashboard"></i><span class="nm">dashboard</span></div>
+    <div class="ic"><i data-lucide="clipboard-list"></i><span class="nm">orders</span></div>
+    <div class="ic"><i data-lucide="package"></i><span class="nm">package</span></div>
+    <div class="ic"><i data-lucide="message-square-text"></i><span class="nm">reviews</span></div>
+    <div class="ic"><i data-lucide="settings"></i><span class="nm">settings</span></div>
+  </div>
+  <p class="note">Lucide — outline, ~1.75px stroke, rounded joins. The only icon system. Paired with text; decorative icons aria-hidden.</p>
+  <script>lucide.createIcons()</script>
+</body>
+</html>

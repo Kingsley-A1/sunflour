@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:22px;display:flex;flex-wrap:wrap;gap:9px;align-content:flex-start}
+  .badge{display:inline-flex;align-items:center;min-height:28px;border-radius:var(--radius-pill);border:1px solid;padding:4px 11px;font-size:12px;font-weight:600}
+  .neutral{border-color:var(--color-border);background:var(--color-surface-soft);color:var(--color-text-muted)}
+  .success{border-color:var(--color-success);background:var(--color-success-soft);color:var(--color-success)}
+  .warning{border-color:var(--color-warning);background:var(--color-warning-soft);color:var(--color-warning)}
+  .danger{border-color:var(--color-danger);background:var(--color-danger-soft);color:var(--color-danger)}
+  .info{border-color:var(--color-focus);background:var(--color-surface-soft);color:var(--color-focus)}
+</style>
+</head>
+<body>
+  <span class="badge warning">Pending payment</span>
+  <span class="badge info">Payment under review</span>
+  <span class="badge success">Payment confirmed</span>
+  <span class="badge info">Out for delivery</span>
+  <span class="badge success">Delivered</span>
+  <span class="badge danger">Cancelled</span>
+  <span class="badge warning">Out of stock</span>
+  <span class="badge success">Active</span>
+  <span class="badge neutral">Hidden</span>
+  <span class="badge warning">Popular</span>
+</body>
+</html>

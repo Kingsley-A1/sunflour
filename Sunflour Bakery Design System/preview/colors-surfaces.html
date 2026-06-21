@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:22px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .sw{display:grid;gap:6px}
+  .chip{height:58px;border-radius:var(--radius-md);border:1px solid var(--color-border);display:flex;align-items:flex-end;padding:8px}
+  .nm{font-size:12px;font-weight:700}
+  .hex{font-size:11px;color:var(--color-text-soft);font-variant-numeric:tabular-nums}
+  .mini{font-size:10px;font-weight:600;color:var(--color-text-soft)}
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="sw"><div class="chip" style="background:#fff8ea"><span class="mini">bg</span></div><span class="nm">bg</span><span class="hex">#FFF8EA cream</span></div>
+    <div class="sw"><div class="chip" style="background:#fff1c9"><span class="mini">bg-subtle</span></div><span class="nm">bg-subtle</span><span class="hex">#FFF1C9 wheat</span></div>
+    <div class="sw"><div class="chip" style="background:#ffffff"><span class="mini">surface</span></div><span class="nm">surface</span><span class="hex">#FFFFFF</span></div>
+    <div class="sw"><div class="chip" style="background:#fffaf0"><span class="mini">surface-soft</span></div><span class="nm">surface-soft</span><span class="hex">#FFFAF0</span></div>
+    <div class="sw"><div class="chip" style="background:#eadcc5"><span class="mini">border</span></div><span class="nm">border</span><span class="hex">#EADCC5</span></div>
+    <div class="sw"><div class="chip" style="background:#d8c2a2"><span class="mini">border-strong</span></div><span class="nm">border-strong</span><span class="hex">#D8C2A2</span></div>
+  </div>
+</body>
+</html>

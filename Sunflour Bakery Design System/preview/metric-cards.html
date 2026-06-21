@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:20px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-soft);padding:16px;display:grid;gap:6px}
+  .lab{font-size:13px;font-weight:600;color:var(--color-text-muted);margin:0}
+  .val{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;margin:0}
+  .desc{font-size:12px;line-height:1.4;color:var(--color-text-muted);margin:0}
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="card"><p class="lab">Pending payment</p><p class="val">7</p><p class="desc">Awaiting transfer proof or review.</p></div>
+    <div class="card"><p class="lab">Preparing</p><p class="val">12</p><p class="desc">Orders in the kitchen now.</p></div>
+    <div class="card"><p class="lab">Out for delivery</p><p class="val">4</p><p class="desc">On the way to customers.</p></div>
+  </div>
+</body>
+</html>

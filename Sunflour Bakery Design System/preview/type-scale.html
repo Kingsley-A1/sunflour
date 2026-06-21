@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:22px}
+  .row{display:flex;align-items:baseline;gap:16px;padding:7px 0;border-bottom:1px dashed var(--color-border)}
+  .row:last-child{border-bottom:0}
+  .tag{flex:0 0 86px;font-size:11px;font-weight:600;color:var(--color-text-soft);font-variant-numeric:tabular-nums}
+  .spec{line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+  <div class="row"><span class="tag">5xl · 800</span><span class="spec" style="font-size:48px;font-weight:800;letter-spacing:-.01em">Fresh from the oven</span></div>
+  <div class="row"><span class="tag">3xl · 800</span><span class="spec" style="font-size:30px;font-weight:800">Start with the menu</span></div>
+  <div class="row"><span class="tag">2xl · 800</span><span class="spec" style="font-size:24px;font-weight:800">Order created</span></div>
+  <div class="row"><span class="tag">lg · 700</span><span class="spec" style="font-size:18px;font-weight:700">Chicken shawarma</span></div>
+  <div class="row"><span class="tag">base · 400</span><span class="spec" style="font-size:16px;font-weight:400;color:var(--color-text-muted)">Browse the menu and choose pickup or delivery.</span></div>
+  <div class="row"><span class="tag">sm · 400</span><span class="spec" style="font-size:14px;font-weight:400;color:var(--color-text-muted)">Base fee and 6 PM surcharge are shown separately.</span></div>
+  <div class="row"><span class="tag">xs · 500</span><span class="spec" style="font-size:12px;font-weight:500;color:var(--color-text-soft)">Waiting for transfer proof or admin review.</span></div>
+</body>
+</html>

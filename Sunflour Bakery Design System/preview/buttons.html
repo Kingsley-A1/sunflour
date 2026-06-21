@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:22px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all 160ms var(--ease-standard)}
+  .primary{background:var(--color-primary);color:#fff}
+  .primary:hover{background:var(--color-primary-hover)}
+  .secondary{background:var(--color-surface);color:var(--color-text);border-color:var(--color-border)}
+  .ghost{background:transparent;color:var(--color-text)}
+  .ghost:hover{background:var(--color-surface-soft)}
+  .danger{background:var(--color-danger);color:#fff}
+  .disabled{opacity:.55;cursor:not-allowed}
+  .btn i{width:16px;height:16px}
+</style>
+</head>
+<body>
+  <button class="btn primary"><i data-lucide="shopping-bag"></i>Add to cart</button>
+  <button class="btn secondary"><i data-lucide="user-round"></i>Account</button>
+  <button class="btn ghost">Cancel</button>
+  <button class="btn danger"><i data-lucide="trash-2"></i>Remove</button>
+  <button class="btn primary disabled">Out of stock</button>
+  <script>lucide.createIcons()</script>
+</body>
+</html>

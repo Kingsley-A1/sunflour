@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);padding:22px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .stepper{display:inline-flex;align-items:center;gap:8px}
+  .ib{display:grid;place-items:center;width:44px;height:44px;border-radius:var(--radius-sm);border:1px solid var(--color-border);background:var(--color-surface);cursor:pointer}
+  .ib i{width:16px;height:16px}
+  .qty{display:grid;place-items:center;height:44px;min-width:48px;border-radius:var(--radius-sm);border:1px solid var(--color-border);background:var(--color-surface);font-weight:700;font-variant-numeric:tabular-nums}
+  .price{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+  .lab{font-size:12px;color:var(--color-text-muted)}
+</style>
+</head>
+<body>
+  <div class="stepper">
+    <button class="ib"><i data-lucide="minus"></i></button>
+    <span class="qty">2</span>
+    <button class="ib"><i data-lucide="plus"></i></button>
+  </div>
+  <div>
+    <div class="lab">Line estimate</div>
+    <div class="price">₦9,000</div>
+  </div>
+  <button class="ib" style="border-color:var(--color-border)"><i data-lucide="trash-2"></i></button>
+  <script>lucide.createIcons()</script>
+</body>
+</html>
