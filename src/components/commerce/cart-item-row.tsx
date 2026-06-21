@@ -23,7 +23,7 @@ export function CartItemRow({
 }: CartItemRowProps) {
   return (
     <article className="grid grid-cols-[72px_1fr] gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:grid-cols-[88px_1fr_auto]">
-      <div className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)]">
+      <div className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)]">
         {item.imageUrl ? (
           <SafeImage
             alt={item.name}

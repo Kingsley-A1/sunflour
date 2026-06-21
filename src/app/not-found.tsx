@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 export default function NotFoundPage() {
   return (
-    <main className="grid min-h-svh place-items-center bg-[var(--color-bg)] p-4">
+    <main className="grid min-h-svh place-items-center bg-[var(--color-canvas)] p-4">
       <div className="w-full max-w-lg">
         <EmptyState
           action={

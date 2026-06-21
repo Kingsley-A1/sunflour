@@ -46,7 +46,7 @@ const termsSections = [
 export default function TermsPage() {
   return (
     <main>
-      <section className="bg-[var(--color-bg-subtle)]">
+      <section className="bg-[var(--color-canvas-muted)]">
         <div className="mx-auto max-w-4xl px-4 py-12">
           <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
             Terms
@@ -63,7 +63,7 @@ export default function TermsPage() {
       </section>
 
       <section className="mx-auto grid max-w-4xl gap-4 px-4 py-10">
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
           <CheckCircle2
             className="h-6 w-6 text-[var(--color-success)]"
             aria-hidden="true"

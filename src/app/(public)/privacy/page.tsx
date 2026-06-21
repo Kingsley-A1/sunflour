@@ -46,7 +46,7 @@ const privacySections = [
 export default function PrivacyPage() {
   return (
     <main>
-      <section className="bg-[var(--color-bg-subtle)]">
+      <section className="bg-[var(--color-canvas-muted)]">
         <div className="mx-auto max-w-4xl px-4 py-12">
           <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
             Privacy
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
 
             return (
               <article
-                className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]"
+                className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]"
                 key={item.title}
               >
                 <Icon

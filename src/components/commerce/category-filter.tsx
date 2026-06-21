@@ -19,12 +19,13 @@ export function CategoryFilter({
       <button
         aria-pressed={activeSlug === "all"}
         className={cn(
-          "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-normal)] ease-[var(--ease-standard)]",
+          "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)]",
           activeSlug === "all"
             ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)]"
-            : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]",
+            : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
         )}
         onClick={() => onChange("all")}
+        style={activeSlug === "all" ? { color: "var(--color-on-primary)" } : undefined}
         type="button"
       >
         All
@@ -33,13 +34,18 @@ export function CategoryFilter({
         <button
           aria-pressed={activeSlug === category.slug}
           className={cn(
-            "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-normal)] ease-[var(--ease-standard)]",
+            "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)]",
             activeSlug === category.slug
               ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)]"
-              : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]",
+              : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
           )}
           key={category.id}
           onClick={() => onChange(category.slug)}
+          style={
+            activeSlug === category.slug
+              ? { color: "var(--color-on-primary)" }
+              : undefined
+          }
           type="button"
         >
           {category.name}

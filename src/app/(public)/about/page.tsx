@@ -44,7 +44,7 @@ const orderingSteps = [
 export default function AboutPage() {
   return (
     <main>
-      <section className="bg-[var(--color-bg-subtle)]">
+      <section className="bg-[var(--color-canvas-muted)]">
         <div className="mx-auto grid max-w-6xl gap-5 px-4 py-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="max-w-3xl">
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
@@ -106,7 +106,7 @@ export default function AboutPage() {
 
           return (
             <article
-              className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]"
+              className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]"
               key={item.title}
             >
               <Icon className="h-5 w-5 text-[var(--color-primary)]" aria-hidden="true" />
@@ -120,7 +120,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-6 px-4 py-10 lg:grid-cols-[1fr_1fr]">
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
           <HandCoins className="h-6 w-6 text-[var(--color-primary)]" aria-hidden="true" />
           <h2 className="m-0 mt-4 text-2xl font-extrabold">
             Manual payment, handled honestly
@@ -133,7 +133,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
           <ShieldCheck
             className="h-6 w-6 text-[var(--color-primary)]"
             aria-hidden="true"

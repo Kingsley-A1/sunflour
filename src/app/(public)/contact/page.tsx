@@ -93,7 +93,7 @@ export default function ContactPage() {
 
   return (
     <main>
-      <section className="bg-[var(--color-bg-subtle)]">
+      <section className="bg-[var(--color-canvas-muted)]">
         <div className="mx-auto grid max-w-6xl gap-5 px-4 py-8 lg:grid-cols-[1fr_0.8fr] lg:items-end">
           <div>
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
@@ -107,7 +107,7 @@ export default function ContactPage() {
               questions, pickup, delivery, and general support.
             </p>
           </div>
-          <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+          <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
             <ReceiptText
               className="h-6 w-6 text-[var(--color-primary)]"
               aria-hidden="true"
@@ -143,7 +143,7 @@ export default function ContactPage() {
       {contact.address || availableSocialActions.length > 0 ? (
         <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-10 lg:grid-cols-[1fr_1fr]">
           {contact.address ? (
-            <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+            <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
               <MapPin
                 className="h-6 w-6 text-[var(--color-primary)]"
                 aria-hidden="true"
@@ -154,7 +154,7 @@ export default function ContactPage() {
               </p>
               {contact.mapsHref ? (
                 <a
-                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-bold hover:bg-[var(--color-surface-soft)]"
+                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-bold hover:bg-[var(--color-surface-muted)]"
                   href={contact.mapsHref}
                   rel="noreferrer"
                   target="_blank"
@@ -204,7 +204,7 @@ function ContactCard({
   compact?: boolean;
 }) {
   return (
-    <article className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+    <article className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
       <div className="text-[var(--color-primary)]">{action.icon}</div>
       <h2 className="m-0 mt-4 text-lg font-extrabold">{action.title}</h2>
       <p className="m-0 mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
@@ -212,7 +212,7 @@ function ContactCard({
       </p>
       {action.href && action.value ? (
         <a
-          className="mt-4 inline-flex min-h-11 max-w-full items-center justify-center gap-2 break-all rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-bold hover:bg-[var(--color-surface-soft)]"
+          className="mt-4 inline-flex min-h-11 max-w-full items-center justify-center gap-2 break-all rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-bold hover:bg-[var(--color-surface-muted)]"
           href={action.href}
           rel={action.external ? "noreferrer" : undefined}
           target={action.external ? "_blank" : undefined}

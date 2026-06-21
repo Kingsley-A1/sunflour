@@ -58,7 +58,7 @@ export default async function AccountOrdersPage() {
         <div className="grid gap-3">
           {orders.map((order) => (
             <Link
-              className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 hover:bg-[var(--color-surface-soft)]"
+              className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 hover:bg-[var(--color-surface-muted)]"
               href={`/account/orders/${order.orderNumber}`}
               key={order.orderNumber}
             >

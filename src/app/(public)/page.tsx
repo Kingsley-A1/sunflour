@@ -31,7 +31,7 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="bg-[var(--color-bg-subtle)]">
+      <section className="bg-[var(--color-canvas-muted)]">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:py-10">
           <div className="max-w-3xl">
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
@@ -40,9 +40,9 @@ export default async function HomePage() {
             <h1 className="m-0 mt-2 text-4xl font-extrabold leading-tight sm:text-5xl">
               Warm bakes, ready for pickup or delivery.
             </h1>
-            <p className="m-0 mt-4 max-w-xl text-base leading-7 text-[var(--color-text-muted)]">
-              Browse fresh bread, cakes, and pastries, then choose pickup or
-              delivery at checkout.
+            <p className="m-0 mt-4 max-w-2xl text-base leading-7 text-[var(--color-text-muted)] sm:text-lg">
+              Browse fresh breads, celebration cakes, and everyday pastries,
+              then choose pickup or delivery at checkout.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ export default async function HomePage() {
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
-              className="inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-soft)] sm:text-base"
+              className="inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] sm:text-base"
               href="/cart"
             >
               <ShoppingBag className="h-4 w-4" aria-hidden="true" />
@@ -156,14 +156,14 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
   return (
     <Link
       aria-label={`View ${product.name}`}
-      className="group grid min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)] transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-card)]"
+      className="group grid min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]"
       href={`/products/${product.slug}`}
     >
-      <div className="relative aspect-square overflow-hidden bg-[var(--color-surface-soft)]">
+      <div className="relative aspect-square overflow-hidden bg-[var(--color-surface-muted)]">
         {image?.url ? (
           <SafeImage
             alt={image.altText ?? product.name}
-            className="object-cover transition duration-[var(--motion-slow)] ease-[var(--ease-standard)] group-hover:scale-[1.02]"
+            className="object-cover transition duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-standard)] group-hover:scale-[1.02]"
             fill
             fallback={
               <HeroImageFallback productName={product.name} />

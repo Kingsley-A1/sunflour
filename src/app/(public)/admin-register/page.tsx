@@ -14,7 +14,7 @@ export default function AdminRegisterPage() {
         <h1 className="m-0 mt-2 text-3xl font-extrabold">Register admin account</h1>
         <p className="m-0 mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
           Staff registration requires the current 6-digit role code from the
-          founder or operator.
+          founder or super admin.
         </p>
       </header>
       <AdminRegisterForm />

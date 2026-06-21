@@ -35,8 +35,8 @@ export function PublicShell({
 
   return (
     <CartProvider>
-      <div className="flex min-h-svh flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
-        <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
+      <div className="flex min-h-svh flex-col bg-[var(--color-canvas)] text-[var(--color-text)]">
+        <header className="sticky top-0 z-[var(--layer-header)] border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link className="flex min-w-0 items-center gap-3" href="/">
               <Image
@@ -54,7 +54,7 @@ export function PublicShell({
             <nav className="hidden items-center gap-1 md:flex" aria-label="Public navigation">
               {navItems.map((item) => (
                 <Link
-                  className="min-h-11 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text)]"
+                  className="min-h-11 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                   href={item.href}
                   key={item.href}
                 >
@@ -98,7 +98,7 @@ export function PublicShell({
               </Link>
               <Link
                 aria-label="Review cart"
-                className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:bg-[var(--color-surface-soft)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:bg-[var(--color-surface-muted)]"
                 href="/cart"
               >
                 <ShoppingBag className="h-4 w-4" aria-hidden="true" />

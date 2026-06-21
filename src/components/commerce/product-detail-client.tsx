@@ -32,7 +32,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-soft)]">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-muted)]">
         {image?.url ? (
           <SafeImage
             alt={image.altText ?? product.name}
@@ -80,7 +80,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             <div className="grid gap-2">
               {product.variants.map((variant) => (
                 <label
-                  className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-3"
+                  className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3"
                   key={variant.id}
                 >
                   <span className="flex items-center gap-3">

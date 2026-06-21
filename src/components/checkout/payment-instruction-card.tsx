@@ -34,13 +34,13 @@ export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
           verification. Payment is not confirmed until Sunflour staff verifies it.
         </p>
       </div>
-      <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4">
+      <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
         <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
           Amount to transfer
         </p>
         <PriceText amount={result.total} className="text-3xl" />
       </div>
-      <section className="grid gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4">
+      <section className="grid gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
         <h3 className="m-0 text-base font-bold">Bank transfer instruction</h3>
         <p className="m-0 whitespace-pre-line break-words text-sm leading-6 text-[var(--color-text)] [overflow-wrap:anywhere]">
           {result.paymentInstruction}
