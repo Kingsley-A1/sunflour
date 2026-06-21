@@ -4,9 +4,11 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Globe2, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useState } from "react";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Button } from "@/components/ui/button";
+import { FormStatusMessage } from "@/components/ui/form-status-message";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 
@@ -23,7 +25,9 @@ export function SignInForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isStartingGoogleSignIn, setIsStartingGoogleSignIn] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const isBusy = isSigningIn || isStartingGoogleSignIn;
 
   async function submitCredentials(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,26 +54,28 @@ export function SignInForm({
     }
   }
 
+  async function startGoogleSignIn() {
+    setError(null);
+    setIsStartingGoogleSignIn(true);
+
+    try {
+      await signIn("google", { callbackUrl });
+    } catch {
+      setError(
+        "Google sign-in is unavailable right now. Use your email and password or try again shortly.",
+      );
+    } finally {
+      setIsStartingGoogleSignIn(false);
+    }
+  }
+
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       {error ? (
-        <p
-          className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]"
-          role="alert"
-        >
-          {error}
-        </p>
+        <FormStatusMessage message={error} tone="danger" />
       ) : null}
       {isGoogleAuthEnabled ? (
-        <Button
-          className="w-full"
-          icon={<Globe2 className="h-4 w-4" aria-hidden="true" />}
-          onClick={() => signIn("google", { callbackUrl })}
-          size="lg"
-          variant="secondary"
-        >
-          Continue with Google
-        </Button>
+        <GoogleAuthButton loading={isStartingGoogleSignIn} onClick={startGoogleSignIn} />
       ) : null}
       {isGoogleAuthEnabled ? (
         <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
@@ -78,9 +84,10 @@ export function SignInForm({
           <span className="h-px flex-1 bg-[var(--color-border)]" />
         </div>
       ) : null}
-      <form className="grid gap-4" onSubmit={submitCredentials}>
+      <form aria-busy={isBusy} className="grid gap-4" onSubmit={submitCredentials}>
         <Input
           autoComplete="email"
+          disabled={isBusy}
           label="Email"
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -89,12 +96,14 @@ export function SignInForm({
         />
         <PasswordInput
           autoComplete="current-password"
+          disabled={isBusy}
           label="Password"
           onChange={(event) => setPassword(event.target.value)}
           required
           value={password}
         />
         <Button
+          disabled={isStartingGoogleSignIn}
           icon={<Mail className="h-4 w-4" aria-hidden="true" />}
           loading={isSigningIn}
           type="submit"

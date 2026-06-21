@@ -4,9 +4,11 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Globe2, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useState } from "react";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Button } from "@/components/ui/button";
+import { FormStatusMessage } from "@/components/ui/form-status-message";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import {
@@ -35,7 +37,9 @@ export function RegisterForm({
     password?: string;
   }>({});
   const [error, setError] = useState<string | null>(null);
+  const [isStartingGoogleSignIn, setIsStartingGoogleSignIn] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isBusy = isSubmitting || isStartingGoogleSignIn;
 
   async function submitRegistration(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,26 +83,28 @@ export function RegisterForm({
     }
   }
 
+  async function startGoogleSignIn() {
+    setError(null);
+    setIsStartingGoogleSignIn(true);
+
+    try {
+      await signIn("google", { callbackUrl });
+    } catch {
+      setError(
+        "Google sign-up is unavailable right now. Create an account with your email or try again shortly.",
+      );
+    } finally {
+      setIsStartingGoogleSignIn(false);
+    }
+  }
+
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       {error ? (
-        <p
-          className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]"
-          role="alert"
-        >
-          {error}
-        </p>
+        <FormStatusMessage message={error} tone="danger" />
       ) : null}
       {isGoogleAuthEnabled ? (
-        <Button
-          className="w-full"
-          icon={<Globe2 className="h-4 w-4" aria-hidden="true" />}
-          onClick={() => signIn("google", { callbackUrl })}
-          size="lg"
-          variant="secondary"
-        >
-          Continue with Google
-        </Button>
+        <GoogleAuthButton loading={isStartingGoogleSignIn} onClick={startGoogleSignIn} />
       ) : null}
       {isGoogleAuthEnabled ? (
         <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
@@ -107,9 +113,10 @@ export function RegisterForm({
           <span className="h-px flex-1 bg-[var(--color-border)]" />
         </div>
       ) : null}
-      <form className="grid gap-4" onSubmit={submitRegistration}>
+      <form aria-busy={isBusy} className="grid gap-4" onSubmit={submitRegistration}>
         <Input
           autoComplete="name"
+          disabled={isBusy}
           error={fieldErrors.fullName}
           label="Full name"
           onChange={(event) => setFullName(event.target.value)}
@@ -118,6 +125,7 @@ export function RegisterForm({
         />
         <Input
           autoComplete="email"
+          disabled={isBusy}
           error={fieldErrors.email}
           label="Email"
           onChange={(event) => setEmail(event.target.value)}
@@ -127,6 +135,7 @@ export function RegisterForm({
         />
         <PasswordInput
           autoComplete="new-password"
+          disabled={isBusy}
           error={fieldErrors.password}
           helpText="Use at least 8 characters with uppercase, lowercase, and a number."
           label="Password"
@@ -135,6 +144,7 @@ export function RegisterForm({
           value={password}
         />
         <Button
+          disabled={isStartingGoogleSignIn}
           icon={<UserPlus className="h-4 w-4" aria-hidden="true" />}
           loading={isSubmitting}
           type="submit"

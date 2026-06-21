@@ -51,7 +51,7 @@ export function PasswordInput({
           aria-describedby={describedBy || undefined}
           aria-invalid={Boolean(error)}
           className={cn(
-            "min-h-11 w-full rounded-[var(--radius-sm)] border bg-[var(--color-bg)] px-3 pr-12 text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)]",
+            "min-h-[var(--control-height-md)] w-full rounded-[var(--radius-sm)] border bg-[var(--color-surface-overlay)] px-3 pr-12 text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)] disabled:border-[var(--color-disabled-border)] disabled:bg-[var(--color-disabled-bg)] disabled:text-[var(--color-disabled-text)]",
             "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
             error
               ? "border-[var(--color-danger)]"
@@ -64,7 +64,7 @@ export function PasswordInput({
         />
         <button
           aria-label={isVisible ? "Hide password" : "Show password"}
-          className="absolute inset-y-1 right-1 inline-flex min-h-9 min-w-9 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
+          className="absolute inset-y-1 right-1 inline-flex min-h-9 min-w-9 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
           onClick={() => setIsVisible((value) => !value)}
           type="button"
         >

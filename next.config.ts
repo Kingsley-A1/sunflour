@@ -1,19 +1,32 @@
 import type { NextConfig } from "next";
 
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "script-src 'self' 'unsafe-inline' https://accounts.google.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
-  "connect-src 'self' https: wss:",
-  "frame-src https://accounts.google.com",
-  "form-action 'self'",
-  "upgrade-insecure-requests",
-].join("; ");
+export function buildContentSecurityPolicy(
+  nodeEnv = process.env.NODE_ENV,
+) {
+  const scriptSources = [
+    "'self'",
+    "'unsafe-inline'",
+    ...(nodeEnv === "development" ? ["'unsafe-eval'"] : []),
+    "https://accounts.google.com",
+  ].join(" ");
+
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    `script-src ${scriptSources}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https: wss:",
+    "frame-src https://accounts.google.com",
+    "form-action 'self'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
+
+const contentSecurityPolicy = buildContentSecurityPolicy();
 
 const securityHeaders = [
   {

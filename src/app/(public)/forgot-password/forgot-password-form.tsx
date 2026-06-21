@@ -3,6 +3,7 @@
 import { Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { FormStatusMessage } from "@/components/ui/form-status-message";
 import { Input } from "@/components/ui/input";
 import {
   getApiErrorMessage,
@@ -39,18 +40,15 @@ export function ForgotPasswordForm() {
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       {message ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]">
-          {message}
-        </p>
+        <FormStatusMessage message={message} tone="success" />
       ) : null}
       {error ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]">
-          {error}
-        </p>
+        <FormStatusMessage message={error} tone="danger" />
       ) : null}
-      <form className="grid gap-4" onSubmit={submitRequest}>
+      <form aria-busy={isSubmitting} className="grid gap-4" onSubmit={submitRequest}>
         <Input
           autoComplete="email"
+          disabled={isSubmitting}
           label="Email"
           onChange={(event) => setEmail(event.target.value)}
           required
