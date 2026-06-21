@@ -121,7 +121,7 @@ export default async function AdminAuditLogsPage({
 
       <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
         <table className="min-w-[56rem] text-left text-sm">
-          <thead className="bg-[var(--color-surface-soft)]">
+          <thead className="bg-[var(--color-surface-muted)]">
             <tr>
               <th className="p-3">When</th>
               <th className="p-3">Actor</th>
@@ -155,7 +155,7 @@ export default async function AdminAuditLogsPage({
                   ) : null}
                 </td>
                 <td className="p-3">
-                  <pre className="m-0 max-w-md overflow-x-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] p-2 text-xs leading-5">
+                  <pre className="m-0 max-w-md overflow-x-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-2 text-xs leading-5">
                     {formatMetadata(auditLog.metadata)}
                   </pre>
                 </td>

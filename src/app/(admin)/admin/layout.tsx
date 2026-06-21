@@ -15,7 +15,7 @@ export default async function AdminLayout({
 
   if (!user) {
     return (
-      <main className="grid min-h-svh place-items-center bg-[var(--color-bg)] p-4">
+      <main className="grid min-h-svh place-items-center bg-[var(--color-canvas)] p-4">
         <div className="w-full max-w-lg">
           <h1 className="sr-only">Admin access required</h1>
           <ErrorState

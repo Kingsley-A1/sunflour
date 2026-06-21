@@ -122,7 +122,7 @@ export function AdminRegistrationCodesClient() {
 
       {panel ? (
         <>
-          <dl className="grid gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] p-3 text-sm sm:grid-cols-3">
+          <dl className="grid gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3 text-sm sm:grid-cols-3">
             <div>
               <dt className="font-bold text-[var(--color-text)]">Version</dt>
               <dd className="m-0 text-[var(--color-text-muted)]">
@@ -158,7 +158,7 @@ export function AdminRegistrationCodesClient() {
                   </p>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <code className="rounded-[var(--radius-sm)] bg-[var(--color-bg)] px-3 py-2 text-lg font-extrabold tracking-[0.16em] text-[var(--color-text)]">
+                  <code className="rounded-[var(--radius-sm)] bg-[var(--color-canvas)] px-3 py-2 text-lg font-extrabold tracking-[0.16em] text-[var(--color-text)]">
                     {item.code}
                   </code>
                   <Button

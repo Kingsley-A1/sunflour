@@ -203,7 +203,7 @@ export function HomepageHeroProductsClient({
 
             return (
               <div
-                className="grid gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-3 lg:grid-cols-[minmax(0,1fr)_auto]"
+                className="grid gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 lg:grid-cols-[minmax(0,1fr)_auto]"
                 key={`hero-slot-${index}`}
               >
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-end">

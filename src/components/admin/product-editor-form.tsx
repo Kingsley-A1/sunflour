@@ -194,7 +194,7 @@ export function ProductEditorForm({
           onChange={(event) => setIsPopular(event.target.checked)}
         />
         {!product && isSuperAdmin ? (
-          <div className="grid gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] p-3">
+          <div className="grid gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3">
             <h3 className="m-0 text-base font-bold">Optional first variant</h3>
             <Input label="Variant name" onChange={(event) => setVariantName(event.target.value)} value={variantName} />
             <Input
@@ -229,7 +229,7 @@ export function ProductEditorForm({
                           alt={image.altText ?? product.name}
                           className="aspect-[4/3] rounded-[var(--radius-sm)] object-cover"
                           fallback={
-                            <div className="grid aspect-[4/3] place-items-center rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] px-3 text-center text-sm font-semibold text-[var(--color-text-muted)]">
+                            <div className="grid aspect-[4/3] place-items-center rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] px-3 text-center text-sm font-semibold text-[var(--color-text-muted)]">
                               Image unavailable
                             </div>
                           }

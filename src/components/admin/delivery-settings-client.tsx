@@ -293,7 +293,7 @@ export function DeliverySettingsClient() {
       </div>
       <section className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
         <table className="min-w-[44rem] text-left text-sm">
-          <thead className="bg-[var(--color-surface-soft)]">
+          <thead className="bg-[var(--color-surface-muted)]">
             <tr>
               <th className="p-3">Zone</th>
               <th className="p-3">Base fee</th>
@@ -399,7 +399,7 @@ export function DeliverySettingsClient() {
       </section>
       <section className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
         <table className="min-w-[52rem] text-left text-sm">
-          <thead className="bg-[var(--color-surface-soft)]">
+          <thead className="bg-[var(--color-surface-muted)]">
             <tr>
               <th className="p-3">Rule</th>
               <th className="p-3">Starts</th>

@@ -92,7 +92,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       </form>
       <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
         <table className="min-w-[52rem] text-left text-sm">
-          <thead className="bg-[var(--color-surface-soft)]">
+          <thead className="bg-[var(--color-surface-muted)]">
             <tr>
               <th className="p-3">Order</th>
               <th className="p-3">Customer</th>

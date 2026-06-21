@@ -31,7 +31,7 @@ export function EmailSettingsClient() {
       </section>
       <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
         <table className="min-w-[42rem] text-left text-sm">
-          <thead className="bg-[var(--color-surface-soft)]">
+          <thead className="bg-[var(--color-surface-muted)]">
             <tr>
               <th className="p-3">Template</th>
               <th className="p-3">Subject</th>

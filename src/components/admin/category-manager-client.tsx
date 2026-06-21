@@ -86,7 +86,7 @@ export function CategoryManagerClient({
       </section>
       <section className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
         <table className="min-w-[36rem] text-left text-sm">
-          <thead className="bg-[var(--color-surface-soft)]">
+          <thead className="bg-[var(--color-surface-muted)]">
             <tr>
               <th className="p-3">Name</th>
               <th className="p-3">Slug</th>

@@ -86,7 +86,7 @@ export default async function AdminUsersPage() {
             ))}
           </div>
         ) : (
-          <p className="m-0 rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] p-3 text-sm text-[var(--color-text-muted)]">
+          <p className="m-0 rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-muted)]">
             No admin profiles exist yet.
           </p>
         )}
