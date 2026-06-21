@@ -1,0 +1,82 @@
+@keyframes sf-progressive-enter {
+  from { opacity: var(--motion-opacity-hidden); transform: translateY(var(--motion-distance-sm)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sf-page-enter {
+  from { opacity: var(--motion-opacity-hidden); transform: translateY(var(--motion-distance-md)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sf-scale-enter {
+  from { opacity: var(--motion-opacity-hidden); transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sf-aesthetic-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(var(--motion-distance-xs) * -1)); }
+}
+
+.sf-motion-progressive,
+[data-motion="progressive"] {
+  animation: sf-progressive-enter var(--motion-duration-slow) var(--motion-ease-standard) both;
+}
+
+.sf-motion-page,
+[data-motion="page"] {
+  animation: sf-page-enter var(--motion-duration-page) var(--motion-ease-emphasized) both;
+}
+
+.sf-motion-micro,
+[data-motion="micro"] {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.sf-motion-scale,
+[data-motion="scale"] {
+  animation: sf-scale-enter var(--motion-duration-base) var(--motion-ease-standard) both;
+}
+
+.sf-motion-aesthetic,
+[data-motion="aesthetic"] {
+  animation: sf-aesthetic-float 6s var(--motion-ease-standard) infinite;
+}
+
+.sf-motion-progressive[data-stagger="1"], [data-motion="progressive"][data-stagger="1"] { animation-delay: var(--motion-stagger-tight); }
+.sf-motion-progressive[data-stagger="2"], [data-motion="progressive"][data-stagger="2"] { animation-delay: var(--motion-stagger-base); }
+.sf-motion-progressive[data-stagger="3"], [data-motion="progressive"][data-stagger="3"] { animation-delay: calc(var(--motion-stagger-base) * 2); }
+.sf-motion-progressive[data-stagger="4"], [data-motion="progressive"][data-stagger="4"] { animation-delay: calc(var(--motion-stagger-base) * 3); }
+
+@media (hover: hover) and (pointer: fine) {
+  .sf-motion-micro[data-lift="soft"]:is(:hover, :focus-visible),
+  [data-motion="micro"][data-lift="soft"]:is(:hover, :focus-visible) {
+    transform: translateY(calc(var(--motion-distance-xs) * -1));
+  }
+}
+
+.sf-motion-micro:active,
+[data-motion="micro"]:active { transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .sf-motion-progressive,
+  .sf-motion-page,
+  .sf-motion-scale,
+  .sf-motion-aesthetic,
+  [data-motion] {
+    animation: none !important;
+    transform: none !important;
+  }
+}

@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  --color-canvas: color-mix(in srgb, var(--primitive-cream) 38%, var(--primitive-surface));
+  --color-canvas-muted: color-mix(in srgb, var(--primitive-surface-muted) 78%, var(--color-canvas));
+  --color-canvas-emphasis: color-mix(in srgb, var(--primitive-brand-yellow-soft) 20%, var(--color-canvas));
+  --color-surface: var(--primitive-surface);
+  --color-surface-muted: var(--primitive-surface-muted);
+  --color-surface-raised: color-mix(in srgb, var(--primitive-surface) 92%, var(--primitive-brand-yellow-soft));
+  --color-surface-floating: var(--primitive-surface);
+  --color-surface-overlay: color-mix(in srgb, var(--primitive-surface) 88%, var(--primitive-cream));
+  --color-text: var(--primitive-ink);
+  --color-text-muted: var(--primitive-ink-muted);
+  --color-text-soft: var(--primitive-ink-muted);
+  --color-text-inverse: var(--primitive-surface);
+  --color-border: var(--primitive-border);
+  --color-border-strong: color-mix(in srgb, var(--primitive-border) 70%, var(--primitive-ink-muted));
+  --color-border-focus: color-mix(in srgb, var(--primitive-info) 42%, var(--primitive-surface));
+  --color-primary: var(--primitive-brand-red);
+  --color-primary-hover: var(--primitive-brand-red-strong);
+  --color-primary-pressed: color-mix(in srgb, var(--primitive-brand-red-strong) 84%, #000000);
+  --color-on-primary: var(--color-text-inverse);
+  --color-accent: var(--primitive-brand-yellow);
+  --color-accent-soft: var(--primitive-brand-yellow-soft);
+  --color-on-accent: #21140a;
+  --color-success: var(--primitive-success);
+  --color-success-text: #0b6b38;
+  --color-success-soft: color-mix(in srgb, var(--primitive-success) 14%, var(--primitive-surface));
+  --color-warning: var(--primitive-warning);
+  --color-warning-text: #70420b;
+  --color-warning-soft: color-mix(in srgb, var(--primitive-warning) 18%, var(--primitive-surface));
+  --color-danger: var(--primitive-danger);
+  --color-danger-text: #971c13;
+  --color-danger-soft: color-mix(in srgb, var(--primitive-danger) 14%, var(--primitive-surface));
+  --color-info: var(--primitive-info);
+  --color-info-text: #1d4ed8;
+  --color-info-soft: color-mix(in srgb, var(--primitive-info) 14%, var(--primitive-surface));
+  --color-focus: var(--primitive-info);
+  --color-overlay: rgb(24 16 12 / 0.46);
+  --color-overlay-strong: rgb(24 16 12 / 0.68);
+  --color-disabled-bg: color-mix(in srgb, var(--color-surface-muted) 72%, var(--color-canvas));
+  --color-disabled-border: color-mix(in srgb, var(--color-border) 74%, var(--color-canvas));
+  --color-disabled-text: color-mix(in srgb, var(--color-text-muted) 78%, var(--color-surface));
+  --shadow-raised: 0 10px 24px rgb(36 21 13 / 0.06), 0 2px 6px rgb(36 21 13 / 0.04);
+  --shadow-floating: 0 18px 42px rgb(36 21 13 / 0.12), 0 6px 16px rgb(36 21 13 / 0.08);
+  --shadow-modal: 0 24px 72px rgb(24 16 12 / 0.22);
+
+  /* Deprecated compatibility aliases. New component work uses semantic names. */
+  --color-brand-red: var(--color-primary);
+  --color-brand-red-strong: var(--primitive-brand-red-strong);
+  --color-brand-yellow: var(--color-accent);
+  --color-brand-yellow-soft: var(--color-accent-soft);
+  --color-cream: var(--color-canvas);
+  --color-bg: var(--color-canvas);
+  --color-bg-subtle: var(--color-canvas-muted);
+  --color-surface-soft: var(--color-surface-muted);
+  --color-surface-elevated: var(--color-surface-raised);
+  --shadow-soft: var(--shadow-raised);
+  --shadow-card: var(--shadow-floating);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --primitive-brand-red: #ff6b5a;
+    --primitive-brand-red-strong: #ff8a7b;
+    --primitive-brand-yellow: #ffd84d;
+    --primitive-brand-yellow-soft: #3a2f10;
+    --primitive-cream: #18120c;
+    --primitive-surface: #211812;
+    --primitive-surface-muted: #2c2119;
+    --primitive-ink: #fff7ed;
+    --primitive-ink-muted: #d8c3ae;
+    --primitive-border: #49362b;
+    --primitive-success: #4ade80;
+    --primitive-warning: #facc15;
+    --primitive-danger: #fb7185;
+    --primitive-info: #93c5fd;
+    --color-success-text: var(--primitive-success);
+    --color-warning-text: var(--primitive-warning);
+    --color-danger-text: var(--primitive-danger);
+    --color-info-text: var(--primitive-info);
+    --shadow-raised: 0 12px 28px rgb(0 0 0 / 0.3), 0 4px 10px rgb(0 0 0 / 0.22);
+    --shadow-floating: 0 18px 48px rgb(0 0 0 / 0.42), 0 8px 20px rgb(0 0 0 / 0.26);
+    --shadow-modal: 0 28px 88px rgb(0 0 0 / 0.62);
+    --color-overlay: rgb(7 5 3 / 0.62);
+    --color-overlay-strong: rgb(7 5 3 / 0.78);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: var(--color-border-strong);
+    --color-disabled-border: var(--color-border-strong);
+  }
+}

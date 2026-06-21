@@ -37,12 +37,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="fixed bottom-4 right-4 z-50 grid w-[min(24rem,calc(100vw-2rem))] gap-2"
+        className="fixed bottom-4 right-4 z-[var(--layer-toast)] grid w-[min(24rem,calc(100vw-2rem))] gap-2"
       >
         {messages.map((toast) => (
           <div
             className={cn(
-              "flex items-start gap-3 rounded-[var(--radius-md)] border bg-[var(--color-surface)] p-3 text-sm shadow-[var(--shadow-card)]",
+              "flex items-start gap-3 rounded-[var(--radius-md)] border bg-[var(--color-surface-floating)] p-3 text-sm shadow-[var(--shadow-floating)]",
               toast.tone === "success" && "border-[var(--color-success)]",
               toast.tone === "error" && "border-[var(--color-danger)]",
               toast.tone === "info" && "border-[var(--color-info)]",

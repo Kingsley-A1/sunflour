@@ -1,0 +1,20 @@
+{
+  "name": "@sunflour/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-neutral design tokens and motion contract for Sunflour products.",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    "./tokens.css": "./tokens.css",
+    "./themes.css": "./themes.css",
+    "./motion.css": "./motion.css"
+  },
+  "files": [
+    "tokens.css",
+    "themes.css",
+    "motion.css",
+    "README.md"
+  ]
+}

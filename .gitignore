@@ -34,3 +34,5 @@ Thumbs.db
 !.vscode/extensions.json
 
 .vercel/
+/artifact*
+/Sunflour Design System/

@@ -1,389 +1,375 @@
 # Design System - Sunflour Bakery
 
-Status: Phase 0 frontend lockdown document. This file converts `frontend-implimentation.md` into implementation rules for tokens, components, accessibility, performance, and visual behavior.
+Status: phases `1-8` production contract. Framework-neutral foundation package: `@sunflour/design-tokens` v0.1.0.
+
+## Source Architecture
+
+The design system has one-way ownership:
+
+```txt
+packages/design-tokens/tokens.css
+  -> packages/design-tokens/themes.css
+  -> packages/design-tokens/motion.css
+  -> src/styles/component-contracts.css
+  -> route and component usage
+```
+
+- `tokens.css` owns raw palette, dimensions, type values, layout values, and motion values.
+- `themes.css` maps primitives to semantic light/dark roles and owns temporary compatibility aliases.
+- `motion.css` owns reusable behavior and reduced-motion safeguards.
+- `component-contracts.css` is application-specific: global element defaults, layout utilities, and typography roles.
+- `globals.css` is an import manifest only.
+
+Components must not consume primitive tokens or deprecated aliases. The automated design-system contract test enforces this boundary.
+
+### Versioning
+
+Use semantic versioning for `@sunflour/design-tokens`:
+
+- Patch: value refinement that preserves meaning and consumer APIs.
+- Minor: additive token or motion contract.
+- Major: token removal, rename, or semantic meaning change.
+
+Compatibility aliases remain available for older consumers in v0.1.0, but current Sunflour route and component code uses canonical semantic names.
 
 ## Source Of Truth
 
-Read these files before editing frontend UI:
+Read these files before changing frontend UI:
 
 ```txt
 AGENTS.md
 frontend-implimentation.md
 backend-implementation.md
-docs/frontend-routes.md
 docs/component-contracts.md
-docs/api-contracts.md
+docs/frontend-routes.md
+packages/design-tokens/*.css
+src/styles/component-contracts.css
+src/app/globals.css
 ```
 
-`AGENTS.md` is the repository-level source of truth. `frontend-implimentation.md` is the detailed frontend source for this document. If token names or color values conflict, stop and reconcile the decision before writing CSS.
+`AGENTS.md` is the product authority. The internal package is the implementation authority for framework-neutral tokens and motion; `component-contracts.css` owns application-specific contracts.
 
 ## Mental Model
 
-The frontend system is built in layers:
+The frontend system is built in this order:
 
 ```txt
-design tokens -> primitives -> composed components -> route sections -> routes -> flows
+primitive palette -> semantic roles -> primitives -> business components -> routes -> flows
 ```
 
-This exists so the product can ship quickly without visual drift. A route should not invent styling. A business component should not invent primitive behavior. A primitive should not know checkout or admin business rules.
+Do not skip layers. New UI work should consume semantic roles, not raw brand values.
 
-## Knowledge Levels
+## Non-Negotiables
 
-Must know by heart:
+- Mobile-first.
+- WCAG 2.2 AA.
+- Light mode excellent, system dark mode comfortable.
+- Predictable hierarchy before decoration.
+- One authoritative Sunflour palette.
+- Motion supports comprehension and feedback; it never blocks interaction.
+- Existing legacy token consumers stay working until a later migration phase.
 
-- Mobile-first is non-negotiable.
-- WCAG 2.2 AA is the accessibility target.
-- The frontend never owns trusted money calculations.
-- Use semantic tokens, not random colors.
-- One primary action per screen.
-- Checkout must show subtotal, delivery fee, 6 PM surcharge when applied, and total before order creation.
-- Payment is manual and must remain visibly pending until backend/admin confirmation.
-- Admin UI is operational, not decorative.
+## 1. Primitive Palette
 
-Must recognize:
+These are the only authoritative base colors for the app foundation.
 
-- Apple HIG gives clarity, hierarchy, restraint, familiar interaction, and respect for system preferences.
-- Material Design 3 gives semantic color roles, component state consistency, surfaces, and predictable navigation.
-- GOV.UK gives form validation quality, error summaries, field-level errors, and plain language.
-- Shopify Polaris gives admin operation patterns: filters, status badges, row actions, confirmation for destructive work.
-- Stripe Checkout gives payment clarity, short checkout, visible costs, and confidence without noise.
-- Vercel Commerce gives server-rendered storefront speed, App Router structure, and small public bundles.
-- Core Web Vitals give measurable performance targets: LCP <= 2.5s, INP <= 200ms, CLS <= 0.1.
+| Primitive | Light | Dark |
+| --- | --- | --- |
+| `--primitive-brand-red` | `#B22416` | `#FF6B5A` |
+| `--primitive-brand-red-strong` | `#8F1C12` | `#FF8A7B` |
+| `--primitive-brand-yellow` | `#FFD400` | `#FFD84D` |
+| `--primitive-brand-yellow-soft` | `#FFF3B0` | `#3A2F10` |
+| `--primitive-cream` | `#FFF8EC` | `#18120C` |
+| `--primitive-surface` | `#FFFFFF` | `#211812` |
+| `--primitive-surface-muted` | `#F8F3EA` | `#2C2119` |
+| `--primitive-ink` | `#24150D` | `#FFF7ED` |
+| `--primitive-ink-muted` | `#6F4B33` | `#D8C3AE` |
+| `--primitive-border` | `#E9DCC8` | `#49362B` |
+| `--primitive-success` | `#128C4A` | `#4ADE80` |
+| `--primitive-warning` | `#B7791F` | `#FACC15` |
+| `--primitive-danger` | `#B42318` | `#FB7185` |
+| `--primitive-info` | `#2563EB` | `#93C5FD` |
 
-Lookup-only:
+Rejected from the foundation:
 
-- Exact framework API syntax.
-- Current Vercel and Next.js deployment behavior.
-- Detailed WCAG success criteria references.
-- Vendor component examples from Apple, Material, Shopify, Stripe, and GOV.UK.
+- `#F00000`
+- `#B91C1C`
+- `#DC0000`
+- `#F4C400`
 
-## Industry Standard Mapping
+Those values created competing reds/yellows and are no longer part of the reusable contract.
 
-| Standard | Sunflour application |
-| --- | --- |
-| Apple HIG | Clear hierarchy, one obvious action, restrained screens, comfortable tap targets, designed dark mode. |
-| Material Design 3 | Semantic color roles, consistent hover/focus/pressed/disabled/loading states, controlled surfaces. |
-| WCAG 2.2 AA | Contrast, keyboard access, labels, focus states, non-color status meaning, reduced motion. |
-| GOV.UK Design System | Plain error copy, form error summary, field-level guidance, predictable checkout forms. |
-| Shopify Polaris | Admin lists with filters, search, status badges, clear row actions, guarded destructive actions. |
-| Stripe Checkout | Short checkout, fee visibility, unmistakable payment instruction, pending payment honesty. |
-| Vercel Commerce | Server-first storefront, optimized images, Suspense/loading states, small client JavaScript. |
-| Core Web Vitals | Image stability, low layout shift, no heavy public-page scripts, measurable speed. |
+## 2. Semantic Color Roles
 
-## UI Principles
+Semantic tokens are the only colors components should depend on.
 
-Non-negotiables:
+### Canvas and surfaces
 
-- Mobile-first, not mobile-afterthought.
-- Predictability before creativity.
-- Speed before decoration.
-- Accessibility before visual tricks.
-- Reusable components before one-off layouts.
-- One primary action per screen.
-- Clear pricing before checkout.
-- No hidden delivery logic.
-- Manual payment must feel structured.
-- Admin UI must feel operational, not decorative.
+- `--color-canvas`
+- `--color-canvas-muted`
+- `--color-canvas-emphasis`
+- `--color-surface`
+- `--color-surface-muted`
+- `--color-surface-raised`
+- `--color-surface-floating`
+- `--color-surface-overlay`
 
-Sunflour should feel:
+Use:
 
-```txt
-Warm.
-Fresh.
-Clean.
-Family-friendly.
-Professional.
-Affordable but not cheap.
-Modern but not cold.
-Food-first, not tech-first.
-```
+- `canvas` for page background.
+- `canvas-emphasis` for restrained background warmth.
+- `surface` for standard panels.
+- `surface-raised` for cards and grouped items.
+- `surface-floating` for sheets, dialogs, sticky overlays, and toast surfaces.
 
-Reject:
+### Text and borders
 
-- Crowded product cards.
-- Too many colors fighting the logo.
-- Random gradients.
-- Oversized shadows.
-- Multiple CTAs with equal weight.
-- Tiny mobile text.
-- Hidden delivery fees.
-- Checkout walls of text.
-- Admin dashboards filled with vanity charts.
-- Dark mode that looks like inverted light mode.
+- `--color-text`
+- `--color-text-muted`
+- `--color-text-soft`
+- `--color-text-inverse`
+- `--color-border`
+- `--color-border-strong`
+- `--color-border-focus`
 
-## Token Policy
+### Actions and feedback
 
-Components consume semantic roles like `bg-surface`, `text-primary`, `border-default`, and state tokens. Components must not spread raw brand colors across JSX.
+- `--color-primary`
+- `--color-primary-hover`
+- `--color-primary-pressed`
+- `--color-on-primary`
+- `--color-accent`
+- `--color-accent-soft`
+- `--color-on-accent`
+- `--color-success`
+- `--color-success-soft`
+- `--color-warning`
+- `--color-warning-soft`
+- `--color-danger`
+- `--color-danger-soft`
+- `--color-info`
+- `--color-info-soft`
 
-The frontend implementation plan defines semantic tokens. `AGENTS.md` defines core project colors. Implementation should expose the semantic tokens below and may alias AGENTS core names to these values if needed.
+### Focus, overlays, disabled
 
-## Brand Foundation
-
-```txt
-Logo red:       #F00000
-Deep red:       #B91C1C
-Warm yellow:    #FFD400
-Golden yellow:  #F4C400
-Ink black:      #111111
-Warm cream:     #FFF8EA
-Soft wheat:     #FFF1C9
-Fresh white:    #FFFFFF
-```
-
-## Light Mode Tokens
-
-Place these in `src/styles/tokens.css` when the app foundation exists.
-
-```css
-:root {
-  --color-bg: #fff8ea;
-  --color-bg-subtle: #fff1c9;
-  --color-surface: #ffffff;
-  --color-surface-soft: #fffaf0;
-  --color-surface-elevated: #ffffff;
-
-  --color-text: #21140a;
-  --color-text-muted: #6f5842;
-  --color-text-soft: #8a735b;
-  --color-text-inverse: #ffffff;
-
-  --color-primary: #dc0000;
-  --color-primary-hover: #c91414;
-  --color-primary-pressed: #a80f0f;
-  --color-on-primary: #ffffff;
-
-  --color-accent: #ffd400;
-  --color-accent-soft: #fff3b0;
-  --color-on-accent: #21140a;
-
-  --color-border: #eadcc5;
-  --color-border-strong: #d8c2a2;
-  --color-focus: #0b6fff;
-
-  --color-success: #128c4a;
-  --color-success-soft: #e7f7ee;
-  --color-warning: #b7791f;
-  --color-warning-soft: #fff4d6;
-  --color-danger: #c81e1e;
-  --color-danger-soft: #ffe8e8;
-
-  --shadow-soft: 0 8px 24px rgba(33, 20, 10, 0.08);
-  --shadow-card: 0 12px 32px rgba(33, 20, 10, 0.10);
-  --shadow-modal: 0 24px 80px rgba(33, 20, 10, 0.22);
-}
-```
-
-## Dark Mode Tokens
-
-Dark mode is designed, not inverted. Public pages can follow system preference. Admin may add a manual theme toggle if it stays simple.
-
-```css
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0f0a06;
-    --color-bg-subtle: #17100a;
-    --color-surface: #1c130c;
-    --color-surface-soft: #24180f;
-    --color-surface-elevated: #2b1d12;
-
-    --color-text: #fff8ed;
-    --color-text-muted: #d8c5a8;
-    --color-text-soft: #bca98d;
-    --color-text-inverse: #21140a;
-
-    --color-primary: #ff4d42;
-    --color-primary-hover: #ff675f;
-    --color-primary-pressed: #e23832;
-    --color-on-primary: #1b0806;
-
-    --color-accent: #ffd84d;
-    --color-accent-soft: #4a3906;
-    --color-on-accent: #21140a;
-
-    --color-border: #3b2a1c;
-    --color-border-strong: #58402b;
-    --color-focus: #77a7ff;
-
-    --color-success: #4ade80;
-    --color-success-soft: #15351f;
-    --color-warning: #facc15;
-    --color-warning-soft: #3f3108;
-    --color-danger: #ff6b6b;
-    --color-danger-soft: #431515;
-
-    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.30);
-    --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.36);
-    --shadow-modal: 0 24px 80px rgba(0, 0, 0, 0.60);
-  }
-}
-```
-
-## Typography
-
-Use `Inter`, `Manrope`, or a similar clean UI font. Do not use decorative fonts for app UI, and do not recreate or distort the logo.
-
-```css
---font-sans: Inter, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
---text-xs: 0.75rem;
---text-sm: 0.875rem;
---text-base: 1rem;
---text-lg: 1.125rem;
---text-xl: 1.25rem;
---text-2xl: 1.5rem;
---text-3xl: 1.875rem;
---text-4xl: 2.25rem;
-
---leading-tight: 1.15;
---leading-normal: 1.5;
---leading-relaxed: 1.65;
-```
+- `--color-focus`
+- `--color-overlay`
+- `--color-overlay-strong`
+- `--color-disabled-bg`
+- `--color-disabled-border`
+- `--color-disabled-text`
 
 Rules:
 
-- Use readable body text on mobile.
-- Keep admin headings compact and scannable.
-- Do not use viewport-width font scaling.
-- Keep letter spacing at `0` unless a specific label needs uppercase tracking.
+- Focus must remain visible in light and dark mode.
+- Status must never rely on color alone.
+- Disabled states must lower affordance without reducing text contrast into ambiguity.
 
-## Radius, Spacing, Elevation
+## 3. Compatibility Aliases
 
-```css
---radius-xs: 6px;
---radius-sm: 10px;
---radius-md: 14px;
---radius-lg: 18px;
---radius-xl: 24px;
---radius-2xl: 32px;
---radius-pill: 999px;
+These legacy names remain active so existing components keep working during phases `1-6`:
 
---space-1: 4px;
---space-2: 8px;
---space-3: 12px;
---space-4: 16px;
---space-5: 20px;
---space-6: 24px;
---space-8: 32px;
---space-10: 40px;
---space-12: 48px;
---space-16: 64px;
-```
+| Legacy token | Canonical source |
+| --- | --- |
+| `--color-bg` | `--color-canvas` |
+| `--color-bg-subtle` | `--color-canvas-muted` |
+| `--color-surface-soft` | `--color-surface-muted` |
+| `--color-surface-elevated` | `--color-surface-raised` |
+| `--color-brand-red` | `--color-primary` |
+| `--color-brand-red-strong` | `--primitive-brand-red-strong` |
+| `--color-brand-yellow` | `--color-accent` |
+| `--color-brand-yellow-soft` | `--color-accent-soft` |
+| `--color-cream` | `--color-canvas` |
+| `--shadow-soft` | `--shadow-raised` |
+| `--shadow-card` | `--shadow-floating` |
+| `--motion-fast` | `--motion-duration-fast` |
+| `--motion-normal` | `--motion-duration-base` |
+| `--motion-slow` | `--motion-duration-slow` |
+| `--ease-standard` | `--motion-ease-standard` |
 
-Use cards only for real grouping: product items, repeated admin metrics, dialogs, and framed tool surfaces. Do not turn whole page sections into floating cards.
+No new component work should introduce fresh aliases.
 
-## Motion
+## 4. Depth And Elevation
 
-```css
---motion-fast: 120ms;
---motion-normal: 180ms;
---motion-slow: 260ms;
---ease-standard: cubic-bezier(0.2, 0, 0, 1);
-```
+Use these elevation tokens:
 
-Use motion for feedback, modal/sheet entry, page transitions, and cart updates. Respect `prefers-reduced-motion`. Never animate checkout totals in a way that delays reading or creates uncertainty.
+- `--shadow-raised`
+- `--shadow-floating`
+- `--shadow-modal`
 
-## Component State Standard
+Elevation levels:
 
-Every interactive component must define:
+- Raised: cards and repeated grouped surfaces.
+- Floating: toast, sticky utility elements, and elevated panels.
+- Modal: dialogs and major overlays only.
 
-- Default.
-- Hover where pointer exists.
-- Focus-visible.
-- Pressed/active where relevant.
-- Disabled.
-- Loading where async behavior exists.
-- Error where user correction is possible.
+Rules:
 
-Focus rings must be visible in light and dark mode. Buttons and controls should meet comfortable mobile touch size; target 44px minimum height for primary touch actions.
+- Use tonal separation before stronger shadows.
+- Do not stack multiple dramatic shadows.
+- Do not use gradients as a replacement for hierarchy.
 
-## Form And Error Standard
+## 5. Layout Contract
 
-Checkout and admin forms follow the GOV.UK pattern:
+### Tokens
 
-- Validate with Zod through the form layer and backend.
-- Show field-level error messages close to the field.
-- Show an error summary at the top of serious checkout/admin forms.
-- Use direct language: `Enter your phone number`, `Choose your delivery location`, `This item is currently out of stock`.
-- Do not rely only on browser-native validation.
-- Do not hide submit errors inside toasts only.
+- `--layout-container-public`
+- `--layout-container-admin`
+- `--layout-page-gutter`
+- `--layout-section-space-sm`
+- `--layout-section-space-md`
+- `--layout-section-space-lg`
+- `--control-height-sm`
+- `--control-height-md`
+- `--control-height-lg`
+- `--layer-base`
+- `--layer-header`
+- `--layer-overlay`
+- `--layer-modal`
+- `--layer-toast`
+- `--layer-loading`
 
-## Commerce UI Rules
+### Reusable utilities
 
-- Product browsing is fast and readable.
-- Product cards are not crowded.
-- Out-of-stock items cannot be ordered.
-- Cart totals are display-only until backend checkout confirmation.
-- Delivery base fee and 6 PM surcharge must be visually separate.
-- Checkout can be completed without email.
-- Payment instruction shows order number, amount, account details, invoice link, and WhatsApp proof action.
-- UI never says payment is confirmed until backend/admin confirmation.
+- `.sf-container-public`
+- `.sf-container-admin`
+- `.sf-section-sm`
+- `.sf-section` / `.sf-section-md`
+- `.sf-section-lg`
+- `.sf-control-sm`
+- `.sf-control` / `.sf-control-md`
+- `.sf-control-lg`
 
-## Admin UI Rules
+Rules:
 
-- Admin screens are dense enough for operations but not crowded.
-- Dashboard prioritizes current work: pending payment, preparing orders, delivery, reviews, unavailable products.
-- Lists need filters, search, status badges, and row actions.
-- Destructive or irreversible actions require confirmation.
-- Moderator sees restricted states for sensitive settings.
-- Super admin changes should show audit-context copy.
+- Default to `--control-height-md` for interactive controls.
+- Public routes should normally stay on the public container width.
+- Admin can use the admin container width for denser operational layouts.
+- Sticky headers, overlays, toasts, and loading indicators should use the layer tokens instead of hardcoded z-indexes when touched.
 
-## Accessibility Checklist
+## 6. Typography Contract
 
-- [ ] Target WCAG 2.2 AA.
-- [ ] Text contrast passes in light mode.
-- [ ] Text contrast passes in dark mode.
-- [ ] Every input has visible or accessible label.
-- [ ] Every field error explains what to fix.
-- [ ] Checkout has an error summary for serious validation failures.
-- [ ] Focus state is visible on every interactive element.
-- [ ] Dialogs and sheets trap focus.
-- [ ] `Esc` closes dismissible dialogs.
-- [ ] Buttons have accessible names.
-- [ ] Decorative icons are hidden from assistive tech.
-- [ ] Meaningful icons have accessible names.
-- [ ] Product images have useful alt text.
-- [ ] Status is not communicated by color alone.
-- [ ] Reduced motion is respected.
-- [ ] Admin tables are keyboard usable.
-
-## Performance Checklist
-
-- [ ] LCP target is <= 2.5s.
-- [ ] INP target is <= 200ms.
-- [ ] CLS target is <= 0.1.
-- [ ] Use `next/image` for product and hero images.
-- [ ] Set image width/height or stable aspect ratio.
-- [ ] Use responsive image sizes.
-- [ ] Prioritize only true above-the-fold hero imagery.
-- [ ] Lazy-load below-fold product images.
-- [ ] Avoid heavy animation libraries unless needed.
-- [ ] Keep public pages mostly server-rendered.
-- [ ] Use `loading.tsx` and skeletons for route segments.
-- [ ] Split admin-heavy components away from public bundles.
-- [ ] Do not load admin chart/table dependencies on public routes.
-
-## Design Review Checklist
-
-- [ ] The screen has one primary action.
-- [ ] The user can answer: where am I, what can I do, what happens next?
-- [ ] Mobile 360px layout is usable.
-- [ ] Text does not overflow containers.
-- [ ] Touch targets are comfortable.
-- [ ] Loading, empty, error, disabled, and success states exist where relevant.
-- [ ] Light and dark mode both look intentional.
-- [ ] No business-trusted total is calculated only in the frontend.
-- [ ] No random colors or one-off component styling.
-- [ ] No admin-sensitive settings are exposed to unauthorized roles.
-
-## Reference Links
+The font stack remains clean UI typography only:
 
 ```txt
-Apple HIG: https://developer.apple.com/design/human-interface-guidelines
-Material Design 3: https://m3.material.io/
-WCAG 2.2: https://www.w3.org/TR/WCAG22/
-GOV.UK Design System: https://design-system.service.gov.uk/
-Shopify Polaris: https://polaris-react.shopify.com/
-Stripe Checkout: https://stripe.com/payments/checkout
-Vercel Commerce: https://vercel.com/templates/next.js/nextjs-commerce
-Core Web Vitals: https://web.dev/articles/vitals
+Inter, Manrope, system UI fallbacks
 ```
+
+### Role tokens
+
+- Display: `--type-display-size`, `--type-display-line-height`
+- Page title: `--type-page-title-size`, `--type-page-title-line-height`
+- Section title: `--type-section-title-size`, `--type-section-title-line-height`
+- Card title: `--type-card-title-size`, `--type-card-title-line-height`
+- Body: `--type-body-size`, `--type-body-line-height`
+- Body small: `--type-body-sm-size`, `--type-body-sm-line-height`
+- Label: `--type-label-size`, `--type-label-line-height`
+- Caption: `--type-caption-size`, `--type-caption-line-height`
+- Price: `--type-price-size`, `--type-price-line-height`
+
+### Reusable utilities
+
+| Role | Utility |
+| --- | --- |
+| Display | `.sf-display` and legacy `.sf-hero` |
+| Page title | `.sf-page-title` and legacy `.sf-h1` |
+| Section title | `.sf-section-title` and legacy `.sf-h2` |
+| Card title | `.sf-card-title` and legacy `.sf-h3` |
+| Body | `.sf-body` |
+| Body small | `.sf-body-sm` |
+| Label | `.sf-label` |
+| Caption | `.sf-caption` |
+| Price | `.sf-price` |
+
+Rules:
+
+- Display and page-title roles scale up at `sm` and above.
+- Labels stay compact and scannable.
+- Prices always use tabular numerals.
+- Do not use decorative fonts in app UI.
+
+## 7. Motion Contract
+
+### Tokens
+
+- Durations:
+  - `--motion-duration-fast`
+  - `--motion-duration-base`
+  - `--motion-duration-slow`
+  - `--motion-duration-page`
+  - `--motion-duration-aesthetic`
+- Easing:
+  - `--motion-ease-standard`
+  - `--motion-ease-emphasized`
+  - `--motion-ease-exit`
+  - `--motion-ease-linear`
+- Distance and opacity:
+  - `--motion-distance-xs`
+  - `--motion-distance-sm`
+  - `--motion-distance-md`
+  - `--motion-distance-lg`
+  - `--motion-opacity-hidden`
+  - `--motion-opacity-soft`
+- Stagger:
+  - `--motion-stagger-tight`
+  - `--motion-stagger-base`
+
+### Categories
+
+| Category | Use for | Default rule |
+| --- | --- | --- |
+| Progressive disclosure | content reveal inside a stable page | fade + upward translate only |
+| Functional microinteractions | hover, focus, pressed, state confirmation | color, border, opacity, shadow, and very small transform |
+| Page / navigation | route or section swaps | faster than modal motion, never dramatic |
+| Aesthetic motion | rare decorative warmth | subtle float only, never on core task UI |
+
+### Reusable hooks
+
+Class or attribute options:
+
+- `.sf-motion-progressive` or `data-motion="progressive"`
+- `.sf-motion-page` or `data-motion="page"`
+- `.sf-motion-micro` or `data-motion="micro"`
+- `.sf-motion-scale` or `data-motion="scale"`
+- `.sf-motion-aesthetic` or `data-motion="aesthetic"`
+
+Supported stagger markers:
+
+- `data-stagger="1"`
+- `data-stagger="2"`
+- `data-stagger="3"`
+- `data-stagger="4"`
+
+### Motion rules
+
+- Motion clarifies hierarchy or state; it does not perform decoration by default.
+- Do not delay core content, totals, or confirmation copy behind animation.
+- Use `transform` and `opacity` first.
+- Keep micro-lift to `xs` distance only.
+- Use aesthetic motion rarely and never inside checkout-critical UI.
+- `prefers-reduced-motion: reduce` must disable these animation patterns cleanly.
+
+## 8. Component State Standard
+
+Every interactive component must still define:
+
+- Default
+- Hover where pointer exists
+- Focus-visible
+- Pressed / active where relevant
+- Disabled
+- Loading where async behavior exists
+- Error where correction is possible
+
+Focus must be keyboard-visible. Touch targets should not fall below `44px`, which maps directly to the control-height contract.
+
+## 9. Review Checklist
+
+- Are only semantic tokens used in new component styling?
+- Does the page show clear canvas vs surface hierarchy?
+- Do raised, floating, and modal surfaces use the correct elevation level?
+- Are sticky and overlay layers using the shared z-index contract?
+- Are typography roles reused instead of one-off heading sizes?
+- Is motion reduced-motion safe and non-blocking?
+- Does light mode still feel warm and controlled?
+- Does dark mode remain readable and calm?

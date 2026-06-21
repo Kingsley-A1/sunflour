@@ -31,6 +31,7 @@ The lower a component sits in this stack, the less product-specific behavior it 
 ## Global Rules
 
 - Components accept typed props.
+- Components consume canonical semantic tokens from `@sunflour/design-tokens`; raw primitives and deprecated compatibility aliases are forbidden in application code.
 - Components do not fetch data unless they are route-level Server Components or deliberately isolated data components.
 - Components do not hardcode backend business rules.
 - Components do not calculate trusted totals.
@@ -275,6 +276,8 @@ src/
 Use `components/*` for reusable UI and `features/*` for route-specific compositions.
 
 ## Testing Contract
+
+Design-system migration checks live in `tests/design-system/vertical-slices.spec.ts`. Each maintained vertical slice pairs a stable screenshot baseline with an axe scan for critical and serious WCAG violations. Authenticated account and admin interiors require test credentials; their public access boundaries remain the default baseline.
 
 Unit tests:
 

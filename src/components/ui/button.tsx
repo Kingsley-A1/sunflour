@@ -16,17 +16,17 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-hover)] active:bg-[var(--color-primary-pressed)]",
   secondary:
-    "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]",
+    "border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
   ghost:
-    "bg-transparent text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]",
+    "bg-transparent text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
   danger:
     "bg-[var(--color-danger)] text-[var(--color-text-inverse)] hover:brightness-95",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "min-h-10 px-3 text-sm",
-  md: "min-h-11 px-4 text-sm",
-  lg: "min-h-12 px-5 text-base",
+  sm: "min-h-[var(--control-height-sm)] px-3 text-sm",
+  md: "min-h-[var(--control-height-md)] px-4 text-sm",
+  lg: "min-h-[var(--control-height-lg)] px-5 text-base",
 };
 
 export function Button({
@@ -37,19 +37,27 @@ export function Button({
   disabled,
   icon,
   children,
+  style,
   type = "button",
   ...props
 }: ButtonProps) {
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-[var(--radius-sm)] text-center font-semibold transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] disabled:cursor-not-allowed disabled:opacity-55",
+        "inline-flex items-center justify-center gap-2 rounded-[var(--radius-sm)] text-center font-semibold transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] disabled:cursor-not-allowed disabled:opacity-55",
         "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
         variantClasses[variant],
         sizeClasses[size],
         className,
       )}
       disabled={disabled || loading}
+      style={
+        variant === "primary"
+          ? { ...style, color: "var(--color-on-primary)" }
+          : variant === "danger"
+            ? { ...style, color: "var(--color-text-inverse)" }
+            : style
+      }
       type={type}
       {...props}
     >

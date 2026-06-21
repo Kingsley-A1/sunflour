@@ -17,6 +17,7 @@
     "test:frontend": "vitest run src/tests/frontend",
     "test:e2e": "playwright test tests/e2e",
     "test:a11y": "playwright test tests/a11y",
+    "test:design-system": "playwright test tests/design-system",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate:dev": "tsx scripts/require-database-url.ts && prisma migrate dev",
@@ -27,6 +28,7 @@
     "auth:admin-codes": "tsx scripts/print-admin-registration-codes.ts"
   },
   "dependencies": {
+    "@sunflour/design-tokens": "workspace:*",
     "@aws-sdk/client-s3": "^3.1054.0",
     "@aws-sdk/s3-request-presigner": "^3.1054.0",
     "@hookform/resolvers": "^5.4.0",

@@ -438,103 +438,55 @@ Use semantic tokens. Components should consume roles like `bg-surface`, `text-pr
 
 ### 6.1 Brand color foundation
 
-Based on the Sunflour logo and bakery positioning:
+Use the AGENTS-approved Sunflour palette. The canonical implementation lives in
+`src/app/globals.css`, and the full contract lives in `docs/design-system.md`.
 
 ```txt
-Logo red:       #F00000
-Deep red:       #B91C1C
-Warm yellow:    #FFD400
-Golden yellow:  #F4C400
-Ink black:      #111111
-Warm cream:     #FFF8EA
-Soft wheat:     #FFF1C9
-Fresh white:    #FFFFFF
+Brand red:          #B22416
+Brand red strong:   #8F1C12
+Brand yellow:       #FFD400
+Brand yellow soft:  #FFF3B0
+Cream:              #FFF8EC
+Surface:            #FFFFFF
+Surface muted:      #F8F3EA
+Text:               #24150D
+Text muted:         #6F4B33
+Border:             #E9DCC8
+Success:            #128C4A
+Warning:            #B7791F
+Danger:             #B42318
+Info:               #2563EB
 ```
 
 ### 6.2 Light mode semantic tokens
 
-```css
-:root {
-  --color-bg: #fff8ea;
-  --color-bg-subtle: #fff1c9;
-  --color-surface: #ffffff;
-  --color-surface-soft: #fffaf0;
-  --color-surface-elevated: #ffffff;
+```txt
+Primitive palette -> semantic roles -> component usage.
 
-  --color-text: #21140a;
-  --color-text-muted: #6f5842;
-  --color-text-soft: #8a735b;
-  --color-text-inverse: #ffffff;
+Core semantic groups:
+- canvas and surface layers
+- text and border roles
+- primary and accent actions
+- success, warning, danger, info feedback
+- focus, overlay, and disabled states
 
-  --color-primary: #e60000;
-  --color-primary-hover: #c91414;
-  --color-primary-pressed: #a80f0f;
-  --color-on-primary: #ffffff;
-
-  --color-accent: #ffd400;
-  --color-accent-soft: #fff3b0;
-  --color-on-accent: #21140a;
-
-  --color-border: #eadcc5;
-  --color-border-strong: #d8c2a2;
-  --color-focus: #0b6fff;
-
-  --color-success: #128c4a;
-  --color-success-soft: #e7f7ee;
-  --color-warning: #b7791f;
-  --color-warning-soft: #fff4d6;
-  --color-danger: #c81e1e;
-  --color-danger-soft: #ffe8e8;
-
-  --shadow-soft: 0 8px 24px rgba(33, 20, 10, 0.08);
-  --shadow-card: 0 12px 32px rgba(33, 20, 10, 0.10);
-  --shadow-modal: 0 24px 80px rgba(33, 20, 10, 0.22);
-}
+Legacy aliases such as `--color-bg`, `--color-bg-subtle`, and
+`--color-surface-soft` may remain during migration, but new work should target
+the canonical semantic roles defined in `docs/design-system.md`.
 ```
 
 ### 6.3 Dark mode semantic tokens
 
 Dark mode must be designed, not inverted.
 
-```css
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0f0a06;
-    --color-bg-subtle: #17100a;
-    --color-surface: #1c130c;
-    --color-surface-soft: #24180f;
-    --color-surface-elevated: #2b1d12;
+```txt
+Dark mode keeps the same semantic roles as light mode.
 
-    --color-text: #fff8ed;
-    --color-text-muted: #d8c5a8;
-    --color-text-soft: #bca98d;
-    --color-text-inverse: #21140a;
-
-    --color-primary: #ff4d42;
-    --color-primary-hover: #ff675f;
-    --color-primary-pressed: #e23832;
-    --color-on-primary: #1b0806;
-
-    --color-accent: #ffd84d;
-    --color-accent-soft: #4a3906;
-    --color-on-accent: #21140a;
-
-    --color-border: #3b2a1c;
-    --color-border-strong: #58402b;
-    --color-focus: #77a7ff;
-
-    --color-success: #4ade80;
-    --color-success-soft: #15351f;
-    --color-warning: #facc15;
-    --color-warning-soft: #3f3108;
-    --color-danger: #ff6b6b;
-    --color-danger-soft: #431515;
-
-    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.30);
-    --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.36);
-    --shadow-modal: 0 24px 80px rgba(0, 0, 0, 0.60);
-  }
-}
+Rules:
+- preserve clear canvas vs surface hierarchy
+- keep focus and borders visible without harsh glare
+- use the AGENTS-approved dark palette values
+- respect `prefers-reduced-motion` and `prefers-color-scheme`
 ```
 
 ### 6.4 Theme rule

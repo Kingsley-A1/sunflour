@@ -43,7 +43,7 @@ export function ConfirmDialog({
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4"
+      className="fixed inset-0 z-[var(--layer-modal)] grid place-items-center bg-[var(--color-overlay)] p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !loading) {
           onCancel();
@@ -52,7 +52,7 @@ export function ConfirmDialog({
       role="dialog"
     >
       <div
-        className="w-full max-w-md rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-modal)]"
+        className="w-full max-w-md rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-floating)] p-5 shadow-[var(--shadow-modal)]"
         onKeyDown={onKeyDown}
         ref={containerRef}
         tabIndex={-1}

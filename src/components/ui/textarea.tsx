@@ -33,7 +33,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         aria-describedby={describedBy || undefined}
         aria-invalid={Boolean(error)}
         className={cn(
-          "min-h-28 rounded-[var(--radius-sm)] border bg-[var(--color-bg)] px-3 py-2 text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)]",
+          "min-h-28 rounded-[var(--radius-sm)] border bg-[var(--color-surface-overlay)] px-3 py-2 text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)] disabled:border-[var(--color-disabled-border)] disabled:bg-[var(--color-disabled-bg)] disabled:text-[var(--color-disabled-text)]",
           "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
           error
             ? "border-[var(--color-danger)]"

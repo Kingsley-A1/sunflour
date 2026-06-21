@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { PageLoadingLine } from "@/components/ui/page-loading-line";
 import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -29,6 +31,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body>
+        <Suspense fallback={null}>
+          <PageLoadingLine />
+        </Suspense>
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
