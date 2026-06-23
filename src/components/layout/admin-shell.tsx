@@ -15,6 +15,7 @@ import {
   Package,
   Settings,
   ShieldCheck,
+  Tags,
   Truck,
   UsersRound,
 } from "lucide-react";
@@ -32,6 +33,7 @@ export const adminNavItems = [
   { href: "/admin" as Route, label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["ATTENDANT", "MEDIA_MANAGER", "MODERATOR", "SUPER_ADMIN"] as const },
   { href: "/admin/orders" as Route, label: "Orders", icon: ClipboardList, allowedRoles: ["ATTENDANT", "MODERATOR", "SUPER_ADMIN"] as const },
   { href: "/admin/products" as Route, label: "Products", icon: Package, allowedRoles: ["MEDIA_MANAGER", "MODERATOR", "SUPER_ADMIN"] as const },
+  { href: "/admin/categories" as Route, label: "Categories", icon: Tags, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/delivery" as Route, label: "Delivery", icon: Truck, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/users" as Route, label: "Users", icon: UsersRound, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/reviews" as Route, label: "Reviews", icon: MessageSquareText, allowedRoles: ["MODERATOR", "SUPER_ADMIN"] as const },
