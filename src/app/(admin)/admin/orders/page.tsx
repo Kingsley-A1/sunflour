@@ -57,7 +57,7 @@ function buildPageHref(
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   await requireRole(ORDER_ADMIN_ROLES);
   const query = await searchParams;
-  const input = adminOrderListQuerySchema.parse({
+  const parsedInput = adminOrderListQuerySchema.safeParse({
     status: first(query.status),
     paymentStatus: first(query.paymentStatus),
     orderNumber: first(query.orderNumber),
@@ -65,6 +65,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     page: first(query.page),
     pageSize: "25",
   });
+  const input = parsedInput.success
+    ? parsedInput.data
+    : adminOrderListQuerySchema.parse({ page: "1", pageSize: "25" });
   const { orders, pagination } = await listAdminOrders(input);
   const previousPage = Math.max(1, pagination.page - 1);
   const nextPage = Math.min(pagination.pageCount || 1, pagination.page + 1);
@@ -80,6 +83,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         </p>
       </header>
       <form className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 md:grid-cols-4" action="/admin/orders">
+        {!parsedInput.success ? (
+          <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-warning)] bg-[var(--color-warning-soft)] p-3 text-sm font-semibold text-[var(--color-warning)] md:col-span-4" role="status">
+            Some order filters were invalid and have been reset.
+          </p>
+        ) : null}
         <input className="min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3" name="orderNumber" placeholder="Order number" defaultValue={input.orderNumber ?? ""} />
         <input className="min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3" name="customerPhone" placeholder="Customer phone" defaultValue={input.customerPhone ?? ""} />
         <select className="min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3" name="status" defaultValue={input.status ?? ""}>

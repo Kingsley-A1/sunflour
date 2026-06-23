@@ -30,27 +30,49 @@ const customerTypeSchema = z.enum([
   CustomerType.AUTHENTICATED,
 ]);
 
-const optionalSearchTextSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(120)
-  .optional();
+function blankStringToUndefined(value: unknown): unknown {
+  return typeof value === "string" && value.trim().length === 0
+    ? undefined
+    : value;
+}
 
-const optionalDateSchema = z
-  .string()
-  .trim()
-  .datetime({ offset: true })
-  .transform((value) => new Date(value))
-  .optional();
+const optionalOrderStatusSchema = z.preprocess(
+  blankStringToUndefined,
+  orderStatusSchema.optional(),
+);
+
+const optionalPaymentStatusSchema = z.preprocess(
+  blankStringToUndefined,
+  paymentStatusSchema.optional(),
+);
+
+const optionalCustomerTypeSchema = z.preprocess(
+  blankStringToUndefined,
+  customerTypeSchema.optional(),
+);
+
+const optionalSearchTextSchema = z.preprocess(
+  blankStringToUndefined,
+  z.string().trim().min(1).max(120).optional(),
+);
+
+const optionalDateSchema = z.preprocess(
+  blankStringToUndefined,
+  z
+    .string()
+    .trim()
+    .datetime({ offset: true })
+    .transform((value) => new Date(value))
+    .optional(),
+);
 
 const reasonSchema = z.string().trim().min(1).max(500);
 
 export const adminOrderListQuerySchema = z
   .object({
-    status: orderStatusSchema.optional(),
-    paymentStatus: paymentStatusSchema.optional(),
-    customerType: customerTypeSchema.optional(),
+    status: optionalOrderStatusSchema,
+    paymentStatus: optionalPaymentStatusSchema,
+    customerType: optionalCustomerTypeSchema,
     orderNumber: optionalSearchTextSchema,
     customerPhone: optionalSearchTextSchema,
     createdFrom: optionalDateSchema,
