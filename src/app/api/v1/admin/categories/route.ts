@@ -6,6 +6,7 @@ import { validateInput } from "@/server/lib/validation/zod";
 import {
   categoryCreateSchema,
 } from "@/server/modules/menu/catalog-schemas";
+import { revalidateCatalogViews } from "@/server/modules/menu/catalog-revalidation";
 import {
   createCategory,
   listAdminCategories,
@@ -30,8 +31,11 @@ export async function POST(request: Request) {
   try {
     const actor = await requireRole(SUPER_ADMIN_ROLES);
     const input = validateInput(categoryCreateSchema, await readJsonBody(request));
+    const category = await createCategory(input, actor);
 
-    return apiSuccess(await createCategory(input, actor), { status: 201 });
+    revalidateCatalogViews();
+
+    return apiSuccess(category, { status: 201 });
   } catch (error) {
     return apiError(error);
   }

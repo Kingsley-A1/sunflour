@@ -80,7 +80,7 @@ export function PaymentSettingsClient() {
     <div className="grid gap-5">
       {error ? <ErrorState description={error} title="Restricted or unavailable" /> : null}
       {message ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]">
+        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]" role="status">
           {message}
         </p>
       ) : null}

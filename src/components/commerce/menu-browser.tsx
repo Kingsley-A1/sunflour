@@ -10,9 +10,10 @@ import type { PublicMenuResponse } from "@/types/domain";
 
 interface MenuBrowserProps {
   menu: PublicMenuResponse;
+  initialQuery?: string;
 }
 
-export function MenuBrowser({ menu }: MenuBrowserProps) {
+export function MenuBrowser({ menu, initialQuery = "" }: MenuBrowserProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -26,7 +27,7 @@ export function MenuBrowser({ menu }: MenuBrowserProps) {
       ? categoryFromUrl
       : "all";
   const activeCategory = initialCategory;
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
 
   function updateActiveCategory(nextCategory: string) {
     const nextActiveCategory = validCategorySlugs.has(nextCategory)

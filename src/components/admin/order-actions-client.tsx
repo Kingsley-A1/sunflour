@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   getApiErrorMessage,
   updateAdminOrderNote,
@@ -71,6 +72,7 @@ export function OrderActionsClient({
   adminNote,
   role,
 }: OrderActionsClientProps) {
+  const router = useRouter();
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
   const [nextPaymentStatus, setNextPaymentStatus] = useState<PaymentStatus | "">("");
   const [reason, setReason] = useState("");
@@ -81,6 +83,9 @@ export function OrderActionsClient({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const allowedTransitions = getAllowedTransitions(currentStatus, deliveryMethod);
+  const nextStatusIsDestructive =
+    nextStatus === "CANCELLED" || nextStatus === "REJECTED";
+  const nextPaymentStatusIsDestructive = nextPaymentStatus === "REJECTED";
   const allowedPaymentOptions =
     role === "ATTENDANT"
       ? (["PROOF_SENT_ON_WHATSAPP", "UNDER_REVIEW"] satisfies PaymentStatus[])
@@ -103,9 +108,10 @@ export function OrderActionsClient({
         reason: reason || undefined,
         adminNote: note || undefined,
       });
-      setMessage("Order status updated. Refresh to see the latest timeline.");
+      setMessage("Order status updated and recorded in the timeline.");
       setConfirmOpen(false);
       setNextStatus("");
+      router.refresh();
     } catch (updateError) {
       setError(getApiErrorMessage(updateError, "Order status update failed."));
     } finally {
@@ -129,9 +135,10 @@ export function OrderActionsClient({
         paymentStatus: nextPaymentStatus,
         reason: reason || undefined,
       });
-      setMessage("Payment status updated. Refresh to see the latest order state.");
+      setMessage("Payment status updated and recorded for audit.");
       setPaymentConfirmOpen(false);
       setNextPaymentStatus("");
+      router.refresh();
     } catch (updateError) {
       setError(getApiErrorMessage(updateError, "Payment status update failed."));
     } finally {
@@ -150,6 +157,7 @@ export function OrderActionsClient({
         adminNote: note || null,
       });
       setMessage("Admin note saved.");
+      router.refresh();
     } catch (noteError) {
       setError(getApiErrorMessage(noteError, "Admin note could not be saved."));
     } finally {
@@ -167,8 +175,8 @@ export function OrderActionsClient({
           fulfillment statuses are not offered here.
         </p>
       </div>
-      {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]">{error}</p> : null}
-      {message ? <p className="m-0 text-sm font-semibold text-[var(--color-success)]">{message}</p> : null}
+      {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]" role="alert">{error}</p> : null}
+      {message ? <p className="m-0 text-sm font-semibold text-[var(--color-success)]" role="status">{message}</p> : null}
       <Select
         label="Next order status"
         onChange={(event) => setNextStatus(event.target.value as OrderStatus | "")}
@@ -230,8 +238,13 @@ export function OrderActionsClient({
         </Button>
       </div>
       <ConfirmDialog
-        confirmLabel="Update status"
-        description="This status change will be validated by the backend and recorded in the order timeline."
+        confirmLabel={nextStatusIsDestructive ? "Confirm protected change" : "Update status"}
+        description={
+          nextStatusIsDestructive
+            ? "This closes or rejects the order. Enter a clear reason before confirming; the backend records the event and audit log."
+            : "This status change will be validated by the backend and recorded in the order timeline."
+        }
+        destructive={nextStatusIsDestructive}
         loading={isSaving}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={updateOrderStatus}
@@ -242,6 +255,7 @@ export function OrderActionsClient({
         confirmLabel={
           nextPaymentStatus === "REJECTED" ? "Reject payment" : "Update payment"
         }
+        destructive={nextPaymentStatusIsDestructive}
         description={
           nextPaymentStatus === "REJECTED"
             ? "Rejected payment closes this order as rejected. Enter a clear reason before confirming."

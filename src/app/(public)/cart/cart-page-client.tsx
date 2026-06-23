@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CartItemRow } from "@/components/commerce/cart-item-row";
 import { DeliveryQuoteSummary } from "@/components/commerce/delivery-quote-summary";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Select } from "@/components/ui/select";
@@ -18,6 +19,10 @@ export function CartPageClient() {
   const [method, setMethod] = useState<DeliveryMethod>("PICKUP");
   const [zoneId, setZoneId] = useState("");
   const [quote, setQuote] = useState<DeliveryQuote | null>(null);
+  const [pendingRemoveItem, setPendingRemoveItem] = useState<{
+    key: string;
+    name: string;
+  } | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,7 +79,7 @@ export function CartPageClient() {
               itemKey={itemKey}
               key={itemKey}
               onQuantityChange={(quantity) => cart.updateQuantity(itemKey, quantity)}
-              onRemove={() => cart.removeItem(itemKey)}
+              onRemove={() => setPendingRemoveItem({ key: itemKey, name: item.name })}
             />
           );
         })}
@@ -142,6 +147,25 @@ export function CartPageClient() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </aside>
+      <ConfirmDialog
+        confirmLabel="Remove item"
+        description={
+          pendingRemoveItem
+            ? `Remove ${pendingRemoveItem.name} from your cart.`
+            : "Remove this item from your cart."
+        }
+        destructive
+        onCancel={() => setPendingRemoveItem(null)}
+        onConfirm={() => {
+          if (pendingRemoveItem) {
+            cart.removeItem(pendingRemoveItem.key);
+          }
+
+          setPendingRemoveItem(null);
+        }}
+        open={Boolean(pendingRemoveItem)}
+        title="Remove item from cart?"
+      />
     </div>
   );
 }

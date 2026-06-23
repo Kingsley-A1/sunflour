@@ -8,7 +8,16 @@ export const metadata = {
   title: "Menu",
 };
 
-export default async function MenuPage() {
+interface MenuPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function first(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function MenuPage({ searchParams }: MenuPageProps) {
+  const query = first((await searchParams).query)?.trim() ?? "";
   const { menu, error } = await getPublicMenuSafe();
 
   return (
@@ -26,7 +35,7 @@ export default async function MenuPage() {
       {error || !menu ? (
         <ErrorState description={error ?? "Menu data is not available."} title="Menu unavailable" />
       ) : (
-        <MenuBrowser menu={menu} />
+        <MenuBrowser initialQuery={query} key={query} menu={menu} />
       )}
     </main>
   );

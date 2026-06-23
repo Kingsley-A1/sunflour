@@ -7,6 +7,7 @@ import {
   idParamSchema,
   productImageCreateSchema,
 } from "@/server/modules/menu/catalog-schemas";
+import { revalidateCatalogViews } from "@/server/modules/menu/catalog-revalidation";
 import { attachProductImage } from "@/server/modules/menu/catalog-service";
 
 export const dynamic = "force-dynamic";
@@ -24,8 +25,11 @@ export async function POST(request: Request, context: ProductImageRouteContext) 
       productImageCreateSchema,
       await readJsonBody(request),
     );
+    const image = await attachProductImage(params.id, input, actor);
 
-    return apiSuccess(await attachProductImage(params.id, input, actor), {
+    revalidateCatalogViews();
+
+    return apiSuccess(image, {
       status: 201,
     });
   } catch (error) {

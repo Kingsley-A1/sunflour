@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/client";
 import { formatNairaFromKobo, nairaInputToKobo } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -41,6 +42,13 @@ export function DeliverySettingsClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    destructive?: boolean;
+    action: () => Promise<void>;
+  } | null>(null);
 
   const loadSettings = useCallback(async () => {
     setError(null);
@@ -164,6 +172,7 @@ export function DeliverySettingsClient() {
         isActive: zoneDraft.isActive,
       });
       setEditingZoneId(null);
+      setConfirmation(null);
       setMessage("Delivery zone updated. Checkout will use this setting for new quotes.");
       await loadSettings();
     } catch (zoneError) {
@@ -187,6 +196,7 @@ export function DeliverySettingsClient() {
           ? "Delivery zone deactivated. It will not appear at checkout."
           : "Delivery zone reactivated for checkout.",
       );
+      setConfirmation(null);
       await loadSettings();
     } catch (zoneError) {
       setError(getApiErrorMessage(zoneError, "Delivery zone state update failed."));
@@ -218,6 +228,7 @@ export function DeliverySettingsClient() {
         isActive: ruleDraft.isActive,
       });
       setEditingRuleId(null);
+      setConfirmation(null);
       setMessage("Surcharge rule updated. New delivery quotes will use the latest rule.");
       await loadSettings();
     } catch (ruleError) {
@@ -241,6 +252,7 @@ export function DeliverySettingsClient() {
           ? "Surcharge rule deactivated."
           : "Surcharge rule reactivated.",
       );
+      setConfirmation(null);
       await loadSettings();
     } catch (ruleError) {
       setError(getApiErrorMessage(ruleError, "Surcharge rule state update failed."));
@@ -253,7 +265,7 @@ export function DeliverySettingsClient() {
     <div className="grid gap-5">
       {error ? <ErrorState description={error} title="Delivery settings issue" /> : null}
       {message ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]">
+        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]" role="status">
           {message}
         </p>
       ) : null}
@@ -362,7 +374,15 @@ export function DeliverySettingsClient() {
                       <>
                         <Button
                           loading={isSaving}
-                          onClick={() => saveZoneEdit(zone.id)}
+                          onClick={() =>
+                            setConfirmation({
+                              title: "Confirm delivery zone update",
+                              description:
+                                "This changes the delivery fee used by future checkout quotes. Existing order snapshots will not change.",
+                              confirmLabel: "Save zone",
+                              action: () => saveZoneEdit(zone.id),
+                            })
+                          }
                           size="sm"
                         >
                           Save
@@ -382,7 +402,21 @@ export function DeliverySettingsClient() {
                         </Button>
                         <Button
                           loading={isSaving}
-                          onClick={() => toggleZone(zone)}
+                          onClick={() =>
+                            setConfirmation({
+                              title: zone.isActive
+                                ? "Deactivate delivery zone?"
+                                : "Reactivate delivery zone?",
+                              description: zone.isActive
+                                ? `${zone.name} will no longer appear at checkout for new delivery orders.`
+                                : `${zone.name} will be available again for new delivery orders.`,
+                              confirmLabel: zone.isActive
+                                ? "Deactivate zone"
+                                : "Reactivate zone",
+                              destructive: zone.isActive,
+                              action: () => toggleZone(zone),
+                            })
+                          }
                           size="sm"
                           variant="secondary"
                         >
@@ -485,7 +519,15 @@ export function DeliverySettingsClient() {
                       <>
                         <Button
                           loading={isSaving}
-                          onClick={() => saveRuleEdit(rule.id)}
+                          onClick={() =>
+                            setConfirmation({
+                              title: "Confirm surcharge rule update",
+                              description:
+                                "This changes the surcharge used by future delivery quotes. Existing order snapshots will not change.",
+                              confirmLabel: "Save rule",
+                              action: () => saveRuleEdit(rule.id),
+                            })
+                          }
                           size="sm"
                         >
                           Save
@@ -505,7 +547,21 @@ export function DeliverySettingsClient() {
                         </Button>
                         <Button
                           loading={isSaving}
-                          onClick={() => toggleRule(rule)}
+                          onClick={() =>
+                            setConfirmation({
+                              title: rule.isActive
+                                ? "Deactivate surcharge rule?"
+                                : "Reactivate surcharge rule?",
+                              description: rule.isActive
+                                ? `${rule.name} will not be applied to new delivery quotes.`
+                                : `${rule.name} will be applied again when its time condition matches.`,
+                              confirmLabel: rule.isActive
+                                ? "Deactivate rule"
+                                : "Reactivate rule",
+                              destructive: rule.isActive,
+                              action: () => toggleRule(rule),
+                            })
+                          }
                           size="sm"
                           variant="secondary"
                         >
@@ -520,6 +576,16 @@ export function DeliverySettingsClient() {
           </tbody>
         </table>
       </section>
+      <ConfirmDialog
+        confirmLabel={confirmation?.confirmLabel ?? "Confirm"}
+        description={confirmation?.description ?? "Confirm this delivery setting change."}
+        destructive={confirmation?.destructive}
+        loading={isSaving}
+        onCancel={() => setConfirmation(null)}
+        onConfirm={() => void confirmation?.action()}
+        open={Boolean(confirmation)}
+        title={confirmation?.title ?? "Confirm delivery setting change"}
+      />
     </div>
   );
 }

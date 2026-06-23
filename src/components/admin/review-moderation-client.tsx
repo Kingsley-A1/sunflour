@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getApiErrorMessage, moderateAdminReview } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { ReviewStatus } from "@/types/domain";
@@ -26,29 +27,42 @@ interface ReviewModerationClientProps {
 
 export function ReviewModerationClient({ reviews }: ReviewModerationClientProps) {
   const [reasonById, setReasonById] = useState<Record<string, string>>({});
+  const [pendingModeration, setPendingModeration] = useState<{
+    review: AdminReview;
+    status: Exclude<ReviewStatus, "PENDING">;
+  } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  async function moderate(id: string, status: Exclude<ReviewStatus, "PENDING">) {
+  async function moderate() {
+    if (!pendingModeration) {
+      return;
+    }
+
     setMessage(null);
     setError(null);
+    setIsSaving(true);
 
     try {
       await moderateAdminReview({
-        id,
-        status,
-        reason: reasonById[id] || undefined,
+        id: pendingModeration.review.id,
+        status: pendingModeration.status,
+        reason: reasonById[pendingModeration.review.id] || undefined,
       });
-      setMessage("Review moderation saved. Refresh to see the latest queue.");
+      setMessage("Review moderation saved and audited.");
+      setPendingModeration(null);
     } catch (moderationError) {
       setError(getApiErrorMessage(moderationError, "Review moderation failed."));
+    } finally {
+      setIsSaving(false);
     }
   }
 
   return (
     <div className="grid gap-4">
-      {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]">{error}</p> : null}
-      {message ? <p className="m-0 text-sm font-semibold text-[var(--color-success)]">{message}</p> : null}
+      {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]" role="alert">{error}</p> : null}
+      {message ? <p className="m-0 text-sm font-semibold text-[var(--color-success)]" role="status">{message}</p> : null}
       {reviews.map((review) => (
         <article
           className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
@@ -77,18 +91,32 @@ export function ReviewModerationClient({ reviews }: ReviewModerationClientProps)
             value={reasonById[review.id] ?? ""}
           />
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => moderate(review.id, "APPROVED")} variant="secondary">
+            <Button onClick={() => setPendingModeration({ review, status: "APPROVED" })} variant="secondary">
               Approve
             </Button>
-            <Button onClick={() => moderate(review.id, "REJECTED")} variant="danger">
+            <Button onClick={() => setPendingModeration({ review, status: "REJECTED" })} variant="danger">
               Reject
             </Button>
-            <Button onClick={() => moderate(review.id, "HIDDEN")} variant="secondary">
+            <Button onClick={() => setPendingModeration({ review, status: "HIDDEN" })} variant="secondary">
               Hide
             </Button>
           </div>
         </article>
       ))}
+      <ConfirmDialog
+        confirmLabel={pendingModeration?.status === "APPROVED" ? "Approve review" : "Confirm moderation"}
+        description={
+          pendingModeration
+            ? `Set ${pendingModeration.review.customerNameSnapshot}'s review to ${pendingModeration.status.toLowerCase()}. This moderation action is recorded for audit.`
+            : "Confirm this review moderation action."
+        }
+        destructive={pendingModeration?.status === "REJECTED" || pendingModeration?.status === "HIDDEN"}
+        loading={isSaving}
+        onCancel={() => setPendingModeration(null)}
+        onConfirm={moderate}
+        open={Boolean(pendingModeration)}
+        title="Confirm review moderation"
+      />
     </div>
   );
 }

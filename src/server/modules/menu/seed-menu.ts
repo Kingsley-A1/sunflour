@@ -52,6 +52,56 @@ export interface MenuSeedResult {
   variants: number;
 }
 
+export const canonicalProductCategories = [
+  {
+    name: "Cakes",
+    slug: "cakes",
+    description: "Cakes and celebration bakes.",
+    sortOrder: 30,
+  },
+  {
+    name: "Treats",
+    slug: "treats",
+    description: "Small chops, sweet bites, and bakery treats.",
+    sortOrder: 40,
+  },
+  {
+    name: "Ice Cream",
+    slug: "ice-cream",
+    description: "Ice cream and cold desserts.",
+    sortOrder: 80,
+  },
+  {
+    name: "Others",
+    slug: "others",
+    description: "Other menu items that do not belong in a primary category.",
+    sortOrder: 100,
+  },
+] as const;
+
+export async function seedCanonicalProductCategories(): Promise<number> {
+  for (const categorySeed of canonicalProductCategories) {
+    await prisma.category.upsert({
+      where: { slug: categorySeed.slug },
+      update: {
+        name: categorySeed.name,
+        description: categorySeed.description,
+        sortOrder: categorySeed.sortOrder,
+        isActive: true,
+      },
+      create: {
+        name: categorySeed.name,
+        slug: categorySeed.slug,
+        description: categorySeed.description,
+        sortOrder: categorySeed.sortOrder,
+        isActive: true,
+      },
+    });
+  }
+
+  return canonicalProductCategories.length;
+}
+
 export async function seedInitialMenu(
   seed: MenuSeedInput,
 ): Promise<MenuSeedResult> {

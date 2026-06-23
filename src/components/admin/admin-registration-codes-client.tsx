@@ -115,7 +115,7 @@ export function AdminRegistrationCodesClient() {
         <ErrorState description={error} title="Codes unavailable" />
       ) : null}
       {message ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]">
+        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]" role="status">
           {message}
         </p>
       ) : null}
@@ -179,6 +179,7 @@ export function AdminRegistrationCodesClient() {
       <ConfirmDialog
         confirmLabel="Regenerate codes"
         description="This immediately invalidates the current admin registration codes for every role. Existing admin accounts are not affected."
+        destructive
         loading={isRotating}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={rotateCodes}

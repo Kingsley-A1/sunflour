@@ -65,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className="mt-auto grid gap-3 border-t border-[var(--color-border)] pt-3">
           <p className="m-0 text-base font-semibold text-[var(--color-text)]">
-            {hasVariants ? "From " : ""}
+            {hasVariants ? <span>From </span> : null}
             <PriceText amount={product.basePrice} />
           </p>
           <AddToCartButton buttonVariant="secondary" product={product} />

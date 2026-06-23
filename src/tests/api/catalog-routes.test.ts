@@ -152,6 +152,14 @@ describe("catalog API routes", () => {
         categoryId: "cat_1",
         name: "Cake",
         basePrice: 2500,
+        images: [
+          {
+            mediaAssetId: "media_1",
+            altText: "Cake",
+            isPrimary: true,
+            sortOrder: 0,
+          },
+        ],
       }),
     );
 

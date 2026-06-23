@@ -6,6 +6,7 @@ import logoAsset from "../../../logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
 import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
+import { HeaderSearch } from "@/components/layout/header-search";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
 import type { PublicCategoryNavigationItem } from "@/types/domain";
 
@@ -37,7 +38,7 @@ export function PublicShell({
     <CartProvider>
       <div className="flex min-h-svh flex-col bg-[var(--color-canvas)] text-[var(--color-text)]">
         <header className="sticky top-0 z-[var(--layer-header)] border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
             <Link className="flex min-w-0 items-center gap-3" href="/">
               <Image
                 alt="Sunflour Bakery logo"
@@ -63,6 +64,7 @@ export function PublicShell({
               ))}
             </nav>
             <div className="flex items-center gap-2">
+              <HeaderSearch />
               {isSignedIn ? (
                 <Link
                   className="hidden min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold sm:inline-flex"

@@ -46,7 +46,16 @@ export const productVariantCreateSchema = z
 export const productVariantUpdateSchema =
   productVariantCreateSchema.partial();
 
-export const productCreateSchema = z
+const productImageInputSchema = z
+  .object({
+    mediaAssetId: z.string().min(1),
+    altText: z.string().trim().max(250).optional().nullable(),
+    isPrimary: z.boolean().optional(),
+    sortOrder: sortOrderSchema,
+  })
+  .strict();
+
+const productBaseSchema = z
   .object({
     categoryId: z.string().min(1),
     name: nameSchema,
@@ -58,15 +67,35 @@ export const productCreateSchema = z
     isFeatured: z.boolean().optional(),
     isPopular: z.boolean().optional(),
     sortOrder: sortOrderSchema,
-    variants: z.array(productVariantCreateSchema).max(24).optional(),
   })
   .strict();
 
-export const productUpdateSchema = productCreateSchema
-  .omit({
-    variants: true,
+export const productCreateSchema = productBaseSchema
+  .extend({
+    variants: z.array(productVariantCreateSchema).max(24).optional(),
+    images: z
+      .array(productImageInputSchema)
+      .min(1, "Choose at least one product image.")
+      .max(8, "Choose no more than 8 product images."),
   })
-  .partial();
+  .strict()
+  .superRefine((input, context) => {
+    const mediaAssetIds = new Set<string>();
+
+    input.images.forEach((image, index) => {
+      if (mediaAssetIds.has(image.mediaAssetId)) {
+        context.addIssue({
+          code: "custom",
+          message: "Choose each image only once.",
+          path: ["images", index, "mediaAssetId"],
+        });
+      }
+
+      mediaAssetIds.add(image.mediaAssetId);
+    });
+  });
+
+export const productUpdateSchema = productBaseSchema.partial();
 
 export const productStatusUpdateSchema = z
   .object({
@@ -75,14 +104,7 @@ export const productStatusUpdateSchema = z
   })
   .strict();
 
-export const productImageCreateSchema = z
-  .object({
-    mediaAssetId: z.string().min(1),
-    altText: z.string().trim().max(250).optional().nullable(),
-    isPrimary: z.boolean().optional(),
-    sortOrder: sortOrderSchema,
-  })
-  .strict();
+export const productImageCreateSchema = productImageInputSchema;
 
 const homepageHeroProductItemSchema = z
   .object({

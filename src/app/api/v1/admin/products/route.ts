@@ -4,6 +4,7 @@ import { readJsonBody } from "@/server/lib/api/request";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { validateInput } from "@/server/lib/validation/zod";
 import { productCreateSchema } from "@/server/modules/menu/catalog-schemas";
+import { revalidateCatalogViews } from "@/server/modules/menu/catalog-revalidation";
 import {
   createProduct,
   listAdminProducts,
@@ -28,8 +29,11 @@ export async function POST(request: Request) {
   try {
     const actor = await requireRole(SUPER_ADMIN_ROLES);
     const input = validateInput(productCreateSchema, await readJsonBody(request));
+    const product = await createProduct(input, actor);
 
-    return apiSuccess(await createProduct(input, actor), { status: 201 });
+    revalidateCatalogViews(product.slug);
+
+    return apiSuccess(product, { status: 201 });
   } catch (error) {
     return apiError(error);
   }

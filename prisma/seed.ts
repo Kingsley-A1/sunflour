@@ -1,14 +1,19 @@
 import "dotenv/config";
 import { seedAdminAllowlist } from "../src/server/auth/seed-admins";
-import { seedInitialMenuFromFile } from "../src/server/modules/menu/seed-menu";
+import {
+  seedCanonicalProductCategories,
+  seedInitialMenuFromFile,
+} from "../src/server/modules/menu/seed-menu";
 
 const adminResult = await seedAdminAllowlist();
+const categoryCount = await seedCanonicalProductCategories();
 
 console.log(
   `Seeded ${adminResult.count} admin allowlist entr${
     adminResult.count === 1 ? "y" : "ies"
   }.`,
 );
+console.log(`Ensured ${categoryCount} canonical product categories.`);
 
 if (process.env.SUNFLOUR_MENU_SEED_PATH) {
   const menuResult = await seedInitialMenuFromFile(

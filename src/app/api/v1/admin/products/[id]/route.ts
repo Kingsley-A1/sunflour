@@ -11,6 +11,7 @@ import {
   idParamSchema,
   productUpdateSchema,
 } from "@/server/modules/menu/catalog-schemas";
+import { revalidateCatalogViews } from "@/server/modules/menu/catalog-revalidation";
 import {
   archiveProduct,
   getAdminProduct,
@@ -40,8 +41,11 @@ export async function PATCH(request: Request, context: ProductRouteContext) {
     const actor = await requireRole(PRODUCT_CONTENT_ROLES);
     const params = validateInput(idParamSchema, await context.params);
     const input = validateInput(productUpdateSchema, await readJsonBody(request));
+    const product = await updateProduct(params.id, input, actor);
 
-    return apiSuccess(await updateProduct(params.id, input, actor));
+    revalidateCatalogViews(product.slug);
+
+    return apiSuccess(product);
   } catch (error) {
     return apiError(error);
   }
@@ -51,8 +55,11 @@ export async function DELETE(_request: Request, context: ProductRouteContext) {
   try {
     const actor = await requireRole(SUPER_ADMIN_ROLES);
     const params = validateInput(idParamSchema, await context.params);
+    const product = await archiveProduct(params.id, actor);
 
-    return apiSuccess(await archiveProduct(params.id, actor));
+    revalidateCatalogViews(product.slug);
+
+    return apiSuccess(product);
   } catch (error) {
     return apiError(error);
   }

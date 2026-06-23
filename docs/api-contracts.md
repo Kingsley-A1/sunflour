@@ -580,6 +580,9 @@ Rules:
 ```txt
 - Moderators can only update product availability between ACTIVE and OUT_OF_STOCK.
 - Moderators cannot hide products or unhide hidden products.
+- Product creation requires 1-8 completed PRODUCT_IMAGE media assets in `images[]`.
+- Product image alt text should be generated from the product name, not from the uploaded file name.
+- The first product image is the card/list primary image unless another image is explicitly made primary later.
 - Product base price updates write PRODUCT_PRICE_UPDATE audit logs.
 - Product variant price updates write PRODUCT_VARIANT_PRICE_UPDATE audit logs.
 - Product status updates write PRODUCT_STATUS_UPDATE audit logs.
@@ -627,7 +630,7 @@ Side effects:
 - Completion verifies the object exists in R2 and that content type and byte size match before marking media_assets status READY.
 - Completion does not accept a client-supplied public URL; the backend derives the public URL from configured R2 public base URL.
 - Failed completion keeps media_assets status PENDING_UPLOAD and writes MEDIA_UPLOAD_VERIFICATION_FAILED.
-- Product image creation attaches READY media assets only.
+- Product image creation attaches READY media assets only; new products require at least one image at create time.
 - Media upload URL creation and completion write audit logs.
 ```
 

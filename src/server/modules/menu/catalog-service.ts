@@ -135,6 +135,16 @@ function mapPublicProduct(
   };
 }
 
+function buildProductImageAltText(
+  productName: string,
+  index: number,
+  total: number,
+): string {
+  const name = productName.trim() || "Sunflour Bakery product";
+
+  return total > 1 ? `${name} — view ${index + 1}` : name;
+}
+
 export async function getPublicMenu() {
   const categories = await prisma.category.findMany({
     where: {
@@ -348,6 +358,28 @@ export async function createProduct(
   actor: AuthenticatedUser,
 ) {
   return prisma.$transaction(async (transaction) => {
+    const mediaAssetIds = input.images.map((image) => image.mediaAssetId);
+    const mediaAssets = await transaction.mediaAsset.findMany({
+      where: {
+        id: { in: mediaAssetIds },
+        status: MediaAssetStatus.READY,
+        uploadPurpose: MediaUploadPurpose.PRODUCT_IMAGE,
+        createdByUserId: actor.id,
+      },
+      select: { id: true },
+    });
+
+    if (mediaAssets.length !== mediaAssetIds.length) {
+      throw new AppError({
+        code: ERROR_CODES.VALIDATION_ERROR,
+        publicMessage: "Use completed product image uploads from this admin session.",
+        status: 400,
+        fieldErrors: {
+          images: ["Use completed product image uploads from this admin session."],
+        },
+      });
+    }
+
     const product = await transaction.product.create({
       data: {
         categoryId: input.categoryId,
@@ -365,6 +397,16 @@ export async function createProduct(
               create: input.variants,
             }
           : undefined,
+        images: {
+          create: input.images.map((image, index) => ({
+            mediaAssetId: image.mediaAssetId,
+            altText:
+              image.altText ||
+              buildProductImageAltText(input.name, index, input.images.length),
+            isPrimary: index === 0,
+            sortOrder: image.sortOrder ?? index,
+          })),
+        },
       },
       include: adminProductInclude,
     });
@@ -385,6 +427,7 @@ export async function createProduct(
             basePrice: product.basePrice,
             status: product.status,
             variantCount: product.variants.length,
+            imageCount: product.images.length,
           },
         },
       },

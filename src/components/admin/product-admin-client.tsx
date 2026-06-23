@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import {
   getApiErrorMessage,
@@ -10,6 +11,7 @@ import {
 import { formatNairaFromKobo } from "@/lib/formatters";
 import { productStatusMeta } from "@/lib/status";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
 import type {
@@ -30,21 +32,37 @@ export function ProductAdminClient({
   categories,
   role,
 }: ProductAdminClientProps) {
+  const router = useRouter();
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, ProductStatus>>({});
   const [categoryId, setCategoryId] = useState("all");
   const [status, setStatus] = useState<ProductStatus | "all">("all");
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    product: AdminProduct;
+    nextStatus: ProductStatus;
+  } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const visibleProducts = useMemo(
+    () =>
+      products.map((product) => ({
+        ...product,
+        status: statusOverrides[product.id] ?? product.status,
+      })),
+    [products, statusOverrides],
+  );
 
   const filteredProducts = useMemo(
     () =>
-      products.filter((product) => {
+      visibleProducts.filter((product) => {
         const categoryMatches =
           categoryId === "all" || product.categoryId === categoryId;
         const statusMatches = status === "all" || product.status === status;
 
         return categoryMatches && statusMatches;
       }),
-    [categoryId, products, status],
+    [categoryId, visibleProducts, status],
   );
 
   const isSuperAdmin = role === "SUPER_ADMIN";
@@ -63,21 +81,32 @@ export function ProductAdminClient({
       : ["ACTIVE", "OUT_OF_STOCK"];
   }
 
-  async function updateStatus(
-    product: AdminProduct,
-    nextStatus: ProductStatus,
-  ) {
+  async function updateStatus() {
+    if (!pendingStatusChange) {
+      return;
+    }
+
     setMessage(null);
     setError(null);
+    setIsSaving(true);
+
     try {
       await updateAdminProductStatus({
-        productId: product.id,
-        status: nextStatus,
+        productId: pendingStatusChange.product.id,
+        status: pendingStatusChange.nextStatus,
         reason: "Updated from catalog admin UI.",
       });
-      setMessage("Status update saved. Refresh to see the latest backend state.");
+      setStatusOverrides((current) => ({
+        ...current,
+        [pendingStatusChange.product.id]: pendingStatusChange.nextStatus,
+      }));
+      setMessage("Product availability updated for future browsing and checkout.");
+      setPendingStatusChange(null);
+      router.refresh();
     } catch (statusError) {
       setError(getApiErrorMessage(statusError, "Status update failed."));
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -126,12 +155,12 @@ export function ProductAdminClient({
         )}
       </div>
       {message ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]">
+        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]" role="status">
           {message}
         </p>
       ) : null}
       {error ? (
-        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]">
+        <p className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]" role="alert">
           {error}
         </p>
       ) : null}
@@ -174,9 +203,13 @@ export function ProductAdminClient({
                         !canUpdateAvailability ||
                         (!isSuperAdmin && product.status === "HIDDEN")
                       }
-                      onChange={(event) =>
-                        updateStatus(product, event.target.value as ProductStatus)
-                      }
+                      onChange={(event) => {
+                        const nextStatus = event.target.value as ProductStatus;
+
+                        if (nextStatus !== product.status) {
+                          setPendingStatusChange({ product, nextStatus });
+                        }
+                      }}
                       value={product.status}
                     >
                       {statusOptionsFor(product).map((value) => (
@@ -207,6 +240,20 @@ export function ProductAdminClient({
           </table>
         </div>
       )}
+      <ConfirmDialog
+        confirmLabel="Update availability"
+        description={
+          pendingStatusChange
+            ? `Set ${pendingStatusChange.product.name} to ${productStatusMeta[pendingStatusChange.nextStatus].label}. This affects future public browsing and checkout availability.`
+            : "Confirm this product availability update."
+        }
+        destructive={pendingStatusChange?.nextStatus === "HIDDEN"}
+        loading={isSaving}
+        onCancel={() => setPendingStatusChange(null)}
+        onConfirm={updateStatus}
+        open={Boolean(pendingStatusChange)}
+        title="Confirm product availability change"
+      />
     </div>
   );
 }

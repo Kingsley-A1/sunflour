@@ -7,6 +7,7 @@ import {
   idParamSchema,
   productStatusUpdateSchema,
 } from "@/server/modules/menu/catalog-schemas";
+import { revalidateCatalogViews } from "@/server/modules/menu/catalog-revalidation";
 import { updateProductStatus } from "@/server/modules/menu/catalog-service";
 
 export const dynamic = "force-dynamic";
@@ -27,8 +28,11 @@ export async function PATCH(
       productStatusUpdateSchema,
       await readJsonBody(request),
     );
+    const product = await updateProductStatus(params.id, input, actor);
 
-    return apiSuccess(await updateProductStatus(params.id, input, actor));
+    revalidateCatalogViews(product.slug);
+
+    return apiSuccess(product);
   } catch (error) {
     return apiError(error);
   }
