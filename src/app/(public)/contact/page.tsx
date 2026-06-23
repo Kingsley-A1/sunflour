@@ -15,7 +15,7 @@ import {
   TikTokIcon,
   WhatsAppIcon,
 } from "@/components/ui/brand-icons";
-import { getPublicContactConfig } from "@/server/config/public-contact";
+import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 
 export const metadata: Metadata = {
   title: "Contact Sunflour Bakery",
@@ -32,8 +32,8 @@ interface ContactAction {
   external?: boolean;
 }
 
-export default function ContactPage() {
-  const contact = getPublicContactConfig();
+export default async function ContactPage() {
+  const contact = await getResolvedPublicContactConfig();
   const primaryActions: ContactAction[] = [
     {
       title: "Phone",
@@ -100,11 +100,11 @@ export default function ContactPage() {
               Contact
             </p>
             <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
-              Reach Sunflour without guessing the right channel.
+              Reach {contact.businessName} without guessing the right channel.
             </h1>
             <p className="m-0 mt-3 max-w-2xl text-base leading-7 text-[var(--color-text-muted)]">
-              Use the contact options below for orders, payment proof, invoice
-              questions, pickup, delivery, and general support.
+              {contact.shortDescription ??
+                "Use the contact options below for orders, payment proof, invoice questions, pickup, delivery, and general support."}
             </p>
           </div>
           <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
@@ -162,6 +162,11 @@ export default function ContactPage() {
                   Open in maps
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
                 </a>
+              ) : null}
+              {contact.supportHours ? (
+                <p className="m-0 mt-4 text-sm leading-6 text-[var(--color-text-muted)]">
+                  Support hours: {contact.supportHours}
+                </p>
               ) : null}
             </div>
           ) : null}

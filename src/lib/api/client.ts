@@ -6,6 +6,7 @@ import type {
   AdminHomepageHeroProduct,
   AdminSurchargeRule,
   AdminProduct,
+  BusinessSettings,
   CheckoutResult,
   CustomerProfileResponse,
   DeliveryMethod,
@@ -480,6 +481,37 @@ export async function updatePaymentSettings(input: {
     method: "PATCH",
     body: JSON.stringify(input),
   });
+}
+
+export async function getBusinessSettings(): Promise<BusinessSettings> {
+  const data = await apiRequest<{ businessSettings: BusinessSettings }>(
+    "/api/v1/admin/settings/site",
+  );
+
+  return data.businessSettings;
+}
+
+export async function updateBusinessSettings(input: {
+  businessName: string;
+  shortDescription?: string | null;
+  supportHours?: string | null;
+  phoneNumber?: string | null;
+  whatsappNumber?: string | null;
+  emailAddress?: string | null;
+  address?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+  facebook?: string | null;
+}): Promise<BusinessSettings> {
+  const data = await apiRequest<{ businessSettings: BusinessSettings }>(
+    "/api/v1/admin/settings/site",
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+
+  return data.businessSettings;
 }
 
 export async function listEmailTemplates(): Promise<EmailTemplate[]> {

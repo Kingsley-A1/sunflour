@@ -52,7 +52,13 @@ export const signedInMobileNavItems: PublicMobileNavItem[] = [
   { href: "/account/orders" as Route, label: "Orders", icon: ClipboardList },
 ];
 
-export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) {
+export function PublicMobileNavigation({
+  businessName,
+  isSignedIn,
+}: {
+  businessName: string;
+  isSignedIn: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const authItems = isSignedIn
     ? signedInMobileNavItems
@@ -69,7 +75,7 @@ export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) 
       <Sheet
         onClose={() => setOpen(false)}
         open={open}
-        title="Sunflour navigation"
+        title={`${businessName} navigation`}
       >
         <nav aria-label="Mobile public page navigation">
           <ul className="m-0 grid list-none gap-2 p-0">

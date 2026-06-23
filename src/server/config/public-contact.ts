@@ -1,4 +1,10 @@
+import { cache } from "react";
+import { getBusinessSettingsForPublic } from "@/server/modules/settings";
+
 export interface PublicContactConfig {
+  businessName: string;
+  shortDescription: string | null;
+  supportHours: string | null;
   phoneNumber: string | null;
   phoneHref: string | null;
   whatsappNumber: string | null;
@@ -100,26 +106,33 @@ function isAbsoluteUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
-export function getPublicContactConfig(): PublicContactConfig {
-  const phoneNumber = readPublicEnv("PHONE_NUMBER", "NEXT_PUBLIC_SUNFLOUR_PHONE_NUMBER");
-  const whatsappNumber = readPublicEnv(
-    "WHATSAPP_NUMBER",
-    "NEXT_PUBLIC_SUNFLOUR_WHATSAPP_NUMBER",
-  );
-  const emailAddress = readPublicEnv(
-    "EMAIL_ADDRESS",
-    "NEXT_PUBLIC_SUNFLOUR_EMAIL_ADDRESS",
-  );
-  const instagram = readPublicEnv("INSTAGRAM", "NEXT_PUBLIC_SUNFLOUR_INSTAGRAM");
-  const tiktok = readPublicEnv("TIKTOK", "NEXT_PUBLIC_SUNFLOUR_TIKTOK");
-  const facebook = readPublicEnv("FACEBOOK", "NEXT_PUBLIC_SUNFLOUR_FACEBOOK");
-  const address = readPublicEnv(
-    "ADDRESS",
-    "ADRESS",
-    "NEXT_PUBLIC_SUNFLOUR_ADDRESS",
-  );
+function buildPublicContactConfig(input: {
+  businessName?: string | null;
+  shortDescription?: string | null;
+  supportHours?: string | null;
+  phoneNumber?: string | null;
+  whatsappNumber?: string | null;
+  emailAddress?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+  facebook?: string | null;
+  address?: string | null;
+}): PublicContactConfig {
+  const businessName = input.businessName?.trim() || "Sunflour Bakery";
+  const shortDescription = normalizePublicEnvValue(input.shortDescription ?? undefined);
+  const supportHours = normalizePublicEnvValue(input.supportHours ?? undefined);
+  const phoneNumber = normalizePublicEnvValue(input.phoneNumber ?? undefined);
+  const whatsappNumber = normalizePublicEnvValue(input.whatsappNumber ?? undefined);
+  const emailAddress = normalizePublicEnvValue(input.emailAddress ?? undefined);
+  const instagram = normalizePublicEnvValue(input.instagram ?? undefined);
+  const tiktok = normalizePublicEnvValue(input.tiktok ?? undefined);
+  const facebook = normalizePublicEnvValue(input.facebook ?? undefined);
+  const address = normalizePublicEnvValue(input.address ?? undefined);
 
   return {
+    businessName,
+    shortDescription,
+    supportHours,
     phoneNumber,
     phoneHref: toPhoneHref(phoneNumber),
     whatsappNumber,
@@ -145,3 +158,65 @@ export function getPublicContactConfig(): PublicContactConfig {
     ),
   };
 }
+
+export function getPublicContactConfig(): PublicContactConfig {
+  const phoneNumber = readPublicEnv("PHONE_NUMBER", "NEXT_PUBLIC_SUNFLOUR_PHONE_NUMBER");
+  const whatsappNumber = readPublicEnv(
+    "WHATSAPP_NUMBER",
+    "NEXT_PUBLIC_SUNFLOUR_WHATSAPP_NUMBER",
+  );
+  const emailAddress = readPublicEnv(
+    "EMAIL_ADDRESS",
+    "NEXT_PUBLIC_SUNFLOUR_EMAIL_ADDRESS",
+  );
+  const instagram = readPublicEnv("INSTAGRAM", "NEXT_PUBLIC_SUNFLOUR_INSTAGRAM");
+  const tiktok = readPublicEnv("TIKTOK", "NEXT_PUBLIC_SUNFLOUR_TIKTOK");
+  const facebook = readPublicEnv("FACEBOOK", "NEXT_PUBLIC_SUNFLOUR_FACEBOOK");
+  const address = readPublicEnv(
+    "ADDRESS",
+    "ADRESS",
+    "NEXT_PUBLIC_SUNFLOUR_ADDRESS",
+  );
+
+  return buildPublicContactConfig({
+    businessName: "Sunflour Bakery",
+    shortDescription: null,
+    supportHours: null,
+    phoneNumber,
+    whatsappNumber,
+    emailAddress,
+    instagram,
+    tiktok,
+    facebook,
+    address,
+  });
+}
+
+export const getResolvedPublicContactConfig = cache(
+  async (): Promise<PublicContactConfig> => {
+    const fallback = getPublicContactConfig();
+
+    try {
+      const businessSettings = await getBusinessSettingsForPublic();
+
+      if (!businessSettings) {
+        return fallback;
+      }
+
+      return buildPublicContactConfig({
+        businessName: businessSettings.businessName,
+        shortDescription: businessSettings.shortDescription,
+        supportHours: businessSettings.supportHours,
+        phoneNumber: businessSettings.phoneNumber ?? fallback.phoneNumber,
+        whatsappNumber: businessSettings.whatsappNumber ?? fallback.whatsappNumber,
+        emailAddress: businessSettings.emailAddress ?? fallback.emailAddress,
+        instagram: businessSettings.instagram ?? fallback.instagram,
+        tiktok: businessSettings.tiktok ?? fallback.tiktok,
+        facebook: businessSettings.facebook ?? fallback.facebook,
+        address: businessSettings.address ?? fallback.address,
+      });
+    } catch {
+      return fallback;
+    }
+  },
+);

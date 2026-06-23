@@ -317,6 +317,21 @@ export interface PaymentSettings {
   updatedAt: string;
 }
 
+export interface BusinessSettings {
+  businessName: string;
+  shortDescription: string | null;
+  supportHours: string | null;
+  phoneNumber: string | null;
+  whatsappNumber: string | null;
+  emailAddress: string | null;
+  address: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 export interface EmailTemplate {
   id: string;
   key: string;

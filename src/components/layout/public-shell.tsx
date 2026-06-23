@@ -8,6 +8,7 @@ import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
+import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 import type { PublicCategoryNavigationItem } from "@/types/domain";
 
 interface PublicShellProps {
@@ -24,11 +25,12 @@ const navItems = [
   { href: "/reviews" as Route, label: "Reviews" },
 ];
 
-export function PublicShell({
+export async function PublicShell({
   categories,
   children,
   isSignedIn,
 }: PublicShellProps) {
+  const contact = await getResolvedPublicContactConfig();
   const categoryLinks =
     categories.length > 0
       ? categories
@@ -41,7 +43,7 @@ export function PublicShell({
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
             <Link className="flex min-w-0 items-center gap-3" href="/">
               <Image
-                alt="Sunflour Bakery logo"
+                alt={`${contact.businessName} logo`}
                 className="h-11 w-11 rounded-[var(--radius-sm)] object-contain"
                 height={44}
                 priority
@@ -49,7 +51,7 @@ export function PublicShell({
                 width={44}
               />
               <span className="min-w-0 text-base font-extrabold leading-tight">
-                Sunflour Bakery
+                {contact.businessName}
               </span>
             </Link>
             <nav className="hidden items-center gap-1 md:flex" aria-label="Public navigation">
@@ -106,7 +108,10 @@ export function PublicShell({
                 <ShoppingBag className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">Cart</span>
               </Link>
-              <PublicMobileNavigation isSignedIn={isSignedIn} />
+              <PublicMobileNavigation
+                businessName={contact.businessName}
+                isSignedIn={isSignedIn}
+              />
             </div>
           </div>
           <nav
@@ -129,7 +134,7 @@ export function PublicShell({
           </nav>
         </header>
         <div className="flex-grow">{children}</div>
-        <Footer />
+        <Footer contact={contact} />
         <StickyCartBar />
       </div>
     </CartProvider>

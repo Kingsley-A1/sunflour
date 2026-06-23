@@ -10,7 +10,7 @@ import {
   InstagramIcon,
   TikTokIcon,
 } from "@/components/ui/brand-icons";
-import { getPublicContactConfig } from "@/server/config/public-contact";
+import type { PublicContactConfig } from "@/server/config/public-contact";
 
 interface FooterLink {
   href: Route;
@@ -43,8 +43,7 @@ const legalLinks: FooterLink[] = [
   { href: "/privacy" as Route, label: "Privacy" },
 ];
 
-export function Footer() {
-  const contact = getPublicContactConfig();
+export function Footer({ contact }: { contact: PublicContactConfig }) {
   const currentYear = new Date().getFullYear();
   const contactLinks: ContactLink[] = [
     {
@@ -78,40 +77,40 @@ export function Footer() {
         >
           <Link className="inline-flex items-center gap-3" href="/">
             <Image
-              alt="Sunflour Bakery logo"
+              alt={`${contact.businessName} logo`}
               className="h-12 w-12 rounded-[var(--radius-sm)] object-contain"
               height={48}
               src={logoAsset}
               width={48}
             />
             <span id="footer-brand" className="text-lg font-extrabold">
-              Sunflour Bakery
+              {contact.businessName}
             </span>
           </Link>
           <p className="m-0 mt-4 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
-            Fresh bakes for pickup or delivery, with clear ordering and verified
-            transfer payments.
+            {contact.shortDescription ??
+              "Fresh bakes for pickup or delivery, with clear ordering and verified transfer payments."}
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {contact.instagramHref ? (
               <SocialLink
                 href={contact.instagramHref}
                 icon={<InstagramIcon className="h-5 w-5" />}
-                label="Sunflour Bakery on Instagram"
+                label={`${contact.businessName} on Instagram`}
               />
             ) : null}
             {contact.tiktokHref ? (
               <SocialLink
                 href={contact.tiktokHref}
                 icon={<TikTokIcon className="h-5 w-5" />}
-                label="Sunflour Bakery on TikTok"
+                label={`${contact.businessName} on TikTok`}
               />
             ) : null}
             {contact.facebookHref ? (
               <SocialLink
                 href={contact.facebookHref}
                 icon={<FacebookIcon className="h-5 w-5" />}
-                label="Sunflour Bakery on Facebook"
+                label={`${contact.businessName} on Facebook`}
               />
             ) : null}
           </div>
@@ -154,6 +153,14 @@ export function Footer() {
                   </span>
                 </li>
               ) : null}
+              {contact.supportHours ? (
+                <li className="rounded-[var(--radius-sm)] px-0 py-1.5 text-sm text-[var(--color-text-muted)]">
+                  <span className="block font-semibold text-[var(--color-text)]">
+                    Support hours
+                  </span>
+                  <span>{contact.supportHours}</span>
+                </li>
+              ) : null}
             </ul>
           ) : (
             <Link
@@ -168,7 +175,7 @@ export function Footer() {
 
       <div className="border-t border-[var(--color-border)]">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 text-sm text-[var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between">
-          <p className="m-0">&copy; {currentYear} Sunflour Bakery</p>
+          <p className="m-0">&copy; {currentYear} {contact.businessName}</p>
           <nav aria-label="Legal navigation" className="flex flex-wrap gap-x-4 gap-y-2">
             {legalLinks.map((link) => (
               <Link

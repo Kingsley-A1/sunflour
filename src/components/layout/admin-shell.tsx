@@ -9,7 +9,6 @@ import {
   ChevronRight,
   ClipboardList,
   LayoutDashboard,
-  Mail,
   Menu,
   MessageSquareText,
   Package,
@@ -37,8 +36,7 @@ export const adminNavItems = [
   { href: "/admin/delivery" as Route, label: "Delivery", icon: Truck, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/users" as Route, label: "Users", icon: UsersRound, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/reviews" as Route, label: "Reviews", icon: MessageSquareText, allowedRoles: ["MODERATOR", "SUPER_ADMIN"] as const },
-  { href: "/admin/settings/email" as Route, label: "Email", icon: Mail, allowedRoles: ["SUPER_ADMIN"] as const },
-  { href: "/admin/settings/payment" as Route, label: "Payment", icon: Settings, allowedRoles: ["SUPER_ADMIN"] as const },
+  { href: "/admin/settings" as Route, label: "Settings", icon: Settings, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/audit-logs" as Route, label: "Audit logs", icon: ShieldCheck, allowedRoles: ["SUPER_ADMIN"] as const },
 ];
 
