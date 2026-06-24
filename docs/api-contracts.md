@@ -85,6 +85,8 @@ GET    /api/v1/admin/categories
 POST   /api/v1/admin/categories
 PATCH  /api/v1/admin/categories/[id]
 DELETE /api/v1/admin/categories/[id]
+GET    /api/v1/admin/tabular-menu
+PATCH  /api/v1/admin/tabular-menu
 GET    /api/v1/admin/homepage/hero-products
 PATCH  /api/v1/admin/homepage/hero-products
 GET    /api/v1/admin/products
@@ -558,6 +560,23 @@ GET    /api/v1/admin/categories          MODERATOR | SUPER_ADMIN
 POST   /api/v1/admin/categories          SUPER_ADMIN
 PATCH  /api/v1/admin/categories/[id]     SUPER_ADMIN
 DELETE /api/v1/admin/categories/[id]     SUPER_ADMIN, soft-archives with is_active=false
+```
+
+### Tabular Menu Admin
+
+```txt
+GET   /api/v1/admin/tabular-menu         MEDIA_MANAGER | SUPER_ADMIN
+PATCH /api/v1/admin/tabular-menu         MEDIA_MANAGER | SUPER_ADMIN
+```
+
+Rules:
+
+```txt
+- This surface manages only the public reference menu shown in `/menu?view=table`.
+- Stored content lives in `site_settings` under the `tabular_menu_content` key.
+- The tabular menu must not become a trusted pricing source for checkout, invoices, or order totals.
+- Invalid or missing stored JSON falls back to the documented default content for public reads.
+- PATCH writes TABULAR_MENU_UPDATE audit logs.
 ```
 
 ### Product Admin

@@ -9,6 +9,7 @@ import type {
   PublicHeroProduct,
   PublicMenuResponse,
   PublicProduct,
+  TabularMenuContent,
 } from "@/types/domain";
 import type { Prisma } from "@/generated/prisma/client";
 import {
@@ -21,6 +22,7 @@ import {
   getHomepageHeroProducts,
   listAdminHomepageHeroProducts,
 } from "@/server/modules/menu/homepage-hero-service";
+import { getTabularMenuContentSafeForPublic } from "@/server/modules/menu";
 
 export async function getPublicMenuSafe(): Promise<{
   menu: PublicMenuResponse | null;
@@ -47,6 +49,10 @@ export async function getPublicCategoryNavigationSafe(): Promise<
   } catch {
     return [];
   }
+}
+
+export async function getPublicTabularMenuSafe(): Promise<TabularMenuContent> {
+  return getTabularMenuContentSafeForPublic() as Promise<TabularMenuContent>;
 }
 
 export async function getHomepageHeroProductsSafe(): Promise<{

@@ -14,5 +14,6 @@ export * from "./select";
 export * from "./sheet";
 export * from "./skeleton";
 export * from "./status-pill";
+export * from "./tabs";
 export * from "./textarea";
 export * from "./toast";

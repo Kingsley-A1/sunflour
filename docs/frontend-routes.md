@@ -97,7 +97,7 @@ Note: `frontend-implimentation.md` lists `/account/orders/[orderNumber]` and `/a
 | Route | Purpose | Primary users | Rendering | Primary components |
 | --- | --- | --- | --- | --- |
 | `/` | Homepage | Guests, returning customers | Server Component first | public shell, featured categories, popular items, review preview |
-| `/menu` | Menu catalog | Guests, returning customers | Server-rendered initial data with client search/filter | SearchBar, CategoryPills, ProductGrid, ProductCard |
+| `/menu` | Menu catalog and tabular reference view | Guests, returning customers | Server-rendered initial data with client search/filter | SearchBar, CategoryPills, ProductGrid, ProductCard, Tabs |
 | `/products/[slug]` | Product detail page when page route is used | Buyers comparing variants | Server Component for initial detail, client add-to-cart | ProductDetailSheet or detail view, VariantSelector, AddToCartButton |
 | `/cart` | Cart and delivery quote | Buyers preparing checkout | Client cart with server delivery quote call | CartItemRow, QuantityStepper, DeliveryZoneSelector, DeliveryQuoteSummary |
 | `/checkout` | Guest/auth checkout | Buyers placing orders | Client form with API submission | CheckoutStepper, OrderSummaryCard, PaymentInstructionCard |
@@ -135,11 +135,12 @@ Build:
 
 - Search.
 - Category pills.
+- Dual view tabs for live products and the tabular reference menu.
 - Product grid/list.
 - Availability badges.
 - Product detail sheet or page transition.
 - Add to cart.
-- WhatsApp enquiry.
+- Global WhatsApp entrypoint from the public shell.
 - Empty state.
 - Loading skeleton.
 
@@ -149,6 +150,7 @@ Acceptance:
 - [ ] Search/filter interaction does not feel heavy.
 - [ ] Out-of-stock products cannot be ordered.
 - [ ] Product cards remain readable and consistent.
+- [ ] Tabular menu stays clearly positioned as a reference surface, not a trusted checkout source.
 - [ ] Initial data comes from public API contract.
 
 ### `/products/[slug]`
@@ -286,6 +288,7 @@ Acceptance:
 | `/admin/products` | Product list | MODERATOR for availability, SUPER_ADMIN for full edits depending policy | ProductTable |
 | `/admin/products/new` | Create product | SUPER_ADMIN | ProductEditorForm |
 | `/admin/products/[id]` | Edit product | SUPER_ADMIN, limited moderator availability controls if approved | ProductEditorForm |
+| `/admin/tabular-menu` | Reference menu content editor | MEDIA_MANAGER | TabularMenuManagerClient |
 | `/admin/categories` | Category manager | SUPER_ADMIN | CategoryEditorForm |
 | `/admin/users` | Admin users and registration code panel | SUPER_ADMIN | AdminRegistrationCodesClient, staff account list |
 | `/admin/delivery` | Delivery zones and 6 PM surcharge | SUPER_ADMIN for rule changes | DeliveryZoneTable, SurchargeRuleForm |

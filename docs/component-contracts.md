@@ -106,6 +106,8 @@ Do not pass raw database records directly to UI primitives. Business components 
 | `CategoryPills` | Filter menu by category | categories, active category, change handler | Fetch products directly unless route-scoped. |
 | `ProductCard` | Show product summary and orderability | product DTO, status, image, price display, action handlers | Trust price for checkout. |
 | `ProductGrid` | Lay out menu products | product list, view state, empty/loading state | Own search/filter business rules. |
+| `MenuViewTabs` | Switch `/menu` between live catalog and tabular reference modes | current view, change handler | Change trusted checkout state or pricing rules. |
+| `TabularMenuBrowser` | Show quick-reference menu table and cards | tabular menu content DTO, checkout href | Pretend reference prices are the source of truth for checkout. |
 | `ProductDetailSheet` | Show product details and add-to-cart UI | product detail DTO, variants, availability | Confirm backend orderability. |
 | `VariantSelector` | Choose one variant | variants, selected variant, change handler | Recalculate trusted final price. |
 | `QuantityStepper` | Change item quantity | value, min, max, change handler | Allow invalid quantities. |
@@ -147,6 +149,7 @@ Do not pass raw database records directly to UI primitives. Business components 
 | `OrderFilters` | Order tabs/search | filters by status and order number/phone. |
 | `ProductTable` | Catalog operations | filters by category/status, shows availability clearly. |
 | `ProductEditorForm` | Product create/edit | validates name, category, price, status, variants, images. |
+| `TabularMenuManagerClient` | Edit public reference menu content | validates category/item/price-row structure, preserves stable identifiers. |
 | `CategoryEditorForm` | Category create/edit | validates name, slug, active state, sort order. |
 | `DeliveryZoneTable` | Delivery-zone management | separates base fee from active state. |
 | `SurchargeRuleForm` | 6 PM surcharge rule | shows NGN 500 rule clearly and validates time/amount. |

@@ -132,6 +132,13 @@ media_assets
 
 `addresses` is deferred for v1 saved-address support. Current delivery orders store the delivery address snapshot directly on `orders`.
 
+Current `site_settings` keys include:
+
+```txt
+business_profile
+tabular_menu_content
+```
+
 ## Snapshot Rules
 
 Orders must preserve what the customer saw at purchase time.

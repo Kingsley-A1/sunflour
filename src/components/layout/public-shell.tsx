@@ -8,6 +8,7 @@ import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
+import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 import type { PublicCategoryNavigationItem } from "@/types/domain";
 
@@ -135,6 +136,10 @@ export async function PublicShell({
         </header>
         <div className="flex-grow">{children}</div>
         <Footer contact={contact} />
+        <PublicWhatsAppFab
+          businessName={contact.businessName}
+          href={contact.whatsappHref}
+        />
         <StickyCartBar />
       </div>
     </CartProvider>

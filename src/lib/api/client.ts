@@ -3,6 +3,7 @@ import type {
   AdminDeliveryZone,
   AdminRegistrationCodePanel,
   AdminRegistrationResult,
+  AdminTabularMenuContent,
   AdminHomepageHeroProduct,
   AdminSurchargeRule,
   AdminProduct,
@@ -512,6 +513,28 @@ export async function updateBusinessSettings(input: {
   );
 
   return data.businessSettings;
+}
+
+export async function getAdminTabularMenu(): Promise<AdminTabularMenuContent> {
+  const data = await apiRequest<{ tabularMenu: AdminTabularMenuContent }>(
+    "/api/v1/admin/tabular-menu",
+  );
+
+  return data.tabularMenu;
+}
+
+export async function updateAdminTabularMenu(
+  input: Pick<AdminTabularMenuContent, "categories" | "items">,
+): Promise<AdminTabularMenuContent> {
+  const data = await apiRequest<{ tabularMenu: AdminTabularMenuContent }>(
+    "/api/v1/admin/tabular-menu",
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+
+  return data.tabularMenu;
 }
 
 export async function listEmailTemplates(): Promise<EmailTemplate[]> {

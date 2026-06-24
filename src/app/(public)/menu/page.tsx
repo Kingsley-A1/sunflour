@@ -1,6 +1,11 @@
 import { MenuBrowser } from "@/components/commerce/menu-browser";
+import {
+  MenuViewTabs,
+  type MenuView,
+} from "@/components/commerce/menu-view-tabs";
+import { TabularMenuBrowser } from "@/components/commerce/tabular-menu-browser";
 import { ErrorState } from "@/components/ui/error-state";
-import { getPublicMenuSafe } from "@/lib/api/server";
+import { getPublicMenuSafe, getPublicTabularMenuSafe } from "@/lib/api/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +22,13 @@ function first(value: string | string[] | undefined): string | undefined {
 }
 
 export default async function MenuPage({ searchParams }: MenuPageProps) {
-  const query = first((await searchParams).query)?.trim() ?? "";
-  const { menu, error } = await getPublicMenuSafe();
+  const params = await searchParams;
+  const query = first(params.query)?.trim() ?? "";
+  const view: MenuView = first(params.view) === "table" ? "table" : "products";
+  const [{ menu, error }, tabularMenu] = await Promise.all([
+    getPublicMenuSafe(),
+    getPublicTabularMenuSafe(),
+  ]);
 
   return (
     <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8">
@@ -32,7 +42,10 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
           recalculate all trusted prices on the server.
         </p>
       </header>
-      {error || !menu ? (
+      <MenuViewTabs value={view} />
+      {view === "table" ? (
+        <TabularMenuBrowser checkoutHref="/checkout" content={tabularMenu} />
+      ) : error || !menu ? (
         <ErrorState description={error ?? "Menu data is not available."} title="Menu unavailable" />
       ) : (
         <MenuBrowser initialQuery={query} key={query} menu={menu} />

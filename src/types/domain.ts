@@ -133,6 +133,44 @@ export interface PublicCategoryNavigationItem {
   slug: string;
 }
 
+export interface TabularMenuPrice {
+  id: string;
+  label: string | null;
+  amount: number;
+  sortOrder: number;
+}
+
+export interface TabularMenuCategory {
+  id: string;
+  label: string;
+  summary: string;
+  sortOrder: number;
+}
+
+export interface TabularMenuItem {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  details: string;
+  imageUrl: string;
+  imageAlt: string;
+  prices: TabularMenuPrice[];
+  tags: string[];
+  ingredients: string[];
+  sortOrder: number;
+}
+
+export interface TabularMenuContent {
+  categories: TabularMenuCategory[];
+  items: TabularMenuItem[];
+}
+
+export interface AdminTabularMenuContent extends TabularMenuContent {
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 export interface DeliveryZone {
   id: string;
   name: string;
