@@ -1,6 +1,7 @@
 import { MetricCard } from "@/components/admin/metric-card";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
+import type { Route } from "next";
 import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { requireRole } from "@/server/auth/rbac";
 import { ADMIN_ROLES } from "@/server/auth/roles";
@@ -27,12 +28,60 @@ export default async function AdminDashboardPage() {
         </p>
       </header>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <MetricCard description="Orders created in the selected range." label="Today's orders" value={metrics.counts.ordersInRange} />
-        <MetricCard description="Proof sent or under review." label="Pending payment" value={metrics.counts.pendingPaymentConfirmation} />
-        <MetricCard description="Orders currently in preparation." label="Preparing" value={metrics.counts.preparingOrders} />
-        <MetricCard description="Guest orders in the selected range." label="Guest orders" value={metrics.counts.guestOrdersInRange} />
-        <MetricCard description="Orders currently out for delivery." label="Out for delivery" value={metrics.counts.outForDeliveryOrders} />
-        <MetricCard description="Confirmed non-cancelled sales only." label={metrics.salesEstimate.label} value={formatNairaFromKobo(metrics.salesEstimate.total)} />
+        <MetricCard
+          description="Orders created in the selected range."
+          href={"/admin/orders" as Route}
+          label="Today's orders"
+          value={metrics.counts.ordersInRange}
+        />
+        <MetricCard
+          description="Proof sent or under review."
+          href={"/admin/orders?paymentStatus=UNDER_REVIEW" as Route}
+          label="Pending payment"
+          value={metrics.counts.pendingPaymentConfirmation}
+        />
+        <MetricCard
+          description="Orders currently in preparation."
+          href={"/admin/orders?status=PREPARING" as Route}
+          label="Preparing"
+          value={metrics.counts.preparingOrders}
+        />
+        <MetricCard
+          description="Registered customers and staff accounts."
+          href={"/admin/users" as Route}
+          label="Total users"
+          value={metrics.counts.totalUsers}
+        />
+        <MetricCard
+          description="Guest orders in the selected range."
+          href={"/admin/orders" as Route}
+          label="Guest orders"
+          value={metrics.counts.guestOrdersInRange}
+        />
+        <MetricCard
+          description="Cancelled orders in the selected range."
+          href={"/admin/orders?status=CANCELLED" as Route}
+          label="Cancelled"
+          value={metrics.counts.cancelledOrders}
+        />
+        <MetricCard
+          description="Orders currently out for delivery."
+          href={"/admin/orders?status=OUT_FOR_DELIVERY" as Route}
+          label="Out for delivery"
+          value={metrics.counts.outForDeliveryOrders}
+        />
+        <MetricCard
+          description="Delivered orders in the selected range."
+          href={"/admin/orders?status=DELIVERED" as Route}
+          label="Delivered"
+          value={metrics.counts.deliveredOrders}
+        />
+        <MetricCard
+          description="Confirmed non-cancelled sales only."
+          href={"/admin/orders?paymentStatus=CONFIRMED" as Route}
+          label={metrics.salesEstimate.label}
+          value={formatNairaFromKobo(metrics.salesEstimate.total)}
+        />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="grid gap-3 p-4">

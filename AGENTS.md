@@ -1,99 +1,78 @@
-# AGENTS.md — Sunflour Bakery
+# AGENTS.md - Sunflour Bakery
 
-**Project:** Sunflour Bakery Restaurant Website + Ordering Platform  
-**Company standard:** Built for honour and for excellence  
-**Purpose:** Give Codex, Claude, Copilot, and other AI coding agents the exact operating context, architectural boundaries, quality bar, and implementation rules for this repository.  
-**Package manager:** `pnpm` only. Do not use `npm`, `yarn`, or `bun` for dependency installation or scripts unless the human maintainer explicitly changes this standard.
+Project: Sunflour Bakery ordering platform.
+Standard: built for honour and for excellence.
+Package manager: `pnpm` only.
+
+This file is the compact operating contract for AI agents. Use the section that matches the current task, then read the linked project docs only when that task needs them. Do not treat this file as permission for broad refactors.
 
 ---
 
 ## 1. Mission
 
-We are building a mobile-first ordering platform for Sunflour Bakery, not a generic restaurant website.
+Sunflour is a mobile-first bakery ordering platform, not a generic restaurant site.
 
-The product must let customers:
+Customers must be able to browse the official menu, search products, add items to cart, choose pickup or delivery, see delivery fees before checkout, receive Moniepoint bank-transfer instructions, view invoices, send payment proof through WhatsApp, track order status where supported, and submit moderated reviews.
 
-- Browse the official Sunflour menu.
-- Search and filter products.
-- View product details, variants, prices, and availability.
-- Add products to cart.
-- Choose pickup or delivery.
-- See delivery fees clearly, including the 6 PM surcharge.
-- Checkout as guest or authenticated user.
-- Receive clear Moniepoint bank-transfer instructions.
-- Download or view a purchase invoice.
-- Send payment proof through WhatsApp.
-- Track order status where supported.
-- Submit reviews safely.
+Admins must be able to manage products, categories, variants, images, delivery zones, surcharge rules, manual payment settings, payment verification, order lifecycle, reviews, dashboard metrics, transactional email behavior, audit logs, business settings, and reference menu content.
 
-The product must let admins:
-
-- Manage products, categories, variants, images, and availability.
-- Manage delivery zones and the 6 PM surcharge.
-- Manage manual payment settings.
-- Verify payment manually.
-- Move orders through the full lifecycle.
-- Moderate reviews.
-- View operational dashboard metrics.
-- Control transactional email behaviour.
-- Audit critical business changes.
-
-The platform must feel simple to customers and powerful to the business.
+When uncertain, optimize for customer clarity, business trust, security, mobile speed, operational simplicity, and maintainable architecture.
 
 ---
 
-## 2. Required Context Before Any Task
+## 2. Read What Applies
 
-Before making code changes, read the relevant documents:
+Always read:
 
-```txt
-docs/backend-implementation.md
-docs/frontend-implimentation.md
-AGENTS.md
-```
+- `AGENTS.md`
+- The user request
+- Existing code in the files or modules you will touch
 
-If these files are not in `/docs`, check the repository root or ask the maintainer before proceeding.
+For planning or product-rule work, also read:
 
-For backend work, also read or create:
+- `backend-implementation.md`
+- `frontend-implimentation.md`
+- Relevant `*-2.0.md` docs when the task references them
 
-```txt
-docs/api-contracts.md
-docs/database-schema.md
-docs/order-lifecycle.md
-```
+For backend, API, database, checkout, orders, auth, payments, email, reviews, audit, or delivery work, also read:
 
-For frontend work, also read or create:
+- `docs/api-contracts.md`
+- `docs/database-schema.md`
+- `docs/order-lifecycle.md`
 
-```txt
-docs/design-system.md
-docs/frontend-routes.md
-docs/component-contracts.md
-```
+For frontend, UI, design-system, layout, accessibility, public, customer, or admin UI work, also read:
 
-Do not invent product rules when the documentation is missing. Ask for clarification or leave a clear TODO with the exact decision required.
+- `docs/design-system.md`
+- `docs/frontend-routes.md`
+- `docs/component-contracts.md`
+
+If a required doc is missing, check the repo root before asking. Do not invent business rules. If a rule is absent and materially affects behavior, stop and report the exact decision needed.
 
 ---
 
-## 3. Stack
+## 3. Stack And Boundaries
 
-```txt
-Framework: Next.js 16 App Router
-UI runtime: React 19
-Language: TypeScript strict mode
-Package manager: pnpm
-Database: CockroachDB
-ORM: Prisma
-Authentication: Auth.js / NextAuth
-Email: Resend + React Email templates
-Storage: Cloudflare R2
-Validation: Zod
-Styling: Tailwind CSS + CSS variables
-Hosting: Vercel
-CI/CD: GitHub -> Vercel Preview -> Production
-Testing: Vitest, React Testing Library, Playwright, axe checks where relevant
-```
+Stack:
 
-### Package manager rule
+- Next.js 16 App Router, React 19, TypeScript strict mode
+- Tailwind CSS and CSS variables
+- CockroachDB with Prisma
+- Auth.js / NextAuth
+- Resend and React Email templates
+- Cloudflare R2 for media
+- Zod validation
+- Vitest, React Testing Library, Playwright, axe checks where relevant
+- Vercel hosting and GitHub based deployment
+
+Architecture:
+
+- Modular monolith inside Next.js App Router.
+- Route handlers stay thin: validate request, call service/module, return typed response.
+- Business logic belongs in `src/server/modules/*`.
+- UI logic belongs in components, hooks, or route-level composition.
+- Database access must be isolated behind services/modules.
+- Do not turn whole route groups or the whole app into Client Components.
+- Do not add dependencies unless the product value is clear and the existing stack cannot reasonably handle the task.
 
 Use only:
 
@@ -108,433 +87,118 @@ pnpm build
 pnpm dev
 ```
 
-Do not generate `package-lock.json`, `yarn.lock`, or `bun.lockb`. If any appear accidentally, remove them unless the human maintainer explicitly approves a package manager change.
+Do not generate `package-lock.json`, `yarn.lock`, or `bun.lockb`.
 
 ---
 
-## 4. Architecture Standard
+## 4. Product Rules
 
-This is a modular monolith inside Next.js App Router.
+Money and pricing:
 
-Do not build a messy app where route files own all business logic.
+- Never trust frontend prices, delivery fees, surcharge values, subtotals, or totals.
+- Backend must recalculate product price, variant price, quantity, subtotal, delivery base fee, 6 PM surcharge, final delivery fee, and order total.
+- Orders must store snapshots for product name, variant name, unit price, line total, delivery zone name, delivery base fee, surcharge, delivery total fee, payment instruction, and proof WhatsApp number.
+- Old invoices must not change when products, prices, delivery zones, surcharge rules, or payment settings change later.
 
-Preferred structure:
+Delivery:
 
-```txt
-src/
-  app/
-    (public)/
-    (customer)/
-    admin/
-    api/
-      v1/
-        public/
-        customer/
-        admin/
-        webhooks/
-  components/
-    ui/
-    layout/
-    menu/
-    cart/
-    checkout/
-    invoice/
-    admin/
-  server/
-    auth/
-    db/
-    config/
-    modules/
-      menu/
-      cart/
-      checkout/
-      orders/
-      delivery/
-      payments/
-      invoices/
-      email/
-      reviews/
-      admin/
-      users/
-      media/
-      audit/
-    lib/
-      validation/
-      errors/
-      rate-limit/
-      security/
-      money/
-      date-time/
-      idempotency/
-  styles/
-  tests/
-```
+- Delivery zones are admin-editable.
+- From 6:00 PM, delivery orders receive an additional NGN 500 surcharge unless the active rule is disabled by an authorized admin.
+- Pickup has NGN 0 delivery fee and never receives the delivery surcharge.
 
-Route handlers should be thin:
+Manual payment:
 
-```txt
-Route handler -> validate request -> call service/module -> return typed response.
-```
+- Sunflour uses manual Moniepoint bank transfer in v1.
+- The system must never claim payment is confirmed until an admin verifies it.
+- Correct flow: order created, invoice generated, payment instruction shown, WhatsApp proof handoff, admin verifies, payment confirmed, order progresses.
 
-Business logic belongs in modules/services. UI logic belongs in components/hooks. Database access must be isolated and testable.
+Orders:
+
+- Order statuses: `PENDING_PAYMENT`, `PAYMENT_UNDER_REVIEW`, `PAYMENT_CONFIRMED`, `PREPARING`, `READY_FOR_PICKUP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`, `REJECTED`.
+- Payment statuses: `UNPAID`, `PROOF_SENT_ON_WHATSAPP`, `UNDER_REVIEW`, `CONFIRMED`, `REJECTED`.
+- Every order status change creates an `order_status_events` record.
+- Payment confirmation or rejection creates payment confirmation events and audit logs.
+- Invalid transitions must be rejected server-side.
+
+Email:
+
+- All email goes through the email module.
+- Approved email use cases: `ORDER_CONFIRMATION`, `PURCHASE_INVOICE`, `AUTH_PASSWORD_RESET`, `ADMIN_NEW_ORDER_ALERT`, `ORDER_STATUS_UPDATE`, `APPRECIATION_AFTER_DELIVERY`.
+- Do not send marketing, newsletters, birthday offers, or promotional automation without explicit approval.
+- Do not call Resend directly outside the email module.
+- Email failure must not break order creation.
+
+Reviews:
+
+- Public reviews enter `PENDING`.
+- Only approved reviews appear publicly.
+- Admin moderation writes audit logs.
 
 ---
 
-## 5. Product Rules That Must Not Be Broken
-
-### 5.1 Money and pricing
-
-Never trust prices from the frontend.
-
-The backend must recalculate:
-
-- Product price.
-- Variant price.
-- Quantity.
-- Subtotal.
-- Delivery base fee.
-- 6 PM surcharge.
-- Final delivery fee.
-- Order total.
-
-Every order must store snapshots:
-
-```txt
-product_name_snapshot
-variant_name_snapshot
-unit_price_snapshot
-line_total
-delivery_zone_name_snapshot
-delivery_base_fee_snapshot
-delivery_surcharge_snapshot
-delivery_total_fee_snapshot
-payment_instruction_snapshot
-```
-
-Old invoices must not change when products, prices, delivery zones, or payment settings are updated later.
-
-### 5.2 Delivery rule
-
-Delivery zones are admin-editable.
-
-From **6:00 PM**, delivery orders receive an additional **₦500 surcharge**, unless the surcharge rule is disabled by an authorized admin.
-
-Pickup must have ₦0 delivery fee and must not receive the 6 PM delivery surcharge.
-
-### 5.3 Manual payment rule
-
-Sunflour uses manual Moniepoint transfer in v1.
-
-The system must not claim a payment is confirmed until an admin verifies it.
-
-Correct flow:
-
-```txt
-Order created -> invoice generated -> payment instruction shown -> WhatsApp proof handoff -> admin verifies -> payment confirmed -> order progresses.
-```
-
-### 5.4 Email rule
-
-All email must go through the email module.
-
-Allowed use cases now:
-
-```txt
-ORDER_CONFIRMATION
-PURCHASE_INVOICE
-AUTH_PASSWORD_RESET
-ADMIN_NEW_ORDER_ALERT
-ORDER_STATUS_UPDATE
-APPRECIATION_AFTER_DELIVERY
-```
-
-Do not send promotional campaigns, newsletters, birthday offers, or marketing automation unless the human maintainer explicitly approves it.
-
-Do not call Resend directly from random modules or UI files.
-
-Use:
-
-```txt
-EmailService.queueEmail()
-EmailService.sendQueuedEmail()
-EmailTemplateService.renderTemplate()
-EmailPolicyService.canSend()
-```
-
-Email failure must not break order creation.
-
-### 5.5 Reviews rule
-
-Public reviews must enter `PENDING` state first.
-
-Only approved reviews appear publicly.
-
-Admin moderation must write audit logs.
-
----
-
-## 6. Order Lifecycle
-
-Use these order statuses:
-
-```txt
-PENDING_PAYMENT
-PAYMENT_UNDER_REVIEW
-PAYMENT_CONFIRMED
-PREPARING
-READY_FOR_PICKUP
-OUT_FOR_DELIVERY
-DELIVERED
-CANCELLED
-REJECTED
-```
-
-Use these payment statuses:
-
-```txt
-UNPAID
-PROOF_SENT_ON_WHATSAPP
-UNDER_REVIEW
-CONFIRMED
-REJECTED
-```
-
-Every order status change must create an `order_status_events` record.
-
-Every payment confirmation/rejection must create a payment confirmation event and an audit log.
-
-Do not allow invalid transitions. Example: a cancelled order must not move to delivered without a deliberate super_admin override.
-
----
-
-## 7. Roles and Permissions
+## 5. Roles, RBAC, And Audit
 
 Roles:
 
-```txt
-CUSTOMER
-MODERATOR
-SUPER_ADMIN
-```
+- `CUSTOMER`
+- `ATTENDANT`
+- `MEDIA_MANAGER`
+- `MODERATOR`
+- `SUPER_ADMIN`
 
-### super_admin
+Server-side RBAC is the authority. Hidden UI is not security.
 
-Can:
+General permissions:
 
-- Manage admins.
-- Manage products/categories/variants/images.
-- Manage delivery zones and surcharge rules.
-- Manage payment settings.
-- Manage email settings/templates.
-- Manage orders and reviews.
-- View dashboard and audit logs.
+- `SUPER_ADMIN`: all admin operations, including admins, products, categories, variants, images, delivery, payment, email, orders, reviews, dashboard, settings, and audit logs.
+- `MODERATOR`: operational order lifecycle, payment review where policy allows, product availability, dashboard, and review moderation.
+- `ATTENDANT`: order operations only where allowed by backend role groups.
+- `MEDIA_MANAGER`: product/media/content surfaces where allowed; no payment settings, admin management, or order authority unless explicitly granted.
+- `CUSTOMER`: public browsing, checkout, own account/orders, and review submission.
 
-### moderator
-
-Can:
-
-- View dashboard.
-- Manage order lifecycle within allowed transitions.
-- Confirm or reject payment proof if approved by product policy.
-- Update product availability.
-- Moderate reviews.
-
-Cannot:
-
-- Change Moniepoint/payment settings.
-- Change email sender/settings.
-- Create or remove admins.
-- Delete critical records.
-- Override protected business rules.
-
-### customer
-
-Can:
-
-- Browse menu.
-- Checkout.
-- View own orders if authenticated.
-- Submit reviews.
-- Manage basic profile details.
-
-Admin permissions must be enforced server-side, not only hidden in the UI.
+Critical admin actions require audit logs, including payment settings, delivery fee updates, surcharge rules, product price/status changes, order payment confirmation/rejection, cancellation/rejection, admin creation/removal, email template changes, review moderation, business settings, and content settings.
 
 ---
 
-## 8. Public Frontend Experience Rules
+## 6. Frontend And UX
 
-The frontend is mobile-first because the majority of users are mobile users.
+Public frontend must be fast, mobile-first, predictable, accessible, and honest about price and payment state.
 
-Every public page must be:
+Users should always understand:
 
-- Fast.
-- Clear.
-- Predictable.
-- Accessible.
-- Light-mode excellent.
-- Dark-mode usable from day one.
-- Touch-friendly.
-- Not bloated.
+- Where they are
+- What they can do
+- What happens after tapping a control
+- How much they are paying
+- What delivery costs
+- What happens after checkout
+- Current order/payment status
 
-Users must always understand:
+Design-system rules:
 
-```txt
-Where am I?
-What can I do here?
-What will happen if I tap this?
-How much am I paying?
-What is delivery costing?
-What happens after checkout?
-What is my order status?
-```
+- Use semantic tokens from the design system; avoid raw one-off colors.
+- Light mode must be excellent. Dark mode must remain comfortable.
+- Use app-specific reusable components instead of a bloated generic library.
+- Build on existing primitives before creating new ones.
+- Keep components touch-friendly, keyboard usable, and readable at 360px width.
+- Status must use text, not color alone.
+- Forms need labels, useful help text, field errors, and clear recovery.
+- Modals/sheets must be labelled and manage focus.
+- Motion must respect `prefers-reduced-motion` and never block interaction.
 
-No hidden fees. No vague CTAs. No confusing payment language. No surprise login requirement.
+Performance rules:
 
----
-
-## 9. UI and Design System Rules
-
-Sunflour UI should feel warm, fresh, professional, and controlled.
-
-Default mode is light mode. Dark mode must follow the user's system preference and remain comfortable.
-
-### Core tokens
-
-```css
-:root {
-  --color-brand-red: #B22416;
-  --color-brand-red-strong: #8F1C12;
-  --color-brand-yellow: #FFD400;
-  --color-brand-yellow-soft: #FFF3B0;
-  --color-cream: #FFF8EC;
-  --color-surface: #FFFFFF;
-  --color-surface-muted: #F8F3EA;
-  --color-text: #24150D;
-  --color-text-muted: #6F4B33;
-  --color-border: #E9DCC8;
-  --color-success: #128C4A;
-  --color-warning: #B7791F;
-  --color-danger: #B42318;
-  --color-info: #2563EB;
-}
-
-.dark {
-  --color-brand-red: #FF6B5A;
-  --color-brand-red-strong: #FF8A7B;
-  --color-brand-yellow: #FFD84D;
-  --color-brand-yellow-soft: #3A2F10;
-  --color-cream: #18120C;
-  --color-surface: #211812;
-  --color-surface-muted: #2C2119;
-  --color-text: #FFF7ED;
-  --color-text-muted: #D8C3AE;
-  --color-border: #49362B;
-  --color-success: #4ADE80;
-  --color-warning: #FACC15;
-  --color-danger: #FB7185;
-  --color-info: #93C5FD;
-}
-```
-
-### Typography
-
-Use `Inter`, `Manrope`, or a similarly clean UI font. Do not use decorative fonts for app UI.
-
-### Component rules
-
-Build reusable app-specific components, not a bloated generic component library.
-
-Required primitives:
-
-```txt
-Button
-Input
-Textarea
-Select
-Checkbox
-Radio
-Badge
-Card
-Modal/Drawer
-Sheet
-Tabs
-Toast
-Skeleton
-EmptyState
-StatusPill
-PriceText
-QuantityStepper
-```
-
-Required business components:
-
-```txt
-ProductCard
-ProductDetailSheet
-CategoryFilter
-SearchBar
-CartSummary
-DeliveryQuoteCard
-CheckoutStepper
-PaymentInstructionCard
-InvoiceSummary
-OrderStatusTimeline
-ReviewCard
-AdminMetricCard
-AdminDataTable
-AdminStatusSelect
-AdminUploadField
-```
+- Prefer Server Components for static or server-rendered views.
+- Use Client Components only where interaction requires them.
+- Avoid loading admin code on public pages.
+- Avoid heavy animation/UI libraries unless explicitly approved.
+- Use image optimization, route-level splitting, and stable loading states.
 
 ---
 
-## 10. Accessibility Standard
+## 7. Backend, API, And Data
 
-Target WCAG 2.2 AA.
-
-Minimum rules:
-
-- Text contrast must be readable in light and dark mode.
-- Buttons and links must have visible focus states.
-- Tap targets should be comfortable on mobile.
-- Forms must have labels and useful errors.
-- Status must not rely on color alone.
-- Modals/drawers must trap focus where appropriate.
-- Loading states must not hide important user context.
-- Error messages must tell users what to do next.
-- Use semantic HTML before custom widgets.
-
-Do not ship inaccessible checkout or admin controls.
-
----
-
-## 11. Performance Standard
-
-Performance is part of trust.
-
-Use:
-
-- Server Components for mostly static/server-rendered views.
-- Client Components only where interaction requires them.
-- Image optimization.
-- Suspense/loading states.
-- Small client bundles.
-- Route-level code splitting.
-- Optimistic UI only when rollback is safe.
-
-Avoid:
-
-- Making the whole app `use client`.
-- Heavy UI libraries without approval.
-- Unnecessary animation packages.
-- Loading all admin code on public pages.
-- Client-side calculation of trusted business totals.
-
----
-
-## 12. Backend API Rules
-
-API routes should follow this shape:
+API namespaces:
 
 ```txt
 /api/v1/public/*
@@ -543,14 +207,10 @@ API routes should follow this shape:
 /api/v1/webhooks/*
 ```
 
-API responses should be predictable:
+Response envelope:
 
 ```ts
-type ApiSuccess<T> = {
-  ok: true;
-  data: T;
-};
-
+type ApiSuccess<T> = { ok: true; data: T };
 type ApiError = {
   ok: false;
   error: {
@@ -561,80 +221,42 @@ type ApiError = {
 };
 ```
 
-Never expose secrets, internal stack traces, or unsafe database details in API responses.
+Backend rules:
+
+- Validate every request with Zod.
+- Normalize API errors; never expose stack traces, secrets, raw Prisma errors, or unsafe internals.
+- Use idempotency for checkout and other duplicate-sensitive writes.
+- Use transactions where multiple records must stay consistent.
+- Keep trusted totals on the server.
+- Store money as integer minor units.
+- Store timestamps in UTC and apply the configured app timezone at business-rule boundaries.
+- Use signed upload flows for Cloudflare R2 and verify file type, size, purpose, and object existence.
+- Public APIs must expose only what the user journey needs.
 
 ---
 
-## 13. Admin Dashboard Metrics
-
-Dashboard must support:
-
-```txt
-Today’s orders
-Pending payment confirmation
-Preparing orders
-Total users
-Number of guests
-Cancelled orders
-Out for delivery
-Delivered orders
-Total sales estimate
-Top ordered items
-Low/hidden/out-of-stock products
-Recent reviews pending approval
-```
-
-Dashboard data must come from backend queries, not frontend guesses.
-
-Sales estimate should be conservative:
-
-```txt
-SUM(total) WHERE payment_status = CONFIRMED AND status != CANCELLED AND status != REJECTED
-```
-
-Label it as estimate because payment is manually verified.
-
----
-
-## 14. Security Rules
+## 8. Security
 
 Non-negotiables:
 
-- Validate every request with Zod.
-- Use TypeScript strict mode.
-- Enforce RBAC server-side.
-- Store secrets only in environment variables.
-- Do not commit `.env` files.
-- Do not expose payment settings to public APIs except what is needed after checkout.
-- Use signed upload flow for Cloudflare R2.
-- Validate file type, size, and upload intent.
+- TypeScript strict mode.
+- Zod validation at trust boundaries.
+- Server-side RBAC.
+- Secrets only in environment variables.
+- No `.env` commits.
+- No sensitive payment settings in public APIs except checkout-required snapshots/instructions.
 - Rate-limit sensitive public endpoints.
-- Add audit logs for admin-critical actions.
-- Use idempotency for checkout/order creation.
-- Never trust frontend totals.
-
-Critical actions requiring audit logs:
-
-```txt
-Payment setting update
-Delivery fee update
-Surcharge rule update
-Product price update
-Product status update
-Order payment confirmation
-Order cancellation
-Admin creation/removal
-Email template update
-Review approval/rejection
-```
+- Audit critical admin mutations.
+- Do not trust frontend totals, statuses, roles, or ownership.
+- Customer data access must enforce ownership server-side.
 
 ---
 
-## 15. Testing Requirements
+## 9. Testing And Definition Of Done
 
-Every meaningful feature must include tests or a clear reason why not.
+Use checks in proportion to risk. For meaningful code changes, run the relevant subset and explain any skipped check.
 
-Use `pnpm` commands:
+Required before marking a feature done when feasible:
 
 ```bash
 pnpm lint
@@ -643,216 +265,100 @@ pnpm test
 pnpm build
 ```
 
-Recommended test layers:
+Test focus:
 
-```txt
-Unit tests: money, delivery fee, surcharge, status transitions, validation.
-Integration tests: API routes, database writes, auth/RBAC, checkout, email outbox.
-Component tests: forms, product cards, checkout steps, admin controls.
-E2E tests: menu -> cart -> checkout -> invoice -> admin order update.
-Accessibility tests: checkout, menu, admin forms, modal/drawer interactions.
-```
+- Unit: money, delivery surcharge, status transitions, validation, pure services.
+- Integration: API routes, database writes, auth/RBAC, checkout, email outbox, audit behavior.
+- Component: forms, product cards, checkout/admin controls, modals/sheets.
+- E2E/accessibility: menu, cart, checkout, invoice, admin order updates, critical forms.
 
-Do not mark a phase done if `pnpm build` fails.
+Done means:
 
----
-
-## 16. Vercel and Deployment Rules
-
-Vercel is part of the engineering workflow.
-
-Expected flow:
-
-```txt
-Feature branch -> Pull Request -> Vercel Preview Deployment -> checks -> review -> merge -> Production
-```
-
-Rules:
-
-- No direct production edits.
-- No secrets in GitHub.
-- Preview and Production env vars must be separate.
-- Test checkout/admin/email behaviour on Preview before Production.
-- Use Vercel Environment Variables for secrets.
-- Use Vercel Cron only for approved scheduled jobs like email outbox processing.
-- Check current Next.js and Vercel docs when implementing runtime/deployment behaviour.
+- Matches the requested scope and product rules.
+- Types, lint, tests, and build pass or any skipped item is justified.
+- Security rules are respected.
+- Accessibility is considered where UI exists.
+- Loading, empty, error, and success states are handled.
+- Mobile experience works.
+- Critical admin actions are audited.
+- Frontend does not guess backend-trusted values.
+- Code is maintainable by another engineer or agent.
 
 ---
 
-## 17. AI Agent Workflow
+## 10. Agent Workflow
 
-Every AI agent task must be scoped.
+Before editing:
 
-Use this task packet:
+- Identify the task type: frontend, backend, auth/RBAC, database, docs, tests, deployment, or mixed.
+- Read only the relevant docs from Section 2.
+- Inspect actual code before changing names, contracts, schema, tokens, or behavior.
+- Preserve unrelated worktree changes.
+
+While editing:
+
+- Keep changes scoped.
+- Prefer existing local patterns and helpers.
+- Do not mass-refactor unless explicitly asked.
+- Do not change business rules without approval.
+- Do not create disconnected abstractions.
+- Use `apply_patch` for manual file edits.
+
+When reporting:
+
+- List files changed.
+- State decisions made.
+- State validation results.
+- Call out risks, assumptions, or unresolved product decisions.
+
+Task packet for new agents:
 
 ```txt
 Task:
-Implement Phase X: [name].
+[specific implementation goal]
 
 Read first:
 - AGENTS.md
-- docs/backend-implementation.md
-- docs/frontend-implimentation.md
-- relevant API/schema/design docs
+- [only relevant docs from Section 2]
 
 Scope:
-- Only implement files needed for this phase.
-- Do not redesign unrelated modules.
-- Do not change product rules without approval.
-- Use pnpm only.
+- [files/modules in scope]
+- No unrelated redesign/refactor
+- Preserve product rules
+- Use pnpm only
 
-Acceptance criteria:
-- [paste exact acceptance criteria]
+Acceptance:
+- [clear criteria]
 
 Required checks:
 - pnpm lint
 - pnpm typecheck
 - pnpm test
 - pnpm build
-
-Output expected:
-- Summary of changed files.
-- Tests added or updated.
-- Risks, assumptions, and unresolved questions.
-```
-
-Agents must not perform wide refactors unless the task explicitly requests it.
-
----
-
-## 18. Implementation Order
-
-Follow this order unless the human maintainer changes it:
-
-```txt
-1. Product rule confirmation.
-2. Repository foundation and pnpm setup.
-3. Database schema.
-4. Auth and RBAC.
-5. Design system and frontend shell.
-6. Menu/product backend.
-7. Public menu frontend.
-8. Delivery fee and surcharge engine.
-9. Cart and checkout UI.
-10. Checkout/order creation backend.
-11. Manual payment workflow.
-12. Invoice backend and frontend.
-13. Resend email outbox.
-14. Admin dashboard shell.
-15. Admin order lifecycle.
-16. Product/category/media admin.
-17. Delivery/payment/email/review admin controls.
-18. Customer profile and guest lookup.
-19. Reviews moderation.
-20. Dashboard metrics.
-21. Hardening, accessibility, performance, and launch testing.
-```
-
-Each phase must accomplish something usable. Do not build disconnected abstractions that do not move the product forward.
-
----
-
-## 19. Definition of Done
-
-A feature is not done until:
-
-```txt
-1. It matches the implementation plan.
-2. It uses pnpm scripts successfully.
-3. Types pass.
-4. Lint passes.
-5. Relevant tests pass.
-6. Build passes.
-7. Security rules are respected.
-8. Accessibility is considered where UI exists.
-9. Error and empty states exist.
-10. Mobile experience works.
-11. Admin-critical actions are audited.
-12. Frontend does not guess backend-trusted values.
-13. The code is clear enough for another engineer or AI agent to maintain.
 ```
 
 ---
 
-## 20. Anti-Patterns to Reject
+## 11. Reject These Patterns
 
 Reject code that:
 
-- Uses `npm`, `yarn`, or `bun` instead of `pnpm`.
-- Makes the whole app a Client Component.
-- Places all business logic inside route handlers.
-- Trusts frontend prices, delivery fees, or totals.
-- Hardcodes delivery zones or product prices.
-- Sends Resend emails directly outside the email module.
-- Allows moderators to change payment settings.
-- Updates order status without `order_status_events`.
-- Updates critical admin data without `audit_logs`.
+- Uses `npm`, `yarn`, or `bun`.
+- Makes the whole app client-rendered.
+- Puts business logic inside route handlers.
+- Trusts frontend prices, fees, totals, roles, ownership, or statuses.
+- Hardcodes editable delivery zones or product prices.
+- Sends email outside the email module.
+- Allows unauthorized roles to change payment, email, admin, or protected business settings.
+- Updates order/payment status without required events and audit logs.
 - Shows unapproved reviews publicly.
-- Makes checkout depend on email being available.
+- Makes checkout depend on email availability.
 - Adds dependencies without clear product value.
-- Ignores dark mode.
-- Ignores mobile usability.
-- Creates beautiful UI on weak business logic.
-- Ships without `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
+- Ignores mobile usability, accessibility, dark mode, or production build health.
+- Ships beautiful UI on weak business logic.
 
 ---
 
-## 21. What Good Looks Like
+## 12. Final Rule
 
-Use these systems as quality references, not as copy targets:
-
-```txt
-Vercel Commerce:
-Fast Next.js commerce structure, server-first product browsing, clean deployment discipline.
-
-Vercel Platform:
-Preview Deployments, environment separation, GitHub workflow, production discipline.
-
-Stripe Checkout:
-Clear payment state, no surprise payment flow, confidence-building transaction experience.
-
-Shopify Admin:
-Clear order/payment/fulfillment separation and practical merchant operations.
-
-Toast:
-Restaurant-aware ordering, guest checkout, pricing before order finalization.
-
-Square Orders:
-Disciplined order object, line items, service charges, fulfillment, and payment association.
-
-Apple HIG:
-Clarity, deference, depth, touch quality, predictable interface behaviour.
-
-Material Design:
-Reusable component system, state clarity, accessibility, and motion discipline.
-
-GOV.UK Design System:
-Plain language, form clarity, error quality, accessibility-first public service UX.
-
-Resend:
-Controlled transactional email infrastructure.
-
-OWASP:
-Security by default, especially validation, uploads, auth, and auditability.
-```
-
-Sunflour should feel easy because the system underneath is disciplined.
-
----
-
-## 22. Final Rule
-
-When uncertain, optimize for:
-
-```txt
-Customer clarity.
-Business trust.
-Security.
-Mobile speed.
-Operational simplicity.
-Maintainable architecture.
-```
-
-This platform is not built for decoration. It is built to help Sunflour operate better.
-
-**Built for honour and for excellence.**
+This platform is built to help Sunflour operate better. Favor disciplined systems over decoration, clear user journeys over clever UI, and production-safe implementation over quick patches.

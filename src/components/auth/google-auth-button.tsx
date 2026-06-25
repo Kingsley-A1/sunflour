@@ -20,7 +20,7 @@ export function GoogleAuthButton({
   return (
     <Button
       className={cn(
-        "w-full justify-center border-[var(--color-border-strong)] bg-[var(--color-surface)] shadow-[var(--shadow-raised)] hover:bg-[var(--color-surface-raised)]",
+        "w-full justify-center border-[var(--color-border-strong)] bg-[var(--color-surface)] shadow-none hover:bg-[var(--color-surface-muted)]",
         className,
       )}
       disabled={disabled}

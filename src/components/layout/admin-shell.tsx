@@ -5,11 +5,14 @@ import { usePathname } from "next/navigation";
 import type { Route } from "next";
 import { useState } from "react";
 import {
+  Building2,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   LayoutDashboard,
   ListOrdered,
+  Mail,
   Menu,
   MessageSquareText,
   Package,
@@ -26,6 +29,8 @@ import { cn } from "@/lib/utils";
 
 interface AdminShellProps {
   role: UserRole;
+  userName?: string | null;
+  userEmail?: string | null;
   children: React.ReactNode;
 }
 
@@ -38,7 +43,17 @@ export const adminNavItems = [
   { href: "/admin/delivery" as Route, label: "Delivery", icon: Truck, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/users" as Route, label: "Users", icon: UsersRound, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/reviews" as Route, label: "Reviews", icon: MessageSquareText, allowedRoles: ["MODERATOR", "SUPER_ADMIN"] as const },
-  { href: "/admin/settings" as Route, label: "Settings", icon: Settings, allowedRoles: ["SUPER_ADMIN"] as const },
+  {
+    href: "/admin/settings" as Route,
+    label: "Settings",
+    icon: Settings,
+    allowedRoles: ["SUPER_ADMIN"] as const,
+    children: [
+      { href: "/admin/settings/business" as Route, label: "Business profile", icon: Building2, allowedRoles: ["SUPER_ADMIN"] as const },
+      { href: "/admin/settings/payment" as Route, label: "Payment", icon: CreditCard, allowedRoles: ["SUPER_ADMIN"] as const },
+      { href: "/admin/settings/email" as Route, label: "Email", icon: Mail, allowedRoles: ["SUPER_ADMIN"] as const },
+    ],
+  },
   { href: "/admin/audit-logs" as Route, label: "Audit logs", icon: ShieldCheck, allowedRoles: ["SUPER_ADMIN"] as const },
 ];
 
@@ -70,32 +85,111 @@ function AdminNavigation({
         .map((item) => {
           const Icon = item.icon;
           const active = isCurrentRoute(pathname, item.href);
+          const visibleChildren = item.children?.filter((child) =>
+            canSee(role, child.allowedRoles),
+          );
 
           return (
-            <Link
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "inline-flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] px-3 text-sm font-semibold transition duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-standard)]",
-                active
-                  ? "bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-[var(--shadow-raised)]"
-                  : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]",
-                collapsed && "justify-center px-0",
-              )}
-              href={item.href}
-              key={item.href}
-              onClick={onNavigate}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
-            </Link>
+            <div className="grid gap-1" key={item.href}>
+              <Link
+                aria-current={active && pathname === item.href ? "page" : undefined}
+                className={cn(
+                  "inline-flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] px-3 text-sm font-semibold transition duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-standard)]",
+                  active
+                    ? "bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-[var(--shadow-raised)]"
+                    : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]",
+                  collapsed && "justify-center px-0",
+                )}
+                href={item.href}
+                onClick={onNavigate}
+                title={collapsed ? item.label : undefined}
+              >
+                <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
+              </Link>
+              {!collapsed && visibleChildren?.length ? (
+                <div className="ml-4 grid gap-1 border-l border-[var(--color-border)] pl-3">
+                  {visibleChildren.map((child) => {
+                    const ChildIcon = child.icon;
+                    const childActive = isCurrentRoute(pathname, child.href);
+
+                    return (
+                      <Link
+                        aria-current={childActive ? "page" : undefined}
+                        className={cn(
+                          "inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-sm)] px-3 text-sm font-semibold transition duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-standard)]",
+                          childActive
+                            ? "bg-[var(--color-surface-muted)] text-[var(--color-text)]"
+                            : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]",
+                        )}
+                        href={child.href}
+                        key={child.href}
+                        onClick={onNavigate}
+                      >
+                        <ChildIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{child.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           );
         })}
     </nav>
   );
 }
 
-export function AdminShell({ role, children }: AdminShellProps) {
+function formatRole(role: UserRole) {
+  return role.replaceAll("_", " ").toLowerCase();
+}
+
+function getInitials(name?: string | null, email?: string | null) {
+  const source = name?.trim() || email?.split("@")[0] || "Admin user";
+  const words = source.split(/\s+/).filter(Boolean);
+  const first = words[0]?.[0] ?? "A";
+  const second = words[1]?.[0] ?? words[0]?.[1] ?? "D";
+
+  return `${first}${second}`.toUpperCase();
+}
+
+function AdminIdentity({
+  collapsed,
+  role,
+  userEmail,
+  userName,
+}: {
+  collapsed: boolean;
+  role: UserRole;
+  userEmail?: string | null;
+  userName?: string | null;
+}) {
+  const displayName = userName?.trim() || userEmail || "Sunflour admin";
+  const initials = getInitials(userName, userEmail);
+
+  return (
+    <div
+      className={cn(
+        "mt-auto flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3",
+        collapsed && "justify-center border-0 bg-transparent p-0",
+      )}
+    >
+      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--color-primary)] text-sm font-extrabold text-[var(--color-on-primary)]">
+        {initials}
+      </div>
+      {!collapsed ? (
+        <div className="min-w-0">
+          <p className="m-0 truncate text-sm font-bold">{displayName}</p>
+          <p className="m-0 mt-1 truncate text-xs capitalize text-[var(--color-text-muted)]">
+            {formatRole(role)}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function AdminShell({ role, userName, userEmail, children }: AdminShellProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -108,7 +202,7 @@ export function AdminShell({ role, children }: AdminShellProps) {
       )}
     >
       <aside className="hidden min-h-svh border-r border-[var(--color-border)] bg-[var(--color-surface)] lg:block">
-        <div className="sticky top-0 grid gap-4 p-4">
+        <div className="sticky top-0 flex h-svh flex-col gap-4 p-4">
           <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between gap-2")}>
             <Link className={cn("font-extrabold", collapsed ? "text-xl" : "text-lg")} href="/admin" title="Sunflour Admin">
               {collapsed ? "S" : "Sunflour Admin"}
@@ -130,10 +224,16 @@ export function AdminShell({ role, children }: AdminShellProps) {
             />
           ) : (
             <p className="m-0 rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] px-3 py-2 text-xs font-semibold capitalize text-[var(--color-text-muted)]">
-              Role: {role.replace("_", " ").toLowerCase()}
+              {userName || userEmail || "Admin"} · {formatRole(role)}
             </p>
           )}
           <AdminNavigation collapsed={collapsed} pathname={pathname} role={role} />
+          <AdminIdentity
+            collapsed={collapsed}
+            role={role}
+            userEmail={userEmail}
+            userName={userName}
+          />
         </div>
       </aside>
 
@@ -145,13 +245,19 @@ export function AdminShell({ role, children }: AdminShellProps) {
       >
         <div className="grid gap-4">
           <p className="m-0 rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] px-3 py-2 text-xs font-semibold capitalize text-[var(--color-text-muted)]">
-            Role: {role.replace("_", " ").toLowerCase()}
+            {userName || userEmail || "Admin"} · {formatRole(role)}
           </p>
           <AdminNavigation
             collapsed={false}
             onNavigate={() => setMobileOpen(false)}
             pathname={pathname}
             role={role}
+          />
+          <AdminIdentity
+            collapsed={false}
+            role={role}
+            userEmail={userEmail}
+            userName={userName}
           />
         </div>
       </Sheet>

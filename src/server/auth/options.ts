@@ -92,6 +92,7 @@ const providers: NextAuthOptions["providers"] = googleCredentials
       GoogleProvider({
         clientId: googleCredentials.clientId,
         clientSecret: googleCredentials.clientSecret,
+        allowDangerousEmailAccountLinking: true,
       }),
       credentialsProvider,
     ]
@@ -110,6 +111,13 @@ export const authOptions: NextAuthOptions = {
   },
   providers,
   callbacks: {
+    signIn({ account, profile }) {
+      if (account?.provider === "google") {
+        return hasVerifiedGoogleEmail(profile);
+      }
+
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.role = user.role ?? UserRole.CUSTOMER;

@@ -26,6 +26,7 @@ export function PaymentSettingsClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     getPaymentSettings()
@@ -64,6 +65,7 @@ export function PaymentSettingsClient() {
       setSettings(updated);
       setMessage("Payment settings saved. New orders will snapshot the latest active instruction.");
       setConfirmOpen(false);
+      setIsEditing(false);
     } catch (settingsError) {
       setError(
         getApiErrorMessage(
@@ -84,6 +86,28 @@ export function PaymentSettingsClient() {
           {message}
         </p>
       ) : null}
+      {!isEditing ? (
+        <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="m-0 text-xl font-bold">Moniepoint transfer settings</h2>
+              <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
+                Future orders use this active payment instruction snapshot.
+                Existing orders and invoices do not change.
+              </p>
+            </div>
+            <Button onClick={() => setIsEditing(true)} variant="secondary">
+              Edit payment settings
+            </Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <SummaryItem label="Bank" value={bankName || "Not set"} />
+            <SummaryItem label="Account name" value={accountName || "Not set"} />
+            <SummaryItem label="Account number" value={accountNumber || "Not set"} />
+            <SummaryItem label="Status" value={isActive ? "Active" : "Inactive"} />
+          </div>
+        </section>
+      ) : (
       <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
         <div>
           <h2 className="m-0 text-xl font-bold">Moniepoint transfer settings</h2>
@@ -102,8 +126,14 @@ export function PaymentSettingsClient() {
           label="Payment settings active"
           onChange={(event) => setIsActive(event.target.checked)}
         />
-        <Button onClick={() => setConfirmOpen(true)}>Review and save</Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button onClick={() => setConfirmOpen(true)}>Review and save</Button>
+          <Button onClick={() => setIsEditing(false)} variant="secondary">
+            Cancel
+          </Button>
+        </div>
       </section>
+      )}
       <ConfirmDialog
         confirmLabel="Save settings"
         description="This changes the payment instruction snapshot used by future orders. Old invoices and old order snapshots will not change."
@@ -117,6 +147,17 @@ export function PaymentSettingsClient() {
           Current saved setting: {settings?.bankName ?? "none"}
         </p>
       </ConfirmDialog>
+    </div>
+  );
+}
+
+function SummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4">
+      <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
+        {label}
+      </p>
+      <p className="m-0 mt-2 break-words text-sm font-bold">{value}</p>
     </div>
   );
 }

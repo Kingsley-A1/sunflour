@@ -25,6 +25,7 @@ export function ReviewForm() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,6 +72,7 @@ export function ReviewForm() {
       setName("");
       setComment("");
       setRating(5);
+      setIsSubmitted(true);
     } catch (reviewError) {
       if (reviewError instanceof ApiClientError) {
         setFieldErrors({
@@ -94,6 +96,36 @@ export function ReviewForm() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isSubmitted) {
+    return (
+      <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+        <div>
+          <h2 className="m-0 text-xl font-bold">Review submitted</h2>
+          <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
+            It will appear publicly after Sunflour approves it.
+          </p>
+        </div>
+        {message ? (
+          <p
+            className="m-0 text-sm font-semibold text-[var(--color-success)]"
+            role="status"
+          >
+            {message}
+          </p>
+        ) : null}
+        <Button
+          onClick={() => {
+            setIsSubmitted(false);
+            setMessage(null);
+          }}
+          variant="secondary"
+        >
+          Write another review
+        </Button>
+      </section>
+    );
   }
 
   return (

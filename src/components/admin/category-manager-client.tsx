@@ -206,6 +206,7 @@ function CategoryCard({ category }: { category: AdminCategory }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   async function saveCategory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -227,6 +228,7 @@ function CategoryCard({ category }: { category: AdminCategory }) {
         isActive,
       });
       setMessage("Category updated.");
+      setIsEditing(false);
       router.refresh();
     } catch (categoryError) {
       setError(
@@ -242,6 +244,35 @@ function CategoryCard({ category }: { category: AdminCategory }) {
 
   return (
     <article className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-raised)]">
+      {!isEditing ? (
+        <div className="grid gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="m-0 text-lg font-bold">{name}</h3>
+                <StatusPill status={isActive ? "ACTIVE" : "HIDDEN"} />
+              </div>
+              <p className="m-0 mt-2 break-words text-sm text-[var(--color-text-muted)]">
+                {description || "No description set."}
+              </p>
+              <p className="m-0 mt-2 text-sm text-[var(--color-text-muted)]">
+                Sort order: {sortOrder} · Slug: {category.slug}
+              </p>
+            </div>
+            <Button onClick={() => setIsEditing(true)} variant="secondary">
+              Edit category
+            </Button>
+          </div>
+          {message ? (
+            <p
+              className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]"
+              role="status"
+            >
+              {message}
+            </p>
+          ) : null}
+        </div>
+      ) : (
       <form className="grid gap-4" onSubmit={saveCategory}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -304,11 +335,22 @@ function CategoryCard({ category }: { category: AdminCategory }) {
             label={`Show ${category.name} in public browsing`}
             onChange={(event) => setIsActive(event.target.checked)}
           />
-          <Button className="w-full sm:w-auto" loading={isSaving} type="submit">
-            Save category
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="w-full sm:w-auto" loading={isSaving} type="submit">
+              Save category
+            </Button>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => setIsEditing(false)}
+              type="button"
+              variant="secondary"
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
       </form>
+      )}
     </article>
   );
 }

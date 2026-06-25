@@ -64,6 +64,7 @@ export function BusinessSettingsClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     getBusinessSettings()
@@ -106,6 +107,7 @@ export function BusinessSettingsClient() {
         "Business settings saved. Public contact surfaces now use the latest approved details.",
       );
       setConfirmOpen(false);
+      setIsEditing(false);
     } catch (settingsError) {
       setError(
         getApiErrorMessage(
@@ -130,6 +132,49 @@ export function BusinessSettingsClient() {
         </p>
       ) : null}
 
+      {!isEditing ? (
+        <section className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-raised)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
+                Public business profile
+              </p>
+              <h2 className="m-0 mt-1 text-xl font-bold">
+                Contact and social details
+              </h2>
+              <p className="m-0 mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
+                These values power public contact surfaces. Existing orders and
+                invoices keep their original snapshots.
+              </p>
+            </div>
+            <Button onClick={() => setIsEditing(true)} variant="secondary">
+              Edit business profile
+            </Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <SettingsMetric
+              icon={<Phone className="h-5 w-5" aria-hidden="true" />}
+              label="Phone"
+              value={phoneNumber || "Not set"}
+            />
+            <SettingsMetric
+              icon={<MessageCircle className="h-5 w-5" aria-hidden="true" />}
+              label="WhatsApp"
+              value={whatsappNumber || "Not set"}
+            />
+            <SettingsMetric
+              icon={<Mail className="h-5 w-5" aria-hidden="true" />}
+              label="Email"
+              value={emailAddress || "Not set"}
+            />
+            <SettingsMetric
+              icon={<MapPin className="h-5 w-5" aria-hidden="true" />}
+              label="Address"
+              value={address || "Not set"}
+            />
+          </div>
+        </section>
+      ) : (
       <section className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-raised)]">
         <div className="grid gap-1">
           <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
@@ -251,7 +296,12 @@ export function BusinessSettingsClient() {
                 Changes apply to future public page renders only. Order
                 snapshots and invoices do not change.
               </p>
-              <Button onClick={() => setConfirmOpen(true)}>Review and save</Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={() => setConfirmOpen(true)}>Review and save</Button>
+                <Button onClick={() => setIsEditing(false)} variant="secondary">
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -293,6 +343,7 @@ export function BusinessSettingsClient() {
           </aside>
         </div>
       </section>
+      )}
 
       <ConfirmDialog
         confirmLabel="Save business settings"

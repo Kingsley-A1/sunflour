@@ -36,7 +36,11 @@ export default async function AdminLayout({
     );
   }
 
-  return <AdminShell role={user.role}>{children}</AdminShell>;
+  return (
+    <AdminShell role={user.role} userEmail={user.email} userName={user.name}>
+      {children}
+    </AdminShell>
+  );
 }
 
 async function getAdminUser() {

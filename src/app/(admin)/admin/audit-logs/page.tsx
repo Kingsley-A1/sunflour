@@ -61,10 +61,49 @@ function buildPageHref(
 
 function formatMetadata(metadata: unknown): string {
   if (!metadata) {
-    return "No metadata";
+    return "No extra details";
   }
 
   return JSON.stringify(metadata, null, 2);
+}
+
+function humanizeToken(value: string | null | undefined): string {
+  if (!value) {
+    return "Not recorded";
+  }
+
+  return value
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatMetadataSummary(metadata: unknown): string {
+  if (!metadata || typeof metadata !== "object") {
+    return "No extra details recorded.";
+  }
+
+  const entries = Object.entries(metadata as Record<string, unknown>).filter(
+    ([, value]) => value !== null && value !== undefined,
+  );
+
+  if (entries.length === 0) {
+    return "No extra details recorded.";
+  }
+
+  return entries
+    .slice(0, 3)
+    .map(([key, value]) => {
+      const label = humanizeToken(key);
+
+      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        return `${label}: ${String(value)}`;
+      }
+
+      return `${label}: updated`;
+    })
+    .join(" · ");
 }
 
 function formatActor(auditLog: {
@@ -124,18 +163,18 @@ export default async function AdminAuditLogsPage({
       <header className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-raised)]">
         <div>
           <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
-            Governance
+            Activity history
           </p>
-          <h1 className="m-0 mt-2 text-3xl font-extrabold">Audit logs</h1>
+          <h1 className="m-0 mt-2 text-3xl font-extrabold">Admin changes</h1>
           <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--color-text-muted)]">
-            Review critical business changes across catalog, delivery, payment,
-            reviews, and order operations. Sensitive metadata is already
-            redacted before it reaches this page.
+            Review important changes to orders, products, delivery, payment,
+            reviews, and settings. Sensitive details are removed before this
+            page loads.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryCard label="Total logs" value={String(pagination.total)} />
-          <SummaryCard label="Applied filters" value={String(appliedFilters)} />
+            <SummaryCard label="Total changes" value={String(pagination.total)} />
+            <SummaryCard label="Applied filters" value={String(appliedFilters)} />
           <SummaryCard
             label="Current page"
             value={`${pagination.page}/${pagination.pageCount || 1}`}
@@ -152,32 +191,32 @@ export default async function AdminAuditLogsPage({
             className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-warning)] bg-[var(--color-warning-soft)] p-3 text-sm font-semibold text-[var(--color-warning)]"
             role="status"
           >
-            Some audit filters were invalid and have been reset.
+            Some filters were invalid and have been reset.
           </p>
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <Input
             defaultValue={input.action ?? ""}
-            label="Action"
+            label="Change type"
             name="action"
             placeholder="ORDER_STATUS_UPDATE"
           />
           <Input
             defaultValue={input.targetType ?? ""}
-            label="Target type"
+            label="Area"
             name="targetType"
             placeholder="order"
           />
           <Input
             defaultValue={input.targetId ?? ""}
-            label="Target ID"
+            label="Record ID"
             name="targetId"
             placeholder="ord_123"
           />
           <Input
             defaultValue={input.actorUserId ?? ""}
-            label="Actor user ID"
+            label="Admin user ID"
             name="actorUserId"
             placeholder="usr_123"
           />
@@ -196,7 +235,7 @@ export default async function AdminAuditLogsPage({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="m-0 text-sm text-[var(--color-text-muted)]">
-            Use exact values when tracing a specific operational change.
+            Use filters only when you need to trace a specific change.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             {hasFilters ? (
@@ -214,7 +253,7 @@ export default async function AdminAuditLogsPage({
 
       {auditLogs.length === 0 ? (
         <section className="rounded-[var(--radius-lg)] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)]">
-          No audit logs match the current filters.
+          No admin changes match the current filters.
         </section>
       ) : (
         <>
@@ -230,25 +269,25 @@ export default async function AdminAuditLogsPage({
                       {formatDateTime(auditLog.createdAt)}
                     </p>
                     <h2 className="m-0 mt-1 break-words text-base font-bold">
-                      {auditLog.action}
+                      {humanizeToken(auditLog.action)}
                     </h2>
                   </div>
                   <p className="m-0 rounded-[var(--radius-pill)] bg-[var(--color-surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">
-                    {auditLog.targetType}
+                    {humanizeToken(auditLog.targetType)}
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <DetailBlock label="Actor" value={formatActor(auditLog)} />
+                  <DetailBlock label="Changed by" value={formatActor(auditLog)} />
                   <DetailBlock
-                    label="Target"
+                    label="Affected record"
                     value={auditLog.targetId ?? "No target ID"}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <p className="m-0 text-sm font-semibold">Metadata</p>
-                  <pre className="m-0 max-h-64 overflow-auto rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3 text-xs leading-5 text-[var(--color-text-muted)]">
-                    {formatMetadata(auditLog.metadata)}
-                  </pre>
+                  <p className="m-0 text-sm font-semibold">What changed</p>
+                  <p className="m-0 rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3 text-sm leading-6 text-[var(--color-text-muted)]">
+                    {formatMetadataSummary(auditLog.metadata)}
+                  </p>
                 </div>
               </article>
             ))}
@@ -259,10 +298,10 @@ export default async function AdminAuditLogsPage({
               <thead className="bg-[var(--color-surface-muted)]">
                 <tr>
                   <th className="p-3">When</th>
-                  <th className="p-3">Actor</th>
-                  <th className="p-3">Action</th>
-                  <th className="p-3">Target</th>
-                  <th className="p-3">Metadata</th>
+                  <th className="p-3">Changed by</th>
+                  <th className="p-3">Change</th>
+                  <th className="p-3">Affected area</th>
+                  <th className="p-3">Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -278,13 +317,13 @@ export default async function AdminAuditLogsPage({
                       <p className="m-0 font-semibold">{formatActor(auditLog)}</p>
                       {auditLog.actor?.role ? (
                         <p className="m-0 mt-1 text-xs uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-                          {auditLog.actor.role.replaceAll("_", " ")}
+                          {humanizeToken(auditLog.actor.role)}
                         </p>
                       ) : null}
                     </td>
-                    <td className="p-3 font-semibold">{auditLog.action}</td>
+                    <td className="p-3 font-semibold">{humanizeToken(auditLog.action)}</td>
                     <td className="p-3">
-                      <span className="font-semibold">{auditLog.targetType}</span>
+                      <span className="font-semibold">{humanizeToken(auditLog.targetType)}</span>
                       {auditLog.targetId ? (
                         <span className="mt-1 block text-[var(--color-text-muted)]">
                           {auditLog.targetId}
@@ -292,9 +331,14 @@ export default async function AdminAuditLogsPage({
                       ) : null}
                     </td>
                     <td className="p-3">
-                      <pre className="m-0 max-w-xl overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3 text-xs leading-5 text-[var(--color-text-muted)]">
-                        {formatMetadata(auditLog.metadata)}
-                      </pre>
+                      <details className="max-w-xl rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-muted)]">
+                        <summary className="cursor-pointer font-semibold text-[var(--color-text)]">
+                          {formatMetadataSummary(auditLog.metadata)}
+                        </summary>
+                        <pre className="m-0 mt-3 overflow-auto whitespace-pre-wrap text-xs leading-5">
+                          {formatMetadata(auditLog.metadata)}
+                        </pre>
+                      </details>
                     </td>
                   </tr>
                 ))}

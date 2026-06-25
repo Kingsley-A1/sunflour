@@ -14,30 +14,40 @@ export function CategoryFilter({
   activeSlug,
   onChange,
 }: CategoryFilterProps) {
+  const totalProducts = categories.reduce(
+    (count, category) => count + category.products.length,
+    0,
+  );
+
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Menu categories">
+    <nav
+      aria-label="Menu categories"
+      className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-[var(--shadow-raised)]"
+    >
+      <div className="flex gap-1 overflow-x-auto" role="list">
       <button
-        aria-pressed={activeSlug === "all"}
+        aria-current={activeSlug === "all" ? "page" : undefined}
         className={cn(
-          "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)]",
+          "grid min-h-12 shrink-0 place-items-center rounded-[var(--radius-sm)] px-4 text-left text-sm font-semibold transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
           activeSlug === "all"
-            ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)]"
-            : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
+            ? "bg-[var(--color-primary)] text-[var(--color-on-primary)]"
+            : "text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
         )}
         onClick={() => onChange("all")}
         style={activeSlug === "all" ? { color: "var(--color-on-primary)" } : undefined}
         type="button"
       >
-        All
+        <span>All</span>
+        <span className="text-xs font-medium opacity-80">{totalProducts}</span>
       </button>
       {categories.map((category) => (
         <button
-          aria-pressed={activeSlug === category.slug}
+          aria-current={activeSlug === category.slug ? "page" : undefined}
           className={cn(
-            "min-h-11 shrink-0 rounded-[var(--radius-pill)] border px-4 text-sm font-semibold transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)]",
+            "grid min-h-12 shrink-0 place-items-center rounded-[var(--radius-sm)] px-4 text-left text-sm font-semibold transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]",
             activeSlug === category.slug
-              ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)]"
-              : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
+              ? "bg-[var(--color-primary)] text-[var(--color-on-primary)]"
+              : "text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
           )}
           key={category.id}
           onClick={() => onChange(category.slug)}
@@ -48,9 +58,13 @@ export function CategoryFilter({
           }
           type="button"
         >
-          {category.name}
+          <span>{category.name}</span>
+          <span className="text-xs font-medium opacity-80">
+            {category.products.length}
+          </span>
         </button>
       ))}
-    </div>
+      </div>
+    </nav>
   );
 }

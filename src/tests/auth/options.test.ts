@@ -14,6 +14,15 @@ describe("NextAuth options helpers", () => {
     ]);
   });
 
+  it("allows verified Google email account linking", () => {
+    expect(authOptions.providers[0]).toMatchObject({
+      id: "google",
+      options: {
+        allowDangerousEmailAccountLinking: true,
+      },
+    });
+  });
+
   it("detects complete Google OAuth credentials only", () => {
     expect(
       getGoogleProviderCredentials({
@@ -68,5 +77,31 @@ describe("NextAuth options helpers", () => {
         profile: { email_verified: false },
       }),
     ).toBe(false);
+  });
+
+  it("rejects unverified Google OAuth sign-ins before account linking", async () => {
+    const signIn = authOptions.callbacks?.signIn;
+
+    expect(signIn).toBeDefined();
+
+    expect(
+      await signIn?.({
+        account: { provider: "google", type: "oauth", providerAccountId: "1" } as never,
+        credentials: undefined,
+        email: undefined,
+        profile: { email_verified: false } as never,
+        user: { id: "user_1" } as never,
+      }),
+    ).toBe(false);
+
+    expect(
+      await signIn?.({
+        account: { provider: "google", type: "oauth", providerAccountId: "1" } as never,
+        credentials: undefined,
+        email: undefined,
+        profile: { email_verified: true } as never,
+        user: { id: "user_1" } as never,
+      }),
+    ).toBe(true);
   });
 });
