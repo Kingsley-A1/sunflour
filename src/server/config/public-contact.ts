@@ -1,6 +1,7 @@
-import { prisma } from "@/server/db/prisma";
+import { getBusinessSettingsForPublic } from "@/server/modules/settings";
 
 export interface PublicContactConfig {
+  businessName: string;
   phoneNumber: string | null;
   phoneHref: string | null;
   whatsappNumber: string | null;
@@ -16,16 +17,6 @@ export interface PublicContactConfig {
   address: string | null;
   mapsHref: string | null;
   hasAnyContact: boolean;
-}
-
-interface DbContactSettings {
-  phoneNumber?: string | null;
-  whatsappNumber?: string | null;
-  emailAddress?: string | null;
-  instagram?: string | null;
-  tiktok?: string | null;
-  facebook?: string | null;
-  address?: string | null;
 }
 
 function readPublicEnv(...keys: string[]): string | null {
@@ -94,6 +85,7 @@ function isAbsoluteUrl(value: string): boolean {
 }
 
 function buildConfig(raw: {
+  businessName: string;
   phoneNumber: string | null;
   whatsappNumber: string | null;
   emailAddress: string | null;
@@ -103,6 +95,7 @@ function buildConfig(raw: {
   address: string | null;
 }): PublicContactConfig {
   return {
+    businessName: raw.businessName,
     phoneNumber: raw.phoneNumber,
     phoneHref: toPhoneHref(raw.phoneNumber),
     whatsappNumber: raw.whatsappNumber,
@@ -124,8 +117,11 @@ function buildConfig(raw: {
   };
 }
 
-export async function getPublicContactConfig(): Promise<PublicContactConfig> {
-  const envRaw = {
+export function getPublicContactConfig(): PublicContactConfig {
+  return buildConfig({
+    businessName:
+      readPublicEnv("BUSINESS_NAME", "NEXT_PUBLIC_SUNFLOUR_BUSINESS_NAME") ??
+      "Sunflour Bakery",
     phoneNumber: readPublicEnv("PHONE_NUMBER", "NEXT_PUBLIC_SUNFLOUR_PHONE_NUMBER"),
     whatsappNumber: readPublicEnv("WHATSAPP_NUMBER", "NEXT_PUBLIC_SUNFLOUR_WHATSAPP_NUMBER"),
     emailAddress: readPublicEnv("EMAIL_ADDRESS", "NEXT_PUBLIC_SUNFLOUR_EMAIL_ADDRESS"),
@@ -133,29 +129,30 @@ export async function getPublicContactConfig(): Promise<PublicContactConfig> {
     tiktok: readPublicEnv("TIKTOK", "NEXT_PUBLIC_SUNFLOUR_TIKTOK"),
     facebook: readPublicEnv("FACEBOOK", "NEXT_PUBLIC_SUNFLOUR_FACEBOOK"),
     address: readPublicEnv("ADDRESS", "ADRESS", "NEXT_PUBLIC_SUNFLOUR_ADDRESS"),
-  };
+  });
+}
 
-  let dbSettings: DbContactSettings | null = null;
+export async function getResolvedPublicContactConfig(): Promise<PublicContactConfig> {
+  const fallback = getPublicContactConfig();
+
   try {
-    const record = await prisma.siteSetting.findUnique({
-      where: { key: "contact_settings" },
-    });
-    if (record?.value && typeof record.value === "object") {
-      dbSettings = record.value as DbContactSettings;
+    const settings = await getBusinessSettingsForPublic();
+
+    if (!settings) {
+      return fallback;
     }
+
+    return buildConfig({
+      businessName: settings.businessName || fallback.businessName,
+      phoneNumber: settings.phoneNumber ?? fallback.phoneNumber,
+      whatsappNumber: settings.whatsappNumber ?? fallback.whatsappNumber,
+      emailAddress: settings.emailAddress ?? fallback.emailAddress,
+      instagram: settings.instagram ?? fallback.instagram,
+      tiktok: settings.tiktok ?? fallback.tiktok,
+      facebook: settings.facebook ?? fallback.facebook,
+      address: settings.address ?? fallback.address,
+    });
   } catch {
-    // DB unavailable — fall back to env vars only
+    return fallback;
   }
-
-  const merged = {
-    phoneNumber: dbSettings?.phoneNumber ?? envRaw.phoneNumber,
-    whatsappNumber: dbSettings?.whatsappNumber ?? envRaw.whatsappNumber,
-    emailAddress: dbSettings?.emailAddress ?? envRaw.emailAddress,
-    instagram: dbSettings?.instagram ?? envRaw.instagram,
-    tiktok: dbSettings?.tiktok ?? envRaw.tiktok,
-    facebook: dbSettings?.facebook ?? envRaw.facebook,
-    address: dbSettings?.address ?? envRaw.address,
-  };
-
-  return buildConfig(merged);
 }

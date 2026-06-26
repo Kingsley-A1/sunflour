@@ -15,17 +15,17 @@ export function ProductCard({ product }: ProductCardProps) {
   const image = product.images[0];
 
   return (
-    <Card className="grid overflow-hidden transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-card)]">
+    <Card className="grid overflow-hidden transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]">
       <Link
         className="group block"
         href={`/products/${product.slug}`}
         aria-label={`View ${product.name}`}
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-surface-soft)]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-surface-muted)]">
           {image?.url ? (
             <SafeImage
               alt={image.altText ?? product.name}
-              className="object-cover transition duration-[var(--motion-slow)] ease-[var(--ease-standard)] group-hover:scale-[1.02]"
+              className="object-cover transition duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-standard)] group-hover:scale-[1.02]"
               fill
               fallback={
                 <div className="grid h-full place-items-center px-4 text-center text-sm font-semibold text-[var(--color-text-muted)]">

@@ -72,7 +72,7 @@ export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) 
               return (
                 <li key={item.href}>
                   <Link
-                    className="flex min-h-12 items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]"
+                    className="flex min-h-12 items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
                     href={item.href}
                     onClick={() => setOpen(false)}
                   >
@@ -85,7 +85,7 @@ export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) 
             {isSignedIn ? (
               <li>
                 <button
-                  className="flex min-h-12 w-full items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-left text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-soft)]"
+                  className="flex min-h-12 w-full items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-left text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
                   onClick={() => signOut({ callbackUrl: "/" })}
                   type="button"
                 >

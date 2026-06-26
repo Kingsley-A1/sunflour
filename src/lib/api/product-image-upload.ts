@@ -1,3 +1,8 @@
+import {
+  completeMediaUpload,
+  presignProductImageUpload,
+} from "@/lib/api/client";
+
 export const MAX_PRODUCT_IMAGES = 8;
 
 export interface UploadedProductImage {

@@ -9,7 +9,7 @@ import { Footer } from "@/components/layout/footer";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
 import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
-import { getPublicContactConfig } from "@/server/config/public-contact";
+import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 import type { PublicMenuCategoryNavItem } from "@/types/domain";
 
 interface PublicShellProps {
@@ -31,7 +31,7 @@ export async function PublicShell({
   children,
   isSignedIn,
 }: PublicShellProps) {
-  const contact = await getPublicContactConfig();
+  const contact = await getResolvedPublicContactConfig();
   const categoryLinks =
     categories.length > 0 ? categories : [{ id: "", label: "Menu" }];
 

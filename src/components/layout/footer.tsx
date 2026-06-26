@@ -4,7 +4,7 @@ import type { Route } from "next";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import logoAsset from "../../../logo.png";
-import { getPublicContactConfig } from "@/server/config/public-contact";
+import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 
 interface FooterLink {
   href: Route;
@@ -38,7 +38,7 @@ const legalLinks: FooterLink[] = [
 ];
 
 export async function Footer() {
-  const contact = await getPublicContactConfig();
+  const contact = await getResolvedPublicContactConfig();
   const currentYear = new Date().getFullYear();
   const contactLinks: ContactLink[] = [
     {
@@ -75,7 +75,7 @@ export async function Footer() {
               width={48}
             />
             <span id="footer-brand" className="text-lg font-extrabold">
-              Sunflour Bakery
+              {contact.businessName}
             </span>
           </Link>
         </section>
@@ -114,7 +114,7 @@ export async function Footer() {
 
       <div className="border-t border-[var(--color-border)]">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 text-sm text-[var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between">
-          <p className="m-0">&copy; {currentYear} Sunflour Bakery</p>
+          <p className="m-0">&copy; {currentYear} {contact.businessName}</p>
           <nav aria-label="Legal navigation" className="flex flex-wrap gap-x-4 gap-y-2">
             {legalLinks.map((link) => (
               <Link

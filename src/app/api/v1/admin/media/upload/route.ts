@@ -14,6 +14,14 @@ import { getPublicMediaUrl, getR2Config, getR2Endpoint } from "@/server/modules/
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+type AllowedImageContentType = (typeof ALLOWED_IMAGE_CONTENT_TYPES)[number];
+
+function isAllowedImageContentType(
+  contentType: string,
+): contentType is AllowedImageContentType {
+  return (ALLOWED_IMAGE_CONTENT_TYPES as readonly string[]).includes(contentType);
+}
+
 export async function POST(request: Request) {
   try {
     const actor = await requireRole(PRODUCT_CONTENT_ROLES);
@@ -30,7 +38,7 @@ export async function POST(request: Request) {
 
     const { type: contentType, size, name: fileName } = file;
 
-    if (!(ALLOWED_IMAGE_CONTENT_TYPES as readonly string[]).includes(contentType)) {
+    if (!isAllowedImageContentType(contentType)) {
       throw new AppError({
         code: ERROR_CODES.VALIDATION_ERROR,
         publicMessage: "File type not allowed. Use JPEG, PNG, WebP, or AVIF.",
