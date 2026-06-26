@@ -6,6 +6,8 @@ import {
   PaymentStatus,
 } from "@/generated/prisma/enums";
 import {
+  formatPaymentMethodLabel,
+  formatPaymentStatusLabel,
   generateInvoiceNumber,
   renderInvoiceHtml,
 } from "@/server/modules/invoices";
@@ -92,6 +94,33 @@ describe("invoice renderer", () => {
     expect(htmlSnapshot).not.toContain("Updated Chocolate Cake");
     expect(htmlSnapshot).toContain("7,000");
     expect(htmlSnapshot).not.toContain("8,500");
+  });
+
+  it("renders user-friendly payment method and status labels", () => {
+    const html = renderInvoiceHtml({
+      invoiceNumber: "INV-SFB-20260101-ABC123",
+      generatedAt: createdAt,
+      order: {
+        ...invoiceOrder(),
+        paymentStatus: PaymentStatus.PROOF_SENT_ON_WHATSAPP,
+        paymentMethod: PaymentMethod.BANK_TRANSFER,
+      },
+    });
+
+    expect(html).toContain("Bank transfer");
+    expect(html).not.toContain("BANK_TRANSFER");
+    expect(html).toContain("Proof sent on WhatsApp");
+    expect(html).not.toContain("PROOF_SENT_ON_WHATSAPP");
+  });
+
+  it("maps payment enums to friendly labels", () => {
+    expect(formatPaymentMethodLabel(PaymentMethod.BANK_TRANSFER)).toBe(
+      "Bank transfer",
+    );
+    expect(formatPaymentStatusLabel(PaymentStatus.UNDER_REVIEW)).toBe(
+      "Under review",
+    );
+    expect(formatPaymentStatusLabel(PaymentStatus.CONFIRMED)).toBe("Confirmed");
   });
 
   it("escapes customer and item content in the HTML snapshot", () => {

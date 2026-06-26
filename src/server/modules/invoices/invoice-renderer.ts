@@ -59,6 +59,33 @@ function formatDate(value: Date): string {
   }).format(value);
 }
 
+const paymentMethodLabels: Record<PaymentMethod, string> = {
+  BANK_TRANSFER: "Bank transfer",
+};
+
+const paymentStatusLabels: Record<PaymentStatus, string> = {
+  UNPAID: "Unpaid",
+  PROOF_SENT_ON_WHATSAPP: "Proof sent on WhatsApp",
+  UNDER_REVIEW: "Under review",
+  CONFIRMED: "Confirmed",
+  REJECTED: "Rejected",
+};
+
+export function formatPaymentMethodLabel(method: PaymentMethod): string {
+  return paymentMethodLabels[method] ?? formatEnumFallback(method);
+}
+
+export function formatPaymentStatusLabel(status: PaymentStatus): string {
+  return paymentStatusLabels[status] ?? formatEnumFallback(status);
+}
+
+function formatEnumFallback(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/^\w/, (letter) => letter.toUpperCase());
+}
+
 function renderAddress(order: InvoiceRenderOrder): string {
   if (order.deliveryMethod === "PICKUP") {
     return "Pickup at Sunflour Bakery";
@@ -190,8 +217,8 @@ export function renderInvoiceHtml({
 
       <section class="payment">
         <h2>Payment</h2>
-        <p><strong>Status:</strong> ${escapeHtml(order.paymentStatus)}</p>
-        <p><strong>Method:</strong> ${escapeHtml(order.paymentMethod)}</p>
+        <p><strong>Status:</strong> ${escapeHtml(formatPaymentStatusLabel(order.paymentStatus))}</p>
+        <p><strong>Method:</strong> ${escapeHtml(formatPaymentMethodLabel(order.paymentMethod))}</p>
         <p>${renderPaymentInstruction(order.paymentInstructionSnapshot)}</p>
       </section>
     </main>

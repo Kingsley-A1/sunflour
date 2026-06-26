@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import { FileText } from "lucide-react";
+import { DownloadInvoiceButton } from "@/components/invoice/download-invoice-button";
 import { PrintButton } from "@/components/invoice/print-button";
-import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { getPublicInvoiceSafe } from "@/lib/api/server";
 import { formatDateTime } from "@/lib/formatters";
@@ -37,22 +36,13 @@ export default async function InvoicePage({
         <div className="flex flex-wrap gap-2 no-print">
           <StatusPill status={invoice.order.status} />
           <StatusPill status={invoice.order.paymentStatus} />
+          <DownloadInvoiceButton
+            html={invoice.htmlSnapshot}
+            invoiceNumber={invoice.invoiceNumber}
+          />
           <PrintButton />
         </div>
       </header>
-      <Card className="grid gap-3 p-4 no-print">
-        <div className="flex items-start gap-3">
-          <FileText className="mt-1 h-5 w-5 text-[var(--color-primary)]" aria-hidden="true" />
-          <div>
-            <h2 className="m-0 text-lg font-bold">Snapshot invoice</h2>
-            <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-              This invoice is rendered from backend order snapshots. Product
-              prices, delivery fees, surcharge, and payment instruction do not
-              change when admin settings change later.
-            </p>
-          </div>
-        </div>
-      </Card>
       <iframe
         className="min-h-[36rem] w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white sm:min-h-[52rem] lg:min-h-[72rem]"
         srcDoc={invoice.htmlSnapshot}

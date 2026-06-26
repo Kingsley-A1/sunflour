@@ -3,6 +3,8 @@ export {
   generateInvoiceNumber,
 } from "./invoice-ids";
 export {
+  formatPaymentMethodLabel,
+  formatPaymentStatusLabel,
   renderInvoiceHtml,
   type InvoiceRenderInput,
   type InvoiceRenderItem,
