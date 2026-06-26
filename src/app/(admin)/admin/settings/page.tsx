@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { Building2, CreditCard, Mail, Truck, ShieldCheck } from "lucide-react";
+import { Building2, CreditCard, Mail, Phone, ShieldCheck, Truck } from "lucide-react";
 import { requireRole } from "@/server/auth/rbac";
 import { SUPER_ADMIN_ROLES } from "@/server/auth/roles";
 
@@ -16,6 +16,12 @@ const settingsLinks = [
     label: "Business profile",
     description: "Public business name, contact details, address, and social links.",
     icon: Building2,
+  },
+  {
+    href: "/admin/settings/contacts" as Route,
+    label: "Contact settings",
+    description: "Phone, WhatsApp, email, social handles, and address shown on the public contact page.",
+    icon: Phone,
   },
   {
     href: "/admin/settings/payment" as Route,

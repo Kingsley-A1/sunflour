@@ -13,20 +13,19 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const image = product.images[0];
-  const hasVariants = product.variants.length > 0;
 
   return (
-    <Card className="group/card grid h-full grid-rows-[auto_1fr] overflow-hidden transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-floating)]">
+    <Card className="grid overflow-hidden transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-card)]">
       <Link
-        className="group/image block overflow-hidden"
+        className="group block"
         href={`/products/${product.slug}`}
         aria-label={`View ${product.name}`}
       >
-        <div className="relative aspect-[16/10] overflow-hidden bg-[var(--color-surface-muted)] sm:aspect-[4/3]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-surface-soft)]">
           {image?.url ? (
             <SafeImage
               alt={image.altText ?? product.name}
-              className="object-cover transition duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-standard)] group-hover/image:scale-[1.025]"
+              className="object-cover transition duration-[var(--motion-slow)] ease-[var(--ease-standard)] group-hover:scale-[1.02]"
               fill
               fallback={
                 <div className="grid h-full place-items-center px-4 text-center text-sm font-semibold text-[var(--color-text-muted)]">
@@ -43,33 +42,32 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
       </Link>
-      <div className="flex min-h-0 flex-col gap-4 p-4">
+      <div className="grid gap-3 p-4">
         <div className="grid gap-2">
           <div className="flex flex-wrap items-center gap-2">
             {product.isPopular ? <Badge tone="warning">Popular</Badge> : null}
             <StatusPill status={product.status} />
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid gap-1">
             <Link
-              className="text-lg font-bold leading-snug text-[var(--color-text)] decoration-[var(--color-primary)] decoration-2 underline-offset-4 hover:underline"
+              className="text-lg font-bold leading-snug text-[var(--color-text)] hover:underline"
               href={`/products/${product.slug}`}
             >
               {product.name}
             </Link>
             {product.description ? (
-              <p className="m-0 line-clamp-2 text-sm leading-6 text-[var(--color-text-muted)] sm:min-h-12">
+              <p className="m-0 line-clamp-2 text-sm leading-6 text-[var(--color-text-muted)]">
                 {product.description}
               </p>
             ) : null}
           </div>
         </div>
-        <div className="mt-auto grid gap-3 border-t border-[var(--color-border)] pt-3">
-          <p className="m-0 text-base font-semibold text-[var(--color-text)]">
-            {hasVariants ? <span>From </span> : null}
+        <div className="flex items-center justify-between gap-3">
+          <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
             <PriceText amount={product.basePrice} />
           </p>
-          <AddToCartButton buttonVariant="secondary" product={product} />
         </div>
+        <AddToCartButton buttonVariant="secondary" product={product} />
       </div>
     </Card>
   );
