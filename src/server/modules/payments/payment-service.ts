@@ -288,6 +288,117 @@ function auditActionForPaymentStatus(
   return "ORDER_PAYMENT_STATUS_UPDATE";
 }
 
+export interface CustomerProofHandoffResult {
+  orderNumber: string;
+  status: OrderStatusValue;
+  paymentStatus: PaymentStatusValue;
+  alreadyRecorded: boolean;
+}
+
+/**
+ * Records that a customer handed off payment proof on WhatsApp. This is a
+ * customer-triggered, token-protected action: it only moves an UNPAID order to
+ * PROOF_SENT_ON_WHATSAPP (and the order to PAYMENT_UNDER_REVIEW). It never
+ * confirms payment — manual confirmation stays an admin action. The call is
+ * idempotent: once proof is recorded (or payment progressed), it is a no-op.
+ */
+export async function recordCustomerProofSent(
+  orderNumber: string,
+  token: string,
+): Promise<CustomerProofHandoffResult> {
+  const order = await prisma.order.findFirst({
+    where: {
+      orderNumber,
+      invoice: {
+        publicAccessToken: token,
+      },
+    },
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      paymentStatus: true,
+    },
+  });
+
+  if (!order) {
+    throw notFound("Order not found for the provided proof link.");
+  }
+
+  if (order.paymentStatus !== PaymentStatus.UNPAID) {
+    return {
+      orderNumber: order.orderNumber,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      alreadyRecorded: true,
+    };
+  }
+
+  assertOrderCanReceivePaymentStatusUpdate(order.status);
+
+  const nextPaymentStatus = PaymentStatus.PROOF_SENT_ON_WHATSAPP;
+  const nextOrderStatus = orderStatusForPaymentStatus(nextPaymentStatus);
+  const reason = "Customer reported payment proof sent on WhatsApp.";
+
+  return prisma.$transaction(async (transaction) => {
+    const updatedOrder = await transaction.order.update({
+      where: { id: order.id },
+      data: {
+        paymentStatus: nextPaymentStatus,
+        status: nextOrderStatus,
+      },
+      select: {
+        orderNumber: true,
+        status: true,
+        paymentStatus: true,
+      },
+    });
+
+    if (order.status !== nextOrderStatus) {
+      await transaction.orderStatusEvent.create({
+        data: {
+          orderId: order.id,
+          fromStatus: order.status,
+          toStatus: nextOrderStatus,
+          reason,
+        },
+      });
+    }
+
+    await transaction.paymentConfirmationEvent.create({
+      data: {
+        orderId: order.id,
+        fromStatus: order.paymentStatus,
+        toStatus: nextPaymentStatus,
+        reason,
+      },
+    });
+
+    await writeAuditLog(
+      {
+        action: "ORDER_PROOF_SENT_BY_CUSTOMER",
+        targetType: "order",
+        targetId: order.id,
+        metadata: {
+          orderNumber: order.orderNumber,
+          fromPaymentStatus: order.paymentStatus,
+          toPaymentStatus: nextPaymentStatus,
+          fromOrderStatus: order.status,
+          toOrderStatus: nextOrderStatus,
+        },
+      },
+      transaction,
+    );
+
+    return {
+      orderNumber: updatedOrder.orderNumber,
+      status: updatedOrder.status,
+      paymentStatus: updatedOrder.paymentStatus,
+      alreadyRecorded: false,
+    };
+  });
+}
+
 export async function updateOrderPaymentStatus(
   orderNumber: string,
   input: PaymentStatusUpdateInput,

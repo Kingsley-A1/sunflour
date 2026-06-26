@@ -7,17 +7,22 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { WhatsAppProofButton } from "@/components/checkout/whatsapp-proof-button";
 import type { CheckoutResult } from "@/types/domain";
 
-function invoicePageUrl(result: CheckoutResult): string {
+function invoiceAccessToken(result: CheckoutResult): string | undefined {
   try {
     const url = new URL(result.invoiceUrl, "http://sunflour.local");
-    const token = url.searchParams.get("token");
 
-    return token
-      ? `/orders/${encodeURIComponent(result.orderNumber)}/invoice?token=${encodeURIComponent(token)}`
-      : `/orders/${encodeURIComponent(result.orderNumber)}/invoice`;
+    return url.searchParams.get("token") ?? undefined;
   } catch {
-    return `/orders/${encodeURIComponent(result.orderNumber)}/invoice`;
+    return undefined;
   }
+}
+
+function invoicePageUrl(result: CheckoutResult): string {
+  const token = invoiceAccessToken(result);
+
+  return token
+    ? `/orders/${encodeURIComponent(result.orderNumber)}/invoice?token=${encodeURIComponent(token)}`
+    : `/orders/${encodeURIComponent(result.orderNumber)}/invoice`;
 }
 
 export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
@@ -54,7 +59,11 @@ export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
           <FileText className="h-4 w-4" aria-hidden="true" />
           View invoice
         </Link>
-        <WhatsAppProofButton href={result.whatsAppProofUrl} />
+        <WhatsAppProofButton
+          href={result.whatsAppProofUrl}
+          orderNumber={result.orderNumber}
+          proofToken={invoiceAccessToken(result)}
+        />
       </div>
     </Card>
   );

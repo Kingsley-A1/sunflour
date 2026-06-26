@@ -5,9 +5,11 @@ import type {
   AdminRegistrationResult,
   AdminTabularMenuContent,
   AdminHomepageHeroProduct,
+  AdminProductDraft,
   AdminSurchargeRule,
   AdminProduct,
   BusinessSettings,
+  ProductDraftData,
   CheckoutResult,
   CustomerProfileResponse,
   DeliveryMethod,
@@ -250,6 +252,26 @@ export async function createCheckoutOrder(
   });
 }
 
+export interface OrderProofHandoffResult {
+  orderNumber: string;
+  status: string;
+  paymentStatus: string;
+  alreadyRecorded: boolean;
+}
+
+export async function recordOrderProofSent(input: {
+  orderNumber: string;
+  token: string;
+}): Promise<OrderProofHandoffResult> {
+  return apiRequest<OrderProofHandoffResult>(
+    `/api/v1/public/orders/${encodeURIComponent(input.orderNumber)}/proof-sent`,
+    {
+      method: "POST",
+      body: JSON.stringify({ token: input.token }),
+    },
+  );
+}
+
 export async function submitPublicReview(input: {
   customerName: string;
   rating: number;
@@ -327,6 +349,56 @@ export async function updateAdminProduct(
   return apiRequest(`/api/v1/admin/products/${productId}`, {
     method: "PATCH",
     body: JSON.stringify(input),
+  });
+}
+
+export interface ProductDraftInput {
+  name?: string;
+  data: ProductDraftData;
+}
+
+export async function listAdminProductDrafts(): Promise<AdminProductDraft[]> {
+  const data = await apiRequest<{ drafts: AdminProductDraft[] }>(
+    "/api/v1/admin/product-drafts",
+  );
+
+  return data.drafts;
+}
+
+export async function createAdminProductDraft(
+  input: ProductDraftInput,
+): Promise<AdminProductDraft> {
+  const data = await apiRequest<{ draft: AdminProductDraft }>(
+    "/api/v1/admin/product-drafts",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+  return data.draft;
+}
+
+export async function updateAdminProductDraft(
+  draftId: string,
+  input: ProductDraftInput,
+): Promise<AdminProductDraft> {
+  const data = await apiRequest<{ draft: AdminProductDraft }>(
+    `/api/v1/admin/product-drafts/${draftId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+
+  return data.draft;
+}
+
+export async function deleteAdminProductDraft(
+  draftId: string,
+): Promise<{ id: string }> {
+  return apiRequest(`/api/v1/admin/product-drafts/${draftId}`, {
+    method: "DELETE",
   });
 }
 

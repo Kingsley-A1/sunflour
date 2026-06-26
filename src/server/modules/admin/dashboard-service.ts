@@ -82,6 +82,8 @@ export async function getDashboardMetrics(
     unavailableProducts,
     pendingReviews,
     recentPendingReviews,
+    totalProducts,
+    draftProducts,
   ] = await Promise.all([
     prisma.order.count({ where: rangeWhere }),
     prisma.order.count({
@@ -183,6 +185,8 @@ export async function getDashboardMetrics(
         },
       },
     }),
+    prisma.product.count(),
+    prisma.productDraft.count(),
   ]);
 
   const rangeMetrics = {
@@ -233,6 +237,8 @@ export async function getDashboardMetrics(
       outForDeliveryOrders,
       deliveredOrders,
       pendingReviews,
+      totalProducts,
+      draftProducts,
     },
     salesEstimate: mappedSalesEstimate,
     topOrderedItems: mappedTopOrderedItems,

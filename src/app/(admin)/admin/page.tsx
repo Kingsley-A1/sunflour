@@ -53,6 +53,18 @@ export default async function AdminDashboardPage() {
           value={metrics.counts.totalUsers}
         />
         <MetricCard
+          description="Live catalog products across all statuses."
+          href={"/admin/products" as Route}
+          label="All products"
+          value={metrics.counts.totalProducts}
+        />
+        <MetricCard
+          description="Unfinished product drafts saved for later."
+          href={"/admin/products?view=drafts" as Route}
+          label="Draft products"
+          value={metrics.counts.draftProducts}
+        />
+        <MetricCard
           description="Guest orders in the selected range."
           href={"/admin/orders" as Route}
           label="Guest orders"

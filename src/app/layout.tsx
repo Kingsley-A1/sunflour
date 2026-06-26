@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 import { PageLoadingLine } from "@/components/ui/page-loading-line";
 import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <Suspense fallback={null}>
           <PageLoadingLine />
         </Suspense>
+        <OfflineBanner />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

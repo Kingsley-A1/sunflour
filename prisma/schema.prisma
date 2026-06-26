@@ -134,6 +134,7 @@ model User {
   emailTemplatesUpdated EmailTemplate[] @relation("EmailTemplateUpdater")
   homepageHeroProductsUpdated HomepageHeroProduct[] @relation("HomepageHeroProductUpdater")
   emailPreference EmailPreference?
+  productDrafts ProductDraft[] @relation("ProductDraftCreator")
 
   @@index([lockedUntil])
   @@map("users")
@@ -264,6 +265,20 @@ model Product {
   @@index([isFeatured])
   @@index([isPopular])
   @@map("products")
+}
+
+model ProductDraft {
+  id              String   @id @default(cuid())
+  createdByUserId String   @map("created_by_user_id")
+  name            String   @default("")
+  data            Json
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  createdBy User @relation("ProductDraftCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([createdByUserId, updatedAt])
+  @@map("product_drafts")
 }
 
 model HomepageHeroProduct {

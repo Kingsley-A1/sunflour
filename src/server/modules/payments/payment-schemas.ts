@@ -57,9 +57,18 @@ export const orderNumberParamSchema = z.object({
   orderNumber: z.string().trim().min(1).max(80),
 });
 
+export const publicProofHandoffSchema = z
+  .object({
+    token: z.string().trim().min(1).max(200),
+  })
+  .strict();
+
 export type PaymentSettingsUpdateInput = z.infer<
   typeof paymentSettingsUpdateSchema
 >;
 export type PaymentStatusUpdateInput = z.infer<
   typeof paymentStatusUpdateSchema
+>;
+export type PublicProofHandoffInput = z.infer<
+  typeof publicProofHandoffSchema
 >;

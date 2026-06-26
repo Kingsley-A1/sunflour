@@ -49,6 +49,8 @@ describe("dashboard API route", () => {
         outForDeliveryOrders: 0,
         deliveredOrders: 0,
         pendingReviews: 0,
+        totalProducts: 0,
+        draftProducts: 0,
       },
       salesEstimate: {
         label: "Confirmed sales estimate",

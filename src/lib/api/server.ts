@@ -4,9 +4,12 @@ import type {
   AdminCategory,
   AdminHomepageHeroProduct,
   AdminProduct,
+  AdminProductDraft,
   InvoiceResponse,
+  ProductDraftData,
   PublicCategoryNavigationItem,
   PublicHeroProduct,
+  PublicMenuCategoryNavItem,
   PublicMenuResponse,
   PublicProduct,
   TabularMenuContent,
@@ -18,6 +21,12 @@ import {
   getAdminProduct,
   listPublicCategoryNavigation,
 } from "@/server/modules/menu/catalog-service";
+import {
+  getProductDraft,
+  listProductDrafts,
+  type ProductDraftRecord,
+} from "@/server/modules/menu";
+import type { AuthenticatedUser } from "@/server/auth/rbac";
 import {
   getHomepageHeroProducts,
   listAdminHomepageHeroProducts,
@@ -53,6 +62,30 @@ export async function getPublicCategoryNavigationSafe(): Promise<
 
 export async function getPublicTabularMenuSafe(): Promise<TabularMenuContent> {
   return getTabularMenuContentSafeForPublic() as Promise<TabularMenuContent>;
+}
+
+/**
+ * Category navigation for the public shell, homepage, and menu page. It uses
+ * the tabular menu category source so site-wide category navigation stays
+ * consistent with the published menu content.
+ */
+export async function getPublicMenuCategoryNavigationSafe(): Promise<
+  PublicMenuCategoryNavItem[]
+> {
+  try {
+    const content = await getTabularMenuContentSafeForPublic();
+
+    return content.categories
+      .slice()
+      .sort(
+        (left, right) =>
+          left.sortOrder - right.sortOrder ||
+          left.label.localeCompare(right.label),
+      )
+      .map((category) => ({ id: category.id, label: category.label }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getHomepageHeroProductsSafe(): Promise<{
@@ -259,6 +292,44 @@ export async function getAdminCatalogSafe(): Promise<{
     heroProducts,
     error: hasError ? "Some catalog data could not be loaded." : null,
   };
+}
+
+function mapAdminProductDraft(draft: ProductDraftRecord): AdminProductDraft {
+  return {
+    id: draft.id,
+    name: draft.name,
+    data: (draft.data ?? {}) as ProductDraftData,
+    createdAt: serializeDate(draft.createdAt),
+    updatedAt: serializeDate(draft.updatedAt),
+  };
+}
+
+export async function getAdminProductDraftsSafe(
+  actor: AuthenticatedUser,
+): Promise<{ drafts: AdminProductDraft[]; error: string | null }> {
+  try {
+    const drafts = await listProductDrafts(actor);
+
+    return { drafts: drafts.map(mapAdminProductDraft), error: null };
+  } catch {
+    return { drafts: [], error: "Draft products could not be loaded." };
+  }
+}
+
+export async function getAdminProductDraftSafe(
+  id: string,
+  actor: AuthenticatedUser,
+): Promise<{ draft: AdminProductDraft | null; error: string | null }> {
+  try {
+    const draft = await getProductDraft(id, actor);
+
+    return { draft: mapAdminProductDraft(draft), error: null };
+  } catch {
+    return {
+      draft: null,
+      error: "This draft could not be loaded. It may have been removed.",
+    };
+  }
 }
 
 export async function getAdminProductSafe(id: string): Promise<{

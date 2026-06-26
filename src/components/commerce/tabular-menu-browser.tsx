@@ -25,13 +25,16 @@ import { formatNairaFromKobo } from "@/lib/formatters";
 interface TabularMenuBrowserProps {
   checkoutHref: Route;
   content: TabularMenuContent;
+  initialCategoryId?: string;
 }
 
 export function TabularMenuBrowser({
   checkoutHref,
   content,
+  initialCategoryId = "all",
 }: TabularMenuBrowserProps) {
-  const [activeCategoryId, setActiveCategoryId] = useState<string>("all");
+  const [activeCategoryId, setActiveCategoryId] =
+    useState<string>(initialCategoryId);
   const [query, setQuery] = useState("");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
@@ -150,7 +153,7 @@ export function TabularMenuBrowser({
             ))}
           </div>
           <SearchBar
-            label="Search tabular menu"
+            label="Search menu"
             onChange={setQuery}
             placeholder="Cake, burger, pizza..."
             value={query}

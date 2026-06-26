@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { Save } from "lucide-react";
+import type { Route } from "next";
+import { FileText, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { AdminUploadField } from "@/components/admin/admin-upload-field";
@@ -13,14 +14,20 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   createAdminProduct,
+  createAdminProductDraft,
+  deleteAdminProductDraft,
   getApiErrorMessage,
   updateAdminProduct,
+  updateAdminProductDraft,
+  type ProductDraftInput,
 } from "@/lib/api/client";
 import { uploadProductImageFiles } from "@/lib/api/product-image-upload";
 import { koboToNairaInput, nairaInputToKobo } from "@/lib/formatters";
 import type {
   AdminCategory,
   AdminProduct,
+  AdminProductDraft,
+  ProductDraftData,
   ProductStatus,
   UserRole,
 } from "@/types/domain";
@@ -28,6 +35,7 @@ import type {
 interface ProductEditorFormProps {
   categories: AdminCategory[];
   product?: AdminProduct;
+  draft?: AdminProductDraft;
   role: UserRole;
 }
 
@@ -38,30 +46,173 @@ const productFormSchema = z.object({
   status: z.enum(["ACTIVE", "HIDDEN", "OUT_OF_STOCK"]),
 });
 
+type DraftSaveState = "idle" | "saving" | "saved" | "error";
+
 export function ProductEditorForm({
   categories,
   product,
+  draft,
   role,
 }: ProductEditorFormProps) {
   const router = useRouter();
-  const [name, setName] = useState(product?.name ?? "");
-  const [slug, setSlug] = useState(product?.slug ?? "");
-  const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
-  const [description, setDescription] = useState(product?.description ?? "");
-  const [basePrice, setBasePrice] = useState(koboToNairaInput(product?.basePrice));
-  const [status, setStatus] = useState<ProductStatus>(product?.status ?? "ACTIVE");
-  const [showWhenOutOfStock, setShowWhenOutOfStock] = useState(
-    product?.showWhenOutOfStock ?? true,
+  const draftData: ProductDraftData = draft?.data ?? {};
+  const [name, setName] = useState(product?.name ?? draftData.name ?? "");
+  const [slug, setSlug] = useState(product?.slug ?? draftData.slug ?? "");
+  const [categoryId, setCategoryId] = useState(
+    product?.categoryId ?? draftData.categoryId ?? "",
   );
-  const [isFeatured, setIsFeatured] = useState(product?.isFeatured ?? false);
-  const [isPopular, setIsPopular] = useState(product?.isPopular ?? false);
-  const [variantName, setVariantName] = useState("");
-  const [variantPrice, setVariantPrice] = useState("");
+  const [description, setDescription] = useState(
+    product?.description ?? draftData.description ?? "",
+  );
+  const [basePrice, setBasePrice] = useState(
+    product ? koboToNairaInput(product.basePrice) : draftData.basePrice ?? "",
+  );
+  const [status, setStatus] = useState<ProductStatus>(
+    product?.status ?? (draftData.status as ProductStatus) ?? "ACTIVE",
+  );
+  const [showWhenOutOfStock, setShowWhenOutOfStock] = useState(
+    product?.showWhenOutOfStock ?? draftData.showWhenOutOfStock ?? true,
+  );
+  const [isFeatured, setIsFeatured] = useState(
+    product?.isFeatured ?? draftData.isFeatured ?? false,
+  );
+  const [isPopular, setIsPopular] = useState(
+    product?.isPopular ?? draftData.isPopular ?? false,
+  );
+  const [variantName, setVariantName] = useState(draftData.variantName ?? "");
+  const [variantPrice, setVariantPrice] = useState(draftData.variantPrice ?? "");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [draftSaveState, setDraftSaveState] = useState<DraftSaveState>("idle");
   const isSuperAdmin = role === "SUPER_ADMIN";
   const isMediaManager = role === "MEDIA_MANAGER";
+  // Drafts only apply to the new-product flow (never when editing a product).
+  const supportsDrafts = !product && isSuperAdmin;
+
+  const draftIdRef = useRef<string | null>(draft?.id ?? null);
+  const isPersistingDraftRef = useRef(false);
+
+  function buildDraftData(): ProductDraftData {
+    return {
+      name,
+      slug,
+      categoryId,
+      description,
+      basePrice,
+      status,
+      showWhenOutOfStock,
+      isFeatured,
+      isPopular,
+      variantName,
+      variantPrice,
+    };
+  }
+
+  async function persistDraft(): Promise<boolean> {
+    if (!supportsDrafts || isPersistingDraftRef.current) {
+      return false;
+    }
+
+    isPersistingDraftRef.current = true;
+    setDraftSaveState("saving");
+
+    const payload: ProductDraftInput = {
+      name: name.trim(),
+      data: buildDraftData(),
+    };
+
+    try {
+      if (draftIdRef.current) {
+        await updateAdminProductDraft(draftIdRef.current, payload);
+      } else {
+        const created = await createAdminProductDraft(payload);
+        draftIdRef.current = created.id;
+      }
+
+      setDraftSaveState("saved");
+      return true;
+    } catch {
+      setDraftSaveState("error");
+      return false;
+    } finally {
+      isPersistingDraftRef.current = false;
+    }
+  }
+
+  // Keep a ref to the latest persistDraft so the debounced autosave always runs
+  // the current closure without re-subscribing on every keystroke.
+  const persistDraftRef = useRef(persistDraft);
+
+  useEffect(() => {
+    persistDraftRef.current = persistDraft;
+  });
+
+  useEffect(() => {
+    if (!supportsDrafts || isSaving) {
+      return;
+    }
+
+    const hasContent = [
+      name,
+      slug,
+      categoryId,
+      description,
+      basePrice,
+      variantName,
+      variantPrice,
+    ].some((value) => value.trim().length > 0);
+
+    if (!hasContent) {
+      return;
+    }
+
+    const handle = setTimeout(() => {
+      void persistDraftRef.current();
+    }, 1500);
+
+    return () => clearTimeout(handle);
+  }, [
+    supportsDrafts,
+    isSaving,
+    name,
+    slug,
+    categoryId,
+    description,
+    basePrice,
+    status,
+    showWhenOutOfStock,
+    isFeatured,
+    isPopular,
+    variantName,
+    variantPrice,
+  ]);
+
+  async function discardDraftAfterCreate() {
+    if (!draftIdRef.current) {
+      return;
+    }
+
+    try {
+      await deleteAdminProductDraft(draftIdRef.current);
+    } catch {
+      // A leftover draft is harmless; it can be deleted manually later.
+    }
+
+    draftIdRef.current = null;
+  }
+
+  async function saveDraftAndExit() {
+    setError(null);
+    const saved = await persistDraft();
+
+    if (saved) {
+      router.push("/admin/products?view=drafts" as Route);
+      router.refresh();
+    } else {
+      setError("The draft could not be saved. Check your connection and retry.");
+    }
+  }
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -128,6 +279,8 @@ export function ProductEditorForm({
               ]
             : undefined,
         });
+
+        await discardDraftAfterCreate();
       }
 
       router.replace("/admin/products");
@@ -270,14 +423,39 @@ export function ProductEditorForm({
         </aside>
       </div>
 
-      <div className="sticky bottom-4 z-[var(--layer-raised)] flex justify-end rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-floating)] p-3 shadow-[var(--shadow-floating)]">
-        <Button
-          icon={<Save className="h-4 w-4" aria-hidden="true" />}
-          loading={isSaving}
-          type="submit"
-        >
-          {product ? "Save and close" : "Create product"}
-        </Button>
+      <div className="sticky bottom-4 z-[var(--layer-raised)] flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-floating)] p-3 shadow-[var(--shadow-floating)] sm:flex-row sm:items-center sm:justify-between">
+        {supportsDrafts ? (
+          <p className="m-0 text-sm text-[var(--color-text-muted)]" role="status">
+            {draftSaveState === "saving"
+              ? "Saving draft…"
+              : draftSaveState === "saved"
+                ? "Draft saved. You can close and resume later."
+                : draftSaveState === "error"
+                  ? "Draft not saved. Check your connection."
+                  : "Progress autosaves as a draft."}
+          </p>
+        ) : (
+          <span />
+        )}
+        <div className="flex flex-wrap justify-end gap-2">
+          {supportsDrafts ? (
+            <Button
+              icon={<FileText className="h-4 w-4" aria-hidden="true" />}
+              onClick={saveDraftAndExit}
+              type="button"
+              variant="secondary"
+            >
+              Save as draft
+            </Button>
+          ) : null}
+          <Button
+            icon={<Save className="h-4 w-4" aria-hidden="true" />}
+            loading={isSaving}
+            type="submit"
+          >
+            {product ? "Save and close" : "Create product"}
+          </Button>
+        </div>
       </div>
     </form>
   );

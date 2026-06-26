@@ -133,6 +133,11 @@ export interface PublicCategoryNavigationItem {
   slug: string;
 }
 
+export interface PublicMenuCategoryNavItem {
+  id: string;
+  label: string;
+}
+
 export interface TabularMenuPrice {
   id: string;
   label: string | null;
@@ -301,6 +306,28 @@ export interface AdminProduct {
   category: AdminCategory;
   variants: AdminProductVariant[];
   images: AdminProductImage[];
+}
+
+export interface ProductDraftData {
+  name?: string;
+  slug?: string;
+  categoryId?: string;
+  description?: string;
+  basePrice?: string;
+  status?: string;
+  showWhenOutOfStock?: boolean;
+  isFeatured?: boolean;
+  isPopular?: boolean;
+  variantName?: string;
+  variantPrice?: string;
+}
+
+export interface AdminProductDraft {
+  id: string;
+  name: string;
+  data: ProductDraftData;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AdminHomepageHeroProduct {

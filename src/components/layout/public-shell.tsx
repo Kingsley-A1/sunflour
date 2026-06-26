@@ -6,11 +6,14 @@ import logoAsset from "../../../logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
 import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
+import { HeaderSearch } from "@/components/layout/header-search";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
-import type { PublicCategoryNavigationItem } from "@/types/domain";
+import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
+import { getPublicContactConfig } from "@/server/config/public-contact";
+import type { PublicMenuCategoryNavItem } from "@/types/domain";
 
 interface PublicShellProps {
-  categories: PublicCategoryNavigationItem[];
+  categories: PublicMenuCategoryNavItem[];
   children: React.ReactNode;
   isSignedIn: boolean;
 }
@@ -23,24 +26,23 @@ const navItems = [
   { href: "/reviews" as Route, label: "Reviews" },
 ];
 
-export function PublicShell({
+export async function PublicShell({
   categories,
   children,
   isSignedIn,
 }: PublicShellProps) {
+  const contact = await getPublicContactConfig();
   const categoryLinks =
-    categories.length > 0
-      ? categories
-      : [{ id: "menu", name: "Menu", slug: "" }];
+    categories.length > 0 ? categories : [{ id: "", label: "Menu" }];
 
   return (
     <CartProvider>
-      <div className="flex min-h-svh flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
-        <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+      <div className="flex min-h-svh flex-col bg-[var(--color-canvas)] text-[var(--color-text)]">
+        <header className="sticky top-0 z-[var(--layer-header)] border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
             <Link className="flex min-w-0 items-center gap-3" href="/">
               <Image
-                alt="Sunflour Bakery logo"
+                alt={`${contact.businessName} logo`}
                 className="h-11 w-11 rounded-[var(--radius-sm)] object-contain"
                 height={44}
                 priority
@@ -48,13 +50,13 @@ export function PublicShell({
                 width={44}
               />
               <span className="min-w-0 text-base font-extrabold leading-tight">
-                Sunflour Bakery
+                {contact.businessName}
               </span>
             </Link>
             <nav className="hidden items-center gap-1 md:flex" aria-label="Public navigation">
               {navItems.map((item) => (
                 <Link
-                  className="min-h-11 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text)]"
+                  className="min-h-11 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                   href={item.href}
                   key={item.href}
                 >
@@ -63,6 +65,7 @@ export function PublicShell({
               ))}
             </nav>
             <div className="flex items-center gap-2">
+              <HeaderSearch />
               {isSignedIn ? (
                 <Link
                   className="hidden min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold sm:inline-flex"
@@ -98,7 +101,7 @@ export function PublicShell({
               </Link>
               <Link
                 aria-label="Review cart"
-                className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-normal)] ease-[var(--ease-standard)] hover:bg-[var(--color-surface-soft)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:bg-[var(--color-surface-muted)]"
                 href="/cart"
               >
                 <ShoppingBag className="h-4 w-4" aria-hidden="true" />
@@ -108,26 +111,30 @@ export function PublicShell({
             </div>
           </div>
           <nav
-            aria-label="Product categories"
+            aria-label="Menu categories"
             className="flex gap-1 overflow-x-auto border-t border-[var(--color-border)] px-4 py-2 md:hidden"
           >
             {categoryLinks.map((category) => (
               <Link
                 className="min-h-11 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
                 href={
-                  category.slug
-                    ? (`/menu?category=${category.slug}` as Route)
-                    : ("/menu" as Route)
+                  (category.id
+                    ? `/menu?view=table&category=${encodeURIComponent(category.id)}`
+                    : "/menu") as Route
                 }
-                key={category.id}
+                key={category.id || "menu"}
               >
-                {category.name}
+                {category.label}
               </Link>
             ))}
           </nav>
         </header>
         <div className="flex-grow">{children}</div>
         <Footer />
+        <PublicWhatsAppFab
+          businessName={contact.businessName}
+          href={contact.whatsappHref}
+        />
         <StickyCartBar />
       </div>
     </CartProvider>

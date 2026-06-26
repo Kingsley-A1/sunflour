@@ -17,6 +17,21 @@ export {
   updateProductVariant,
 } from "./catalog-service";
 export { buildCatalogLineItemSnapshot } from "./product-snapshot";
+export {
+  countProductDrafts,
+  createProductDraft,
+  deleteProductDraft,
+  getProductDraft,
+  listProductDrafts,
+  updateProductDraft,
+  type ProductDraftRecord,
+} from "./product-draft-service";
+export {
+  productDraftIdParamSchema,
+  productDraftInputSchema,
+  type ProductDraftData,
+  type ProductDraftInput,
+} from "./product-draft-schemas";
 export { getProductVisibility, publicProductWhere } from "./public-catalog";
 export { seedInitialMenu, seedInitialMenuFromFile } from "./seed-menu";
 export {

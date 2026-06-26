@@ -9,6 +9,7 @@ import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import {
   buildPaymentSnapshot,
   getActivePaymentSnapshot,
+  recordCustomerProofSent,
   updateOrderPaymentStatus,
   updatePaymentSettings,
   validatePaymentStatusTransition,
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   paymentSettingFindUnique: vi.fn(),
   paymentSettingUpsert: vi.fn(),
   orderFindUnique: vi.fn(),
+  orderFindFirst: vi.fn(),
   orderUpdate: vi.fn(),
   orderStatusEventCreate: vi.fn(),
   paymentConfirmationEventCreate: vi.fn(),
@@ -34,6 +36,7 @@ vi.mock("@/server/db/prisma", () => ({
     },
     order: {
       findUnique: mocks.orderFindUnique,
+      findFirst: mocks.orderFindFirst,
     },
     $transaction: mocks.transaction,
   },
@@ -248,5 +251,101 @@ describe("payment service", () => {
       }),
       expect.anything(),
     );
+  });
+
+  describe("customer proof handoff", () => {
+    it("records proof sent without confirming payment, using token access", async () => {
+      mocks.orderFindFirst.mockResolvedValueOnce({
+        id: "order_1",
+        orderNumber: "SFB-20260101-ABC123",
+        status: OrderStatus.PENDING_PAYMENT,
+        paymentStatus: PaymentStatus.UNPAID,
+      });
+      mocks.orderUpdate.mockResolvedValueOnce({
+        orderNumber: "SFB-20260101-ABC123",
+        status: OrderStatus.PAYMENT_UNDER_REVIEW,
+        paymentStatus: PaymentStatus.PROOF_SENT_ON_WHATSAPP,
+      });
+
+      const result = await recordCustomerProofSent(
+        "SFB-20260101-ABC123",
+        "valid-token",
+      );
+
+      expect(result.paymentStatus).toBe(PaymentStatus.PROOF_SENT_ON_WHATSAPP);
+      expect(result.paymentStatus).not.toBe(PaymentStatus.CONFIRMED);
+      expect(result.status).toBe(OrderStatus.PAYMENT_UNDER_REVIEW);
+      expect(result.alreadyRecorded).toBe(false);
+      expect(mocks.orderFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            orderNumber: "SFB-20260101-ABC123",
+            invoice: { publicAccessToken: "valid-token" },
+          }),
+        }),
+      );
+      expect(mocks.paymentConfirmationEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            fromStatus: PaymentStatus.UNPAID,
+            toStatus: PaymentStatus.PROOF_SENT_ON_WHATSAPP,
+          }),
+        }),
+      );
+      expect(mockedWriteAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "ORDER_PROOF_SENT_BY_CUSTOMER",
+        }),
+        expect.anything(),
+      );
+    });
+
+    it("is idempotent and does not re-apply once proof is recorded", async () => {
+      mocks.orderFindFirst.mockResolvedValueOnce({
+        id: "order_1",
+        orderNumber: "SFB-20260101-ABC123",
+        status: OrderStatus.PAYMENT_UNDER_REVIEW,
+        paymentStatus: PaymentStatus.PROOF_SENT_ON_WHATSAPP,
+      });
+
+      const result = await recordCustomerProofSent(
+        "SFB-20260101-ABC123",
+        "valid-token",
+      );
+
+      expect(result.alreadyRecorded).toBe(true);
+      expect(result.paymentStatus).toBe(PaymentStatus.PROOF_SENT_ON_WHATSAPP);
+      expect(mocks.transaction).not.toHaveBeenCalled();
+    });
+
+    it("never overrides an already confirmed payment", async () => {
+      mocks.orderFindFirst.mockResolvedValueOnce({
+        id: "order_1",
+        orderNumber: "SFB-20260101-ABC123",
+        status: OrderStatus.PAYMENT_CONFIRMED,
+        paymentStatus: PaymentStatus.CONFIRMED,
+      });
+
+      const result = await recordCustomerProofSent(
+        "SFB-20260101-ABC123",
+        "valid-token",
+      );
+
+      expect(result.paymentStatus).toBe(PaymentStatus.CONFIRMED);
+      expect(result.alreadyRecorded).toBe(true);
+      expect(mocks.transaction).not.toHaveBeenCalled();
+    });
+
+    it("rejects an invalid or missing proof token", async () => {
+      mocks.orderFindFirst.mockResolvedValueOnce(null);
+
+      await expect(
+        recordCustomerProofSent("SFB-20260101-ABC123", "wrong-token"),
+      ).rejects.toMatchObject({
+        code: ERROR_CODES.NOT_FOUND,
+        status: 404,
+      });
+      expect(mocks.transaction).not.toHaveBeenCalled();
+    });
   });
 });

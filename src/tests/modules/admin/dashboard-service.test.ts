@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   userCount: vi.fn(),
   orderItemGroupBy: vi.fn(),
   productFindMany: vi.fn(),
+  productCount: vi.fn(),
+  productDraftCount: vi.fn(),
   reviewCount: vi.fn(),
   reviewFindMany: vi.fn(),
 }));
@@ -38,6 +40,10 @@ vi.mock("@/server/db/prisma", () => ({
     },
     product: {
       findMany: mocks.productFindMany,
+      count: mocks.productCount,
+    },
+    productDraft: {
+      count: mocks.productDraftCount,
     },
     review: {
       count: mocks.reviewCount,
@@ -84,6 +90,8 @@ describe("dashboard service", () => {
     ]);
     mocks.reviewCount.mockResolvedValueOnce(5);
     mocks.reviewFindMany.mockResolvedValueOnce([]);
+    mocks.productCount.mockResolvedValueOnce(18);
+    mocks.productDraftCount.mockResolvedValueOnce(3);
   });
 
   it("returns operational metrics without sensitive settings", async () => {
@@ -97,6 +105,8 @@ describe("dashboard service", () => {
 
     expect(metrics.counts.ordersInRange).toBe(4);
     expect(metrics.counts.pendingPaymentConfirmation).toBe(2);
+    expect(metrics.counts.totalProducts).toBe(18);
+    expect(metrics.counts.draftProducts).toBe(3);
     expect(metrics.rangeMetrics.ordersInRange).toBe(4);
     expect(metrics.currentBacklog.pendingPaymentConfirmation).toBe(2);
     expect(metrics.salesEstimate.semantics).toBe("range");

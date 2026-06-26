@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { Upload } from "lucide-react";
 import { SearchBar } from "@/components/commerce/search-bar";
 import {
   getApiErrorMessage,
   updateAdminTabularMenu,
 } from "@/lib/api/client";
+import { uploadSingleAdminImage } from "@/lib/api/product-image-upload";
 import { koboToNairaInput, nairaInputToKobo } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
@@ -415,8 +417,8 @@ export function TabularMenuManagerClient({
             lowercase letters, numbers, and hyphens only.
           </p>
           <p className="m-0">
-            Remote image URLs should stay reliable. Use product-quality photos
-            with clear alt text for accessibility.
+            Upload images for the best reliability. A pasted image URL is kept
+            as a fallback. Always set clear alt text for accessibility.
           </p>
         </div>
       </section>
@@ -613,15 +615,15 @@ export function TabularMenuManagerClient({
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input
-                  label={`Image URL for ${item.name}`}
-                  onChange={(event) =>
+                <TabularItemImageField
+                  itemName={item.name}
+                  imageUrl={item.imageUrl}
+                  onImageUrlChange={(nextUrl) =>
                     updateItem(item.id, (current) => ({
                       ...current,
-                      imageUrl: event.target.value,
+                      imageUrl: nextUrl,
                     }))
                   }
-                  value={item.imageUrl}
                 />
                 <Input
                   label={`Image alt text for ${item.name}`}
@@ -797,6 +799,89 @@ export function TabularMenuManagerClient({
           {totalPriceRows} price rows
         </p>
       </ConfirmDialog>
+    </div>
+  );
+}
+
+function TabularItemImageField({
+  itemName,
+  imageUrl,
+  onImageUrlChange,
+}: {
+  itemName: string;
+  imageUrl: string;
+  onImageUrlChange: (nextUrl: string) => void;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleFile(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      const { url } = await uploadSingleAdminImage(file);
+      onImageUrlChange(url);
+    } catch (error) {
+      setUploadError(
+        getApiErrorMessage(
+          error,
+          "Image upload failed. Check the file type, size, and media configuration, or paste an image URL instead.",
+        ),
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+      <Input
+        accept="image/jpeg,image/png,image/webp,image/avif"
+        disabled={isUploading}
+        helpText="Recommended: upload a JPEG, PNG, WebP, or AVIF image. It is stored securely and used on the public menu."
+        label={`Upload image for ${itemName}`}
+        onChange={(event) => handleFile(event.target.files?.[0])}
+        type="file"
+      />
+      {isUploading ? (
+        <p
+          className="m-0 inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-text-muted)]"
+          role="status"
+        >
+          <Upload className="h-4 w-4" aria-hidden="true" />
+          Uploading image…
+        </p>
+      ) : null}
+      {uploadError ? (
+        <p
+          className="m-0 text-sm font-semibold text-[var(--color-danger)]"
+          role="alert"
+        >
+          {uploadError}
+        </p>
+      ) : null}
+      {imageUrl ? (
+        <div className="overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)]">
+          {/* Admin preview of an arbitrary remote/uploaded image URL. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt={`Current image for ${itemName}`}
+            className="h-32 w-full object-cover"
+            src={imageUrl}
+          />
+        </div>
+      ) : null}
+      <Input
+        helpText="Fallback: paste a public image URL if you are not uploading a file."
+        label={`Image URL for ${itemName}`}
+        onChange={(event) => onImageUrlChange(event.target.value)}
+        value={imageUrl}
+      />
     </div>
   );
 }
