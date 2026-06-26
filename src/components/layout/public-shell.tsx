@@ -122,11 +122,7 @@ export async function PublicShell({
             {categoryLinks.map((category) => (
               <Link
                 className="min-h-11 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
-                href={
-                  category.slug
-                    ? (`/menu?category=${category.slug}` as Route)
-                    : ("/menu" as Route)
-                }
+                href={"/menu" as Route}
                 key={category.id}
               >
                 {category.name}

@@ -1,3 +1,5 @@
+import { ERROR_CODES } from "@/server/lib/errors/codes";
+
 export interface AppErrorOptions {
   code: string;
   publicMessage: string;
@@ -33,14 +35,56 @@ function hasPrismaCode(error: unknown, code: string): boolean {
   );
 }
 
+function getPrismaConstraintFields(error: unknown): string[] {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("meta" in error) ||
+    typeof (error as { meta?: unknown }).meta !== "object" ||
+    (error as { meta?: unknown }).meta === null
+  ) {
+    return [];
+  }
+
+  const target = ((error as { meta: { target?: unknown } }).meta).target;
+
+  if (Array.isArray(target)) {
+    return target.filter((field): field is string => typeof field === "string");
+  }
+
+  return typeof target === "string" ? [target] : [];
+}
+
+function uniqueConstraintError(error: unknown): AppError {
+  const fields = getPrismaConstraintFields(error);
+  const fieldErrors =
+    fields.length > 0
+      ? Object.fromEntries(
+          fields.map((field) => [field, ["This value is already in use."]]),
+        )
+      : undefined;
+
+  return new AppError({
+    code: ERROR_CODES.CONFLICT,
+    publicMessage: "A record already exists with this value.",
+    status: 409,
+    fieldErrors,
+    cause: error,
+  });
+}
+
 export function errorFromUnknown(error: unknown): AppError {
   if (error instanceof AppError) {
     return error;
   }
 
+  if (hasPrismaCode(error, "P2002")) {
+    return uniqueConstraintError(error);
+  }
+
   if (hasPrismaCode(error, "P2025")) {
     return new AppError({
-      code: "NOT_FOUND",
+      code: ERROR_CODES.NOT_FOUND,
       publicMessage: "The requested record was not found.",
       status: 404,
       cause: error,

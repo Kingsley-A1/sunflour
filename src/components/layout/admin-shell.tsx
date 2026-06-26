@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Route } from "next";
@@ -22,6 +23,7 @@ import {
   Truck,
   UsersRound,
 } from "lucide-react";
+import logoAsset from "../../../logo.png";
 import { IconButton } from "@/components/ui/icon-button";
 import { Sheet } from "@/components/ui/sheet";
 import type { UserRole } from "@/types/domain";
@@ -204,8 +206,14 @@ export function AdminShell({ role, userName, userEmail, children }: AdminShellPr
       <aside className="hidden min-h-svh border-r border-[var(--color-border)] bg-[var(--color-surface)] lg:block">
         <div className="sticky top-0 flex h-svh flex-col gap-4 p-4">
           <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between gap-2")}>
-            <Link className={cn("font-extrabold", collapsed ? "text-xl" : "text-lg")} href="/admin" title="Sunflour Admin">
-              {collapsed ? "S" : "Sunflour Admin"}
+            <Link href="/admin" title="Sunflour Admin">
+              <Image
+                alt="Sunflour Admin"
+                className="rounded-[var(--radius-sm)] object-contain"
+                height={collapsed ? 40 : 32}
+                src={logoAsset}
+                width={collapsed ? 40 : 32}
+              />
             </Link>
             {!collapsed ? (
               <IconButton
@@ -227,7 +235,9 @@ export function AdminShell({ role, userName, userEmail, children }: AdminShellPr
               {userName || userEmail || "Admin"} · {formatRole(role)}
             </p>
           )}
-          <AdminNavigation collapsed={collapsed} pathname={pathname} role={role} />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <AdminNavigation collapsed={collapsed} pathname={pathname} role={role} />
+          </div>
           <AdminIdentity
             collapsed={collapsed}
             role={role}

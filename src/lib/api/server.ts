@@ -228,27 +228,37 @@ export async function getAdminCatalogSafe(): Promise<{
   heroProducts: AdminHomepageHeroProduct[];
   error: string | null;
 }> {
-  try {
-    const [products, categories, heroProducts] = await Promise.all([
+  const [productsResult, categoriesResult, heroProductsResult] =
+    await Promise.allSettled([
       listAdminProducts(),
       listAdminCategories(),
       listAdminHomepageHeroProducts(),
     ]);
 
-    return {
-      products: products.map((product) => mapAdminProduct(product)),
-      categories: categories.map(mapAdminCategory),
-      heroProducts: heroProducts.map(mapAdminHomepageHeroProduct),
-      error: null,
-    };
-  } catch {
-    return {
-      products: [],
-      categories: [],
-      heroProducts: [],
-      error: "Admin catalog data could not be loaded.",
-    };
-  }
+  const products =
+    productsResult.status === "fulfilled"
+      ? productsResult.value.map(mapAdminProduct)
+      : [];
+  const categories =
+    categoriesResult.status === "fulfilled"
+      ? categoriesResult.value.map(mapAdminCategory)
+      : [];
+  const heroProducts =
+    heroProductsResult.status === "fulfilled"
+      ? heroProductsResult.value.map(mapAdminHomepageHeroProduct)
+      : [];
+
+  const hasError =
+    productsResult.status === "rejected" ||
+    categoriesResult.status === "rejected" ||
+    heroProductsResult.status === "rejected";
+
+  return {
+    products,
+    categories,
+    heroProducts,
+    error: hasError ? "Some catalog data could not be loaded." : null,
+  };
 }
 
 export async function getAdminProductSafe(id: string): Promise<{
@@ -256,22 +266,25 @@ export async function getAdminProductSafe(id: string): Promise<{
   categories: AdminCategory[];
   error: string | null;
 }> {
-  try {
-    const [product, categories] = await Promise.all([
-      getAdminProduct(id),
-      listAdminCategories(),
-    ]);
+  const [productResult, categoriesResult] = await Promise.allSettled([
+    getAdminProduct(id),
+    listAdminCategories(),
+  ]);
 
-    return {
-      product: mapAdminProduct(product),
-      categories: categories.map(mapAdminCategory),
-      error: null,
-    };
-  } catch {
-    return {
-      product: null,
-      categories: [],
-      error: "Product could not be loaded.",
-    };
-  }
+  return {
+    product:
+      productResult.status === "fulfilled"
+        ? mapAdminProduct(productResult.value)
+        : null,
+    categories:
+      categoriesResult.status === "fulfilled"
+        ? categoriesResult.value.map(mapAdminCategory)
+        : [],
+    error:
+      productResult.status === "rejected"
+        ? "Product could not be loaded."
+        : categoriesResult.status === "rejected"
+          ? "Category data could not be loaded."
+          : null,
+  };
 }
