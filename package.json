@@ -25,6 +25,7 @@
     "db:seed": "tsx scripts/require-database-url.ts && tsx prisma/seed.ts",
     "db:studio": "tsx scripts/require-database-url.ts && prisma studio",
     "db:health": "tsx scripts/check-db.ts",
+    "db:sanitize-reviews": "tsx scripts/require-database-url.ts && tsx scripts/sanitize-existing-reviews.ts",
     "auth:admin-codes": "tsx scripts/print-admin-registration-codes.ts"
   },
   "dependencies": {
