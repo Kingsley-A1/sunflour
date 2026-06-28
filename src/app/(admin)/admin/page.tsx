@@ -55,7 +55,7 @@ export default async function AdminDashboardPage() {
         <MetricCard
           description="Live catalog products across all statuses."
           href={"/admin/products" as Route}
-          label="All products"
+          label="Total products"
           value={metrics.counts.totalProducts}
         />
         <MetricCard
