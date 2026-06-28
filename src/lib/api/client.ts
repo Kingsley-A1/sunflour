@@ -631,6 +631,56 @@ export async function moderateAdminReview(input: {
   });
 }
 
+export interface AdminUserAccount {
+  id: string;
+  role: UserRole;
+  status: "ACTIVE" | "SUSPENDED";
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: UserRole;
+    lastLoginAt: string | null;
+    lockedUntil: string | null;
+  };
+}
+
+export interface CustomerUserAccount {
+  id: string;
+  name: string | null;
+  email: string | null;
+  lastLoginAt: string | null;
+  lockedUntil: string | null;
+  createdAt: string;
+}
+
+export interface UserAccountsResponse {
+  result: { id: string; action: string };
+  adminUsers: AdminUserAccount[];
+  customerUsers: CustomerUserAccount[];
+}
+
+export async function updateUserAccountStatus(input: {
+  userId: string;
+  action: "suspend" | "reactivate";
+  reason?: string;
+}): Promise<UserAccountsResponse> {
+  return apiRequest(`/api/v1/admin/users/${encodeURIComponent(input.userId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ action: input.action, reason: input.reason }),
+  });
+}
+
+export async function removeUserAccount(input: {
+  userId: string;
+  reason?: string;
+}): Promise<UserAccountsResponse> {
+  return apiRequest(`/api/v1/admin/users/${encodeURIComponent(input.userId)}`, {
+    method: "DELETE",
+    body: JSON.stringify({ reason: input.reason }),
+  });
+}
+
 export interface PresignMediaUploadResponse {
   mediaAsset: {
     id: string;

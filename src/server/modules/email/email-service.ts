@@ -395,6 +395,42 @@ export async function queueAppreciationAfterDeliveryEmail(
   });
 }
 
+export type AccountStatusAction = "SUSPENDED" | "REACTIVATED" | "REMOVED";
+
+export interface AccountStatusNoticeInput {
+  recipientEmail: string | null;
+  recipientName?: string | null;
+  action: AccountStatusAction;
+  businessName: string;
+  reason?: string | null;
+  supportEmail?: string | null;
+  supportPhone?: string | null;
+}
+
+export async function queueAccountStatusNoticeEmail(
+  input: AccountStatusNoticeInput,
+): Promise<EmailOutboxRecord | null> {
+  if (!input.recipientEmail) {
+    return null;
+  }
+
+  // No orderId: account notices are not order-scoped, and a null orderId keeps
+  // the outbox unique constraint from collapsing repeated notices to one row.
+  return queueEmail({
+    templateKey: EmailTemplateKey.ACCOUNT_STATUS_NOTICE,
+    recipientEmail: input.recipientEmail,
+    recipientName: input.recipientName ?? undefined,
+    payload: {
+      action: input.action,
+      recipientName: input.recipientName ?? undefined,
+      businessName: input.businessName,
+      reason: input.reason ?? undefined,
+      supportEmail: input.supportEmail ?? undefined,
+      supportPhone: input.supportPhone ?? undefined,
+    },
+  });
+}
+
 export async function sendQueuedEmail(id: string): Promise<EmailSendResult> {
   const now = new Date();
   const outbox = await prisma.emailOutbox.findUnique({

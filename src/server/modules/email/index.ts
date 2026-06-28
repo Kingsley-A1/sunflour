@@ -5,6 +5,7 @@ import {
 import {
   listEmailOutboxForAdmin,
   processEmailOutbox,
+  queueAccountStatusNoticeEmail,
   queueAdminNewOrderAlertEmailsForOrder,
   queueAppreciationAfterDeliveryEmail,
   queueEmail,
@@ -42,6 +43,7 @@ export {
 export {
   listEmailOutboxForAdmin,
   processEmailOutbox,
+  queueAccountStatusNoticeEmail,
   queueAdminNewOrderAlertEmailsForOrder,
   queueAppreciationAfterDeliveryEmail,
   queueEmail,
@@ -52,6 +54,8 @@ export {
   retryFailedEmail,
   sendQueuedEmail,
   upsertEmailTemplateForAdmin,
+  type AccountStatusAction,
+  type AccountStatusNoticeInput,
   type EmailOutboxRecord,
   type EmailOrderForQueue,
   type EmailSendResult,
@@ -75,6 +79,7 @@ export {
 export const EmailService = {
   listEmailOutboxForAdmin,
   processEmailOutbox,
+  queueAccountStatusNoticeEmail,
   queueAdminNewOrderAlertEmailsForOrder,
   queueAppreciationAfterDeliveryEmail,
   queueEmail,

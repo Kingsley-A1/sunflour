@@ -115,6 +115,15 @@ const passwordResetPayloadSchema = z.object({
   customerName: z.string().min(1).optional(),
 });
 
+const accountStatusNoticePayloadSchema = z.object({
+  action: z.enum(["SUSPENDED", "REACTIVATED", "REMOVED"]),
+  recipientName: z.string().min(1).optional(),
+  businessName: z.string().min(1),
+  reason: z.string().min(1).optional(),
+  supportEmail: z.string().min(1).optional(),
+  supportPhone: z.string().min(1).optional(),
+});
+
 function parsePayload<T extends z.ZodType>(
   schema: T,
   payload: Record<string, unknown>,
@@ -251,6 +260,72 @@ const registry = {
         html: renderLayout(
           title,
           paragraph(`Hello ${escapeHtml(data.customerName)}, thank you for choosing Sunflour Bakery. We appreciate your order ${escapeHtml(data.orderNumber)}.`),
+        ),
+      };
+    },
+  },
+  [EmailTemplateKey.ACCOUNT_STATUS_NOTICE]: {
+    key: EmailTemplateKey.ACCOUNT_STATUS_NOTICE,
+    name: "Account status notice",
+    bodySchemaOrComponentKey: "account-status-notice-v1",
+    render(payload) {
+      const data = parsePayload(accountStatusNoticePayloadSchema, payload);
+      const name = escapeHtml(data.recipientName ?? "there");
+      const business = escapeHtml(data.businessName);
+      const copy: Record<
+        typeof data.action,
+        { title: string; subject: string; lead: string }
+      > = {
+        SUSPENDED: {
+          title: "Your account has been suspended",
+          subject: `Your ${data.businessName} account has been suspended`,
+          lead: "your account has been <strong>suspended</strong> and you can no longer sign in.",
+        },
+        REACTIVATED: {
+          title: "Your account has been reactivated",
+          subject: `Your ${data.businessName} account has been reactivated`,
+          lead: "your account has been <strong>reactivated</strong>. You can sign in again.",
+        },
+        REMOVED: {
+          title: "Your account has been removed",
+          subject: `Your ${data.businessName} account has been removed`,
+          lead: `your account has been <strong>removed</strong> from ${business}.`,
+        },
+      };
+      const current = copy[data.action];
+      const contactBits: string[] = [];
+
+      if (data.supportEmail) {
+        contactBits.push(
+          `email <a href="mailto:${escapeHtml(data.supportEmail)}">${escapeHtml(data.supportEmail)}</a>`,
+        );
+      }
+      if (data.supportPhone) {
+        contactBits.push(
+          `call <a href="tel:${escapeHtml(data.supportPhone)}">${escapeHtml(data.supportPhone)}</a>`,
+        );
+      }
+
+      const recovery =
+        contactBits.length > 0
+          ? paragraph(
+              `If you believe this was a mistake or want to recover your account, please ${contactBits.join(" or ")}.`,
+            )
+          : paragraph(
+              `If you believe this was a mistake, please contact ${business} to recover your account.`,
+            );
+
+      return {
+        subject: current.subject,
+        html: renderLayout(
+          current.title,
+          [
+            paragraph(`Hello ${name}, ${current.lead}`),
+            data.reason
+              ? paragraph(`<strong>Reason:</strong> ${escapeHtml(data.reason)}`)
+              : "",
+            recovery,
+          ].join(""),
         ),
       };
     },
