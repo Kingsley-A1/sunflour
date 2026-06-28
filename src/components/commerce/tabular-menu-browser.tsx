@@ -37,6 +37,11 @@ export function TabularMenuBrowser({
     [content.categories],
   );
 
+  const itemNames = useMemo(
+    () => content.items.map((item) => item.name),
+    [content.items],
+  );
+
   const visibleItems = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const categoryFilteredItems =
@@ -97,6 +102,7 @@ export function TabularMenuBrowser({
             label="Search menu"
             onChange={setQuery}
             placeholder="Cake, burger, pizza..."
+            suggestions={itemNames}
             value={query}
           />
         </div>
