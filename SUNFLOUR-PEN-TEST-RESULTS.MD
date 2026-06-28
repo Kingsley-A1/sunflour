@@ -3,7 +3,7 @@ NOTE: THIS IS OUTDATED. A NEWER VERSION OF THIS REPORT WILL COME WITHIN A WEEK. 
 # SUNFLOUR-PEN-TEST-RESULTS.MD
 # Sunflour Bakery — Penetration Test & UI/UX Report
 
-**Target:** https://sunflour-five.vercel.app
+**Target:**               
 **Test Date:** 2026-06-09
 **Tester:** Automated Security Assessment (Claude, Anthropic)
 **Scope:** Full web application — authentication, authorization, input validation, client-side security, mobile responsiveness, UI/UX

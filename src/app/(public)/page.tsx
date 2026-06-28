@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, ShoppingBag } from "lucide-react";
+import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
 import { ProductGrid } from "@/components/commerce/product-grid";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { ErrorState } from "@/components/ui/error-state";
 import { FeatureCarousel } from "@/components/ui/feature-carousel";
@@ -10,13 +11,23 @@ import {
   getHomepageHeroProductsSafe,
   getPublicMenuSafe,
 } from "@/lib/api/server";
+import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
+import { buildBakeryJsonLd } from "@/lib/seo/structured-data";
 import type { PublicHeroProduct } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 export default async function HomePage() {
-  const [{ menu, error }, { products: heroProducts, error: heroError }] =
-    await Promise.all([getPublicMenuSafe(), getHomepageHeroProductsSafe()]);
+  const [{ menu, error }, { products: heroProducts, error: heroError }, contact] =
+    await Promise.all([
+      getPublicMenuSafe(),
+      getHomepageHeroProductsSafe(),
+      getResolvedPublicContactConfig(),
+    ]);
   const popularProducts =
     menu?.categories
       .flatMap((category) => category.products)
@@ -25,15 +36,22 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="bg-[var(--color-canvas-muted)]">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:py-10">
+      <JsonLd data={buildBakeryJsonLd(contact)} />
+      <section className="sf-hero-surface border-b border-[var(--color-border)]">
+        <div className="mx-auto grid max-w-6xl gap-7 px-4 py-12 lg:py-16">
           <div className="max-w-3xl">
-            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
+            <span className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[var(--color-primary)] shadow-[var(--shadow-raised)] backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Fresh from Sunflour Bakery
-            </p>
-            <h1 className="m-0 mt-2 text-4xl font-extrabold leading-tight sm:text-5xl">
-              Warm bakes, ready for pickup or delivery.
+            </span>
+            <h1 className="m-0 mt-4 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+              Warm bakes, ready for{" "}
+              <span className="sf-text-gradient">pickup or delivery.</span>
             </h1>
+            <p className="m-0 mt-4 max-w-xl text-base leading-7 text-[var(--color-text-muted)] sm:text-lg">
+              Celebration cakes, fresh bread, and everyday pastries — order
+              online in Calabar and choose pickup or doorstep delivery.
+            </p>
           </div>
 
           {heroError ? (

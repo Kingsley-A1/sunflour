@@ -86,6 +86,36 @@ export interface EmailOrderForQueue {
   } | null;
 }
 
+export interface OrderStatusEmailInput {
+  orderNumber: string;
+  customerNameSnapshot: string;
+  customerEmailSnapshot: string | null;
+}
+
+// Statuses worth emailing the customer about. Internal/intermediate states
+// (PENDING_PAYMENT, PAYMENT_UNDER_REVIEW) are intentionally excluded.
+const customerNotifiableOrderStatuses = new Set<OrderStatusValue>([
+  OrderStatus.PAYMENT_CONFIRMED,
+  OrderStatus.PREPARING,
+  OrderStatus.READY_FOR_PICKUP,
+  OrderStatus.OUT_FOR_DELIVERY,
+  OrderStatus.DELIVERED,
+  OrderStatus.CANCELLED,
+  OrderStatus.REJECTED,
+]);
+
+const orderStatusEmailLabels: Record<OrderStatusValue, string> = {
+  PENDING_PAYMENT: "Pending payment",
+  PAYMENT_UNDER_REVIEW: "Payment under review",
+  PAYMENT_CONFIRMED: "Payment confirmed",
+  PREPARING: "Preparing",
+  READY_FOR_PICKUP: "Ready for pickup",
+  OUT_FOR_DELIVERY: "Out for delivery",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  REJECTED: "Rejected",
+};
+
 function notFound(message: string): AppError {
   return new AppError({
     code: ERROR_CODES.NOT_FOUND,
@@ -301,6 +331,33 @@ export async function queueAdminNewOrderAlertEmailsForOrder(
       }),
     ),
   );
+}
+
+export async function queueOrderStatusUpdateEmailForOrder(
+  order: OrderStatusEmailInput,
+  status: OrderStatusValue,
+): Promise<EmailOutboxRecord | null> {
+  if (
+    !order.customerEmailSnapshot ||
+    !customerNotifiableOrderStatuses.has(status)
+  ) {
+    return null;
+  }
+
+  // Status updates are intentionally queued without orderId: the outbox unique
+  // constraint [orderId, templateKey, recipientEmail] would otherwise collapse
+  // every transition into a single email per order. The order is still
+  // traceable through the orderNumber in the subject and payload.
+  return queueEmail({
+    templateKey: EmailTemplateKey.ORDER_STATUS_UPDATE,
+    recipientEmail: order.customerEmailSnapshot,
+    recipientName: order.customerNameSnapshot,
+    payload: {
+      orderNumber: order.orderNumber,
+      customerName: order.customerNameSnapshot,
+      status: orderStatusEmailLabels[status],
+    },
+  });
 }
 
 export async function queueAppreciationAfterDeliveryEmail(

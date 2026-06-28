@@ -3,13 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
-import {
-  ArrowRight,
-  Info,
-  ListOrdered,
-  Tags,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { SearchBar } from "@/components/commerce/search-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PriceText } from "@/components/ui/price-text";
@@ -82,59 +76,6 @@ export function TabularMenuBrowser({
 
   return (
     <section className="grid gap-6" aria-label="Tabular menu browser">
-      <div className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start">
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
-              Tabular menu
-            </p>
-            <h2 className="m-0 text-2xl font-extrabold sm:text-3xl">
-              Quick-reference names and prices
-            </h2>
-            <p className="m-0 max-w-3xl text-sm leading-6 text-[var(--color-text-muted)] sm:text-base">
-              Use this view to scan the broader Sunflour menu quickly. For live
-              cart actions and trusted order flow, use the Products tab before
-              checkout.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <SummaryStat
-              icon={<Tags className="h-4 w-4" aria-hidden="true" />}
-              label="Categories"
-              value={String(content.categories.length)}
-            />
-            <SummaryStat
-              icon={<ListOrdered className="h-4 w-4" aria-hidden="true" />}
-              label="Menu items"
-              value={String(content.items.length)}
-            />
-            <SummaryStat
-              icon={<Info className="h-4 w-4" aria-hidden="true" />}
-              label="Visible now"
-              value={String(visibleItems.length)}
-            />
-          </div>
-        </div>
-
-        <aside className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4">
-          <p className="m-0 text-sm font-bold text-[var(--color-text)]">
-            Ordering note
-          </p>
-          <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
-            The tabular menu is a reference surface. Checkout uses live catalog
-            items, backend-verified totals, and current delivery rules.
-          </p>
-          <Link
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:bg-[var(--color-primary-hover)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
-            href={checkoutHref}
-          >
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            <span>Go to checkout</span>
-          </Link>
-        </aside>
-      </div>
-
       <div className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-raised)]">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
           <div className="flex gap-2 overflow-x-auto pb-1">
@@ -186,7 +127,7 @@ export function TabularMenuBrowser({
                     Product
                   </th>
                   <th className="px-4 py-3 font-bold" scope="col">
-                    Category
+                    Image
                   </th>
                   <th className="px-4 py-3 font-bold text-right" scope="col">
                     Price
@@ -213,8 +154,30 @@ export function TabularMenuBrowser({
                         </span>
                       </button>
                     </th>
-                    <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">
-                      {categoryMap.get(item.categoryId)?.label ?? "Unassigned"}
+                    <td className="px-4 py-3">
+                      <button
+                        aria-label={`View ${item.name}`}
+                        className="block h-12 w-12 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-canvas-muted)] transition hover:opacity-90 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
+                        onClick={() => setSelectedItemId(item.id)}
+                        type="button"
+                      >
+                        <span className="relative block h-12 w-12">
+                          <SafeImage
+                            alt={item.imageAlt}
+                            className="object-cover"
+                            fallback={
+                              <span className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-[var(--color-text-muted)]">
+                                {item.name.slice(0, 2).toUpperCase()}
+                              </span>
+                            }
+                            fill
+                            loading="lazy"
+                            sizes="48px"
+                            src={item.imageUrl}
+                            unoptimized
+                          />
+                        </span>
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-bold text-[var(--color-primary)]">
                       {formatPriceSummary(item)}
@@ -273,28 +236,6 @@ export function TabularMenuBrowser({
         ) : null}
       </Sheet>
     </section>
-  );
-}
-
-function SummaryStat({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <article className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4">
-      <div className="flex items-center gap-2 text-[var(--color-primary)]">
-        {icon}
-        <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
-          {label}
-        </p>
-      </div>
-      <p className="m-0 mt-3 text-2xl font-extrabold">{value}</p>
-    </article>
   );
 }
 

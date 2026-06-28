@@ -44,8 +44,8 @@ const orderingSteps = [
 export default function AboutPage() {
   return (
     <main>
-      <section className="bg-[var(--color-canvas-muted)]">
-        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+      <section className="sf-hero-surface border-b border-[var(--color-border)]">
+        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-end lg:py-12">
           <div className="max-w-3xl">
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
               About Sunflour

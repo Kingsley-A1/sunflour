@@ -9,6 +9,7 @@ import { prisma } from "@/server/db/prisma";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
+import { queueOrderStatusUpdateEmailForOrder } from "@/server/modules/email";
 import type {
   AdminOrderListQueryInput,
   OrderAdminNoteUpdateInput,
@@ -372,6 +373,8 @@ export async function updateAdminOrderStatus(
       orderNumber: true,
       status: true,
       deliveryMethod: true,
+      customerNameSnapshot: true,
+      customerEmailSnapshot: true,
     },
   });
 
@@ -386,7 +389,7 @@ export async function updateAdminOrderStatus(
     order.deliveryMethod,
   );
 
-  return prisma.$transaction(async (transaction) => {
+  const result = await prisma.$transaction(async (transaction) => {
     const updatedOrder = await transaction.order.update({
       where: { id: order.id },
       data: {
@@ -443,6 +446,22 @@ export async function updateAdminOrderStatus(
       event,
     };
   });
+
+  // Best-effort customer notification. Email must never break the status update.
+  try {
+    await queueOrderStatusUpdateEmailForOrder(
+      {
+        orderNumber: order.orderNumber,
+        customerNameSnapshot: order.customerNameSnapshot,
+        customerEmailSnapshot: order.customerEmailSnapshot,
+      },
+      input.status,
+    );
+  } catch {
+    // Outbox issues must not block the order lifecycle.
+  }
+
+  return result;
 }
 
 export async function updateAdminOrderNote(

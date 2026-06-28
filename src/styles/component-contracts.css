@@ -10,7 +10,10 @@ body {
   min-height: 100svh;
   margin: 0;
   background-color: var(--color-canvas);
-  background-image: linear-gradient(180deg, var(--color-canvas-emphasis) 0%, var(--color-canvas) 18rem, var(--color-canvas-muted) 100%);
+  background-image:
+    radial-gradient(58rem 26rem at 50% -8rem, var(--color-canvas-emphasis) 0%, transparent 72%),
+    linear-gradient(180deg, var(--color-canvas) 0%, var(--color-canvas) 24rem, var(--color-canvas-muted) 100%);
+  background-attachment: fixed;
   color: var(--color-text);
   font-family: var(--font-sans);
   font-size: var(--type-body-size);
@@ -58,6 +61,59 @@ button, input, select, textarea { color: inherit; font: inherit; }
 .sf-label { color: var(--color-text); font-size: var(--type-label-size); font-weight: var(--weight-semibold); line-height: var(--type-label-line-height); }
 .sf-caption { color: var(--color-text-soft); font-size: var(--type-caption-size); font-weight: var(--weight-medium); line-height: var(--type-caption-line-height); }
 .sf-price { color: var(--color-text); font-size: var(--type-price-size); font-variant-numeric: tabular-nums; font-weight: var(--weight-extrabold); line-height: var(--type-price-line-height); }
+
+/* Expressive surfaces. The mesh gradient gives heroes warmth and depth without
+   touching the solid card surfaces layered on top, so text contrast is kept. */
+.sf-surface-gradient { background-image: var(--gradient-hero); }
+
+.sf-hero-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image: var(--gradient-hero);
+}
+
+.sf-hero-surface::before,
+.sf-hero-surface::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: var(--radius-pill);
+  opacity: var(--hero-glow-opacity);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.sf-hero-surface::before {
+  inline-size: 24rem;
+  block-size: 24rem;
+  inset-block-start: -10rem;
+  inset-inline-end: -7rem;
+  background-image: var(--gradient-glow-primary);
+  animation: sf-aesthetic-float 9s var(--motion-ease-standard) infinite;
+}
+
+.sf-hero-surface::after {
+  inline-size: 20rem;
+  block-size: 20rem;
+  inset-block-end: -9rem;
+  inset-inline-start: -6rem;
+  background-image: var(--gradient-glow-accent);
+  animation: sf-aesthetic-float 12s var(--motion-ease-standard) infinite reverse;
+}
+
+/* Accent text. Falls back to a solid brand colour where background-clip:text
+   is unsupported so the text never becomes invisible. */
+.sf-text-gradient { color: var(--color-primary); }
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .sf-text-gradient {
+    background-image: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
 
 @media (forced-colors: active) {
   :focus-visible { outline-color: Highlight; }

@@ -1,5 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/api/server", () => ({
+  getPublicMenuSafe: vi.fn().mockResolvedValue({
+    menu: {
+      categories: [
+        {
+          id: "c1",
+          name: "Cakes",
+          slug: "cakes",
+          description: null,
+          products: [{ slug: "chocolate-cake" }],
+        },
+      ],
+    },
+    error: null,
+  }),
+}));
+
 describe("metadata routes", () => {
   it("keeps admin and transactional routes out of robots indexing", async () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://sunflour.test");
@@ -16,17 +33,18 @@ describe("metadata routes", () => {
     vi.unstubAllEnvs();
   });
 
-  it("publishes core public pages in the sitemap", async () => {
+  it("publishes core public pages and product pages in the sitemap", async () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://sunflour.test/");
     const { default: sitemap } = await import("@/app/sitemap");
 
-    const urls = sitemap().map((entry) => entry.url);
+    const urls = (await sitemap()).map((entry) => entry.url);
 
     expect(urls).toEqual(
       expect.arrayContaining([
         "https://sunflour.test/",
         "https://sunflour.test/menu",
         "https://sunflour.test/reviews",
+        "https://sunflour.test/products/chocolate-cake",
       ]),
     );
 

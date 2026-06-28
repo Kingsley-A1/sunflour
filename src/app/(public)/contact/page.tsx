@@ -14,8 +14,8 @@ export default async function ContactPage() {
 
   return (
     <main>
-      <section className="bg-[var(--color-canvas-muted)]">
-        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-8 lg:grid-cols-[1fr_0.8fr] lg:items-end">
+      <section className="sf-hero-surface border-b border-[var(--color-border)]">
+        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-10 lg:grid-cols-[1fr_0.8fr] lg:items-end lg:py-12">
           <div>
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Contact</p>
             <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">

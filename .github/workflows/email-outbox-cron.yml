@@ -1,0 +1,38 @@
+name: Process email outbox
+
+# External scheduler for the transactional email outbox. The app only sends
+# queued emails when this endpoint is called. Configure two repository secrets:
+#   EMAIL_CRON_URL    e.g. https://sunflourbakery.ng/api/v1/webhooks/cron/email-outbox
+#                     (use the vercel.app URL until the custom domain is live)
+#   EMAIL_CRON_SECRET must equal the EMAIL_CRON_SECRET env var set in Vercel
+#
+# GitHub's scheduled runs fire about every 5 minutes at best and can be delayed
+# under load. For tighter timing, point cron-job.org at the same URL/header.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+# Avoid overlapping runs if one is slow.
+concurrency:
+  group: email-outbox-cron
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger email outbox processing
+        env:
+          EMAIL_CRON_URL: ${{ secrets.EMAIL_CRON_URL }}
+          EMAIL_CRON_SECRET: ${{ secrets.EMAIL_CRON_SECRET }}
+        run: |
+          if [ -z "$EMAIL_CRON_URL" ] || [ -z "$EMAIL_CRON_SECRET" ]; then
+            echo "Missing EMAIL_CRON_URL or EMAIL_CRON_SECRET repository secret." >&2
+            exit 1
+          fi
+          curl -fsS -X POST "$EMAIL_CRON_URL" \
+            -H "x-cron-secret: $EMAIL_CRON_SECRET" \
+            -H "content-type: application/json" \
+            -d '{}'

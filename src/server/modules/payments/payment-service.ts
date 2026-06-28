@@ -10,6 +10,7 @@ import { prisma } from "@/server/db/prisma";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
+import { queueOrderStatusUpdateEmailForOrder } from "@/server/modules/email";
 import { assertOrderCanReceivePaymentStatusUpdate } from "@/server/modules/orders";
 import {
   buildPaymentInstructionSnapshot,
@@ -419,6 +420,8 @@ export async function updateOrderPaymentStatus(
       orderNumber: true,
       status: true,
       paymentStatus: true,
+      customerNameSnapshot: true,
+      customerEmailSnapshot: true,
     },
   });
 
@@ -436,7 +439,7 @@ export async function updateOrderPaymentStatus(
 
   const nextOrderStatus = orderStatusForPaymentStatus(input.paymentStatus);
 
-  return prisma.$transaction(async (transaction) => {
+  const result = await prisma.$transaction(async (transaction) => {
     const updatedOrder = await transaction.order.update({
       where: { id: order.id },
       data: {
@@ -502,4 +505,22 @@ export async function updateOrderPaymentStatus(
       event,
     };
   });
+
+  // Best-effort customer notification (e.g. payment confirmed / rejected). The
+  // notifiable-status filter inside the queue helper ignores intermediate
+  // states such as PAYMENT_UNDER_REVIEW. Email must never block payment review.
+  try {
+    await queueOrderStatusUpdateEmailForOrder(
+      {
+        orderNumber: order.orderNumber,
+        customerNameSnapshot: order.customerNameSnapshot,
+        customerEmailSnapshot: order.customerEmailSnapshot,
+      },
+      nextOrderStatus,
+    );
+  } catch {
+    // Outbox issues must not block payment status updates.
+  }
+
+  return result;
 }

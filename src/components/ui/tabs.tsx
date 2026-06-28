@@ -73,7 +73,7 @@ export function Tabs({
     <div className={cn("grid gap-3", className)}>
       <div
         aria-label={label}
-        className="inline-flex w-full max-w-full gap-2 overflow-x-auto rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1"
+        className="inline-flex w-fit max-w-full gap-2 overflow-x-auto rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1"
         id={tabListId}
         role="tablist"
       >

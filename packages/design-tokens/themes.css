@@ -44,6 +44,22 @@
   --shadow-floating: 0 18px 42px rgb(36 21 13 / 0.12), 0 6px 16px rgb(36 21 13 / 0.08);
   --shadow-modal: 0 24px 72px rgb(24 16 12 / 0.22);
 
+  /* Expressive brand gradients. Built from primitives so light and dark stay
+     tuned. Used for hero surfaces, accent text, and decorative glows. */
+  --gradient-brand: linear-gradient(
+    120deg,
+    var(--primitive-brand-red) 0%,
+    color-mix(in srgb, var(--primitive-brand-red) 48%, var(--primitive-brand-yellow)) 100%
+  );
+  --gradient-hero:
+    radial-gradient(115% 120% at 8% 0%, color-mix(in srgb, var(--primitive-brand-yellow-soft) 90%, transparent) 0%, transparent 52%),
+    radial-gradient(120% 130% at 100% 2%, color-mix(in srgb, var(--primitive-brand-red) 18%, transparent) 0%, transparent 50%),
+    radial-gradient(150% 150% at 94% 100%, color-mix(in srgb, var(--primitive-brand-yellow) 26%, transparent) 0%, transparent 55%),
+    linear-gradient(180deg, var(--color-canvas) 0%, var(--color-canvas-muted) 100%);
+  --gradient-glow-primary: radial-gradient(circle at center, color-mix(in srgb, var(--primitive-brand-red) 55%, transparent) 0%, transparent 68%);
+  --gradient-glow-accent: radial-gradient(circle at center, color-mix(in srgb, var(--primitive-brand-yellow) 72%, transparent) 0%, transparent 68%);
+  --hero-glow-opacity: 0.5;
+
   /* Deprecated compatibility aliases. New component work uses semantic names. */
   --color-brand-red: var(--color-primary);
   --color-brand-red-strong: var(--primitive-brand-red-strong);
@@ -84,6 +100,13 @@
     --shadow-modal: 0 28px 88px rgb(0 0 0 / 0.62);
     --color-overlay: rgb(7 5 3 / 0.62);
     --color-overlay-strong: rgb(7 5 3 / 0.78);
+    /* Re-tuned for a dark canvas: deeper washes, quieter decorative glow. */
+    --gradient-hero:
+      radial-gradient(115% 120% at 8% 0%, color-mix(in srgb, var(--primitive-brand-yellow-soft) 70%, transparent) 0%, transparent 52%),
+      radial-gradient(120% 130% at 100% 2%, color-mix(in srgb, var(--primitive-brand-red) 26%, transparent) 0%, transparent 50%),
+      radial-gradient(150% 150% at 94% 100%, color-mix(in srgb, var(--primitive-brand-yellow) 14%, transparent) 0%, transparent 55%),
+      linear-gradient(180deg, var(--color-canvas) 0%, var(--color-canvas-muted) 100%);
+    --hero-glow-opacity: 0.34;
   }
 }
 

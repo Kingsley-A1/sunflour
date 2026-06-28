@@ -10,6 +10,7 @@ import {
   queueEmail,
   queueManualEmail,
   queueOrderConfirmationEmailForOrder,
+  queueOrderStatusUpdateEmailForOrder,
   queuePurchaseInvoiceEmailForOrder,
   retryFailedEmail,
   sendQueuedEmail,
@@ -46,6 +47,7 @@ export {
   queueEmail,
   queueManualEmail,
   queueOrderConfirmationEmailForOrder,
+  queueOrderStatusUpdateEmailForOrder,
   queuePurchaseInvoiceEmailForOrder,
   retryFailedEmail,
   sendQueuedEmail,
@@ -53,6 +55,7 @@ export {
   type EmailOutboxRecord,
   type EmailOrderForQueue,
   type EmailSendResult,
+  type OrderStatusEmailInput,
   type QueueEmailInput,
 } from "./email-service";
 export {
@@ -77,6 +80,7 @@ export const EmailService = {
   queueEmail,
   queueManualEmail,
   queueOrderConfirmationEmailForOrder,
+  queueOrderStatusUpdateEmailForOrder,
   queuePurchaseInvoiceEmailForOrder,
   retryFailedEmail,
   sendQueuedEmail,

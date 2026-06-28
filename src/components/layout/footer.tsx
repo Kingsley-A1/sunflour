@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import logoAsset from "../../../logo.png";
+import bespokeLogoAsset from "../../../public/bespoketechnology-logo-main.png";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 
 interface FooterLink {
@@ -126,6 +127,23 @@ export async function Footer() {
               </Link>
             ))}
           </nav>
+        </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-1.5 px-4 pb-5 text-center text-xs text-[var(--color-text-muted)]">
+          <span>Designed and Developed by</span>
+          <a
+            className="inline-flex items-center gap-1.5 font-bold text-[var(--color-text)] hover:text-[var(--color-primary)] hover:underline"
+            href="https://bespoketech.com.ng"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="h-8 w-8 object-contain"
+              src={bespokeLogoAsset}
+            />
+            Bespoke Technologies
+          </a>
         </div>
       </div>
     </footer>
