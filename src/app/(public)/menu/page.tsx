@@ -1,11 +1,10 @@
-import Link from "next/link";
-import type { Route } from "next";
 import { MenuBrowser } from "@/components/commerce/menu-browser";
 import {
   MenuViewTabs,
   type MenuView,
 } from "@/components/commerce/menu-view-tabs";
 import { TabularMenuBrowser } from "@/components/commerce/tabular-menu-browser";
+import { PageHero } from "@/components/layout/page-hero";
 import { ErrorState } from "@/components/ui/error-state";
 import { getPublicMenuSafe, getPublicTabularMenuSafe } from "@/lib/api/server";
 
@@ -43,55 +42,33 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
     : "";
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8">
-      <header className="max-w-3xl">
-        <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Menu</p>
-        <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
-          Browse Sunflour products
-        </h1>
-      </header>
-      {sortedCategories.length > 0 ? (
-        <nav
-          aria-label="Menu categories"
-          className="flex gap-2 overflow-x-auto pb-1"
-        >
-          <Link
-            className={categoryNavClass(view === "table" && !activeCategoryId)}
-            href={"/menu?view=table" as Route}
-          >
-            All categories
-          </Link>
-          {sortedCategories.map((category) => (
-            <Link
-              className={categoryNavClass(activeCategoryId === category.id)}
-              href={
-                `/menu?view=table&category=${encodeURIComponent(category.id)}` as Route
-              }
-              key={category.id}
-            >
-              {category.label}
-            </Link>
-          ))}
-        </nav>
-      ) : null}
-      <MenuViewTabs value={view} />
-      {view === "table" ? (
-        <TabularMenuBrowser
-          checkoutHref="/checkout"
-          content={tabularMenu}
-          initialCategoryId={activeCategoryId || "all"}
-        />
-      ) : error || !menu ? (
-        <ErrorState description={error ?? "Menu data is not available."} title="Menu unavailable" />
-      ) : (
-        <MenuBrowser initialQuery={query} key={query} menu={menu} />
-      )}
-    </main>
+    <>
+      <PageHero
+        description="Search the full menu, switch between product cards and the quick price list, then add what you love to your cart."
+        eyebrow="Menu"
+        title={
+          <>
+            Browse <span className="sf-text-gradient">Sunflour products</span>
+          </>
+        }
+      />
+      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8">
+        <MenuViewTabs value={view} />
+        {view === "table" ? (
+          <TabularMenuBrowser
+            checkoutHref="/checkout"
+            content={tabularMenu}
+            initialCategoryId={activeCategoryId || "all"}
+          />
+        ) : error || !menu ? (
+          <ErrorState
+            description={error ?? "Menu data is not available."}
+            title="Menu unavailable"
+          />
+        ) : (
+          <MenuBrowser initialQuery={query} key={query} menu={menu} />
+        )}
+      </main>
+    </>
   );
-}
-
-function categoryNavClass(active: boolean): string {
-  return active
-    ? "min-h-11 shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-on-primary)]"
-    : "min-h-11 shrink-0 rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]";
 }

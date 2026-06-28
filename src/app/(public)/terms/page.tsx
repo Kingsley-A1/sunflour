@@ -46,7 +46,7 @@ const termsSections = [
 export default function TermsPage() {
   return (
     <main>
-      <section className="bg-[var(--color-canvas-muted)]">
+      <section className="sf-hero-surface border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-4xl px-4 py-12">
           <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
             Terms

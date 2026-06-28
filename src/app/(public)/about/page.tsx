@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Truck,
 } from "lucide-react";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const metadata: Metadata = {
   title: "About Sunflour Bakery",
@@ -44,37 +45,33 @@ const orderingSteps = [
 export default function AboutPage() {
   return (
     <main>
-      <section className="sf-hero-surface border-b border-[var(--color-border)]">
-        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-end lg:py-12">
-          <div className="max-w-3xl">
-            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
-              About Sunflour
-            </p>
-            <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
-              Fresh bakery ordering, handled with clarity.
-            </h1>
-            <p className="m-0 mt-3 max-w-2xl text-base leading-7 text-[var(--color-text-muted)]">
-              Sunflour keeps menu browsing, pickup, delivery, payment review,
-              and invoice access understandable from the first tap.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-bold text-[var(--color-on-primary)]"
-                href="/menu"
-              >
-                Browse menu
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-bold text-[var(--color-text)]"
-                href={"/contact" as Route}
-              >
-                Contact Sunflour
-              </Link>
-            </div>
-        </div>
-      </section>
+      <PageHero
+        actions={
+          <>
+            <Link
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-bold text-[var(--color-on-primary)]"
+              href="/menu"
+            >
+              Browse menu
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <Link
+              className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-bold text-[var(--color-text)]"
+              href={"/contact" as Route}
+            >
+              Contact Sunflour
+            </Link>
+          </>
+        }
+        description="Sunflour keeps menu browsing, pickup, delivery, payment review, and invoice access understandable from the first tap."
+        eyebrow="About Sunflour"
+        title={
+          <>
+            Fresh bakery ordering,{" "}
+            <span className="sf-text-gradient">handled with clarity.</span>
+          </>
+        }
+      />
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div>

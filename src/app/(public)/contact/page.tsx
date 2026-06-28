@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight, ExternalLink, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
 import { WhatsAppIcon, InstagramIcon, TikTokIcon, FacebookIcon } from "@/components/ui/brand-icons";
+import { PageHero } from "@/components/layout/page-hero";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 
 export const metadata: Metadata = {
@@ -14,14 +15,8 @@ export default async function ContactPage() {
 
   return (
     <main>
-      <section className="sf-hero-surface border-b border-[var(--color-border)]">
-        <div className="mx-auto grid max-w-6xl gap-5 px-4 py-10 lg:grid-cols-[1fr_0.8fr] lg:items-end lg:py-12">
-          <div>
-            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Contact</p>
-            <h1 className="m-0 mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
-              Reach Sunflour without guessing the right channel.
-            </h1>
-          </div>
+      <PageHero
+        aside={
           <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-raised)]">
             <ReceiptText className="h-6 w-6 text-[var(--color-primary)]" aria-hidden="true" />
             <h2 className="m-0 mt-4 text-xl font-extrabold">Already checked out?</h2>
@@ -29,8 +24,15 @@ export default async function ContactPage() {
               Send payment proof through WhatsApp after placing the order.
             </p>
           </div>
-        </div>
-      </section>
+        }
+        eyebrow="Contact"
+        title={
+          <>
+            Reach Sunflour{" "}
+            <span className="sf-text-gradient">without the guesswork.</span>
+          </>
+        }
+      />
 
       {!contact.hasAnyContact ? (
         <section className="mx-auto max-w-6xl px-4 pt-8">
