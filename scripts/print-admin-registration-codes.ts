@@ -11,3 +11,4 @@ console.log(`Expires: ${panel.expiresAt}`);
 for (const item of panel.codes) {
   console.log(`${item.label}: ${item.code}`);
 }
+//pnpm tsx scripts/print-admin-registration-codes.ts
