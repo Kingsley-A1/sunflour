@@ -24,7 +24,7 @@ import {
   Truck,
   UsersRound,
 } from "lucide-react";
-import logoAsset from "../../../logo.png";
+import logoAsset from "../../../public/logo.png";
 import { IconButton } from "@/components/ui/icon-button";
 import { Sheet } from "@/components/ui/sheet";
 import type { UserRole } from "@/types/domain";

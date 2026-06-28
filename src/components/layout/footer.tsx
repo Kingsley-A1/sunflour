@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import logoAsset from "../../../logo.png";
+import logoAsset from "../../../public/logo.png";
 import bespokeLogoAsset from "../../../public/bespoketechnology-logo-main.png";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 
@@ -128,21 +128,33 @@ export async function Footer() {
             ))}
           </nav>
         </div>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-1.5 px-4 pb-5 text-center text-xs text-[var(--color-text-muted)]">
-          <span>Designed and Developed by</span>
+      </div>
+
+      <div className="sf-surface-gradient border-t border-[var(--color-border)]">
+        <div className="mx-auto flex max-w-6xl items-center justify-center px-4 py-6">
           <a
-            className="inline-flex items-center gap-1.5 font-bold text-[var(--color-text)] hover:text-[var(--color-primary)] hover:underline"
+            aria-label="Bespoke Technologies — visit website"
+            className="group inline-flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]/80 px-4 py-3 shadow-[var(--shadow-raised)] backdrop-blur transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:-translate-y-[1px] hover:shadow-[var(--shadow-floating)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
             href="https://bespoketech.com.ng"
             rel="noreferrer"
             target="_blank"
           >
             <Image
-              alt=""
-              aria-hidden="true"
-              className="h-8 w-8 object-contain"
+              alt="Bespoke Technologies"
+              className="h-11 w-11 shrink-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1 object-contain"
               src={bespokeLogoAsset}
             />
-            Bespoke Technologies
+            <span className="grid text-left">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                Designed &amp; Developed by
+              </span>
+              <span className="text-base font-extrabold leading-tight text-[var(--color-text)] group-hover:text-[var(--color-primary)]">
+                Bespoke Technologies
+              </span>
+              <span className="text-xs font-semibold text-[var(--color-primary)]">
+                bespoketech.com.ng
+              </span>
+            </span>
           </a>
         </div>
       </div>

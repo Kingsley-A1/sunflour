@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { X } from "lucide-react";
-import logoAsset from "../../../logo.png";
+import logoAsset from "../../../public/logo.png";
 import { useModalFocus } from "@/components/ui/modal-focus";
 
 const STORAGE_KEY = "sf-welcome-seen-at";

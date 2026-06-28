@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { CreditCard, ShoppingBag, UserPlus, UserRound } from "lucide-react";
-import logoAsset from "../../../logo.png";
+import logoAsset from "../../../public/logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
 import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
@@ -44,7 +44,7 @@ export async function PublicShell({
             <Link className="flex min-w-0 items-center gap-3" href="/">
               <Image
                 alt={`${contact.businessName} logo`}
-                className="h-11 w-11 rounded-[var(--radius-sm)] object-contain"
+                className="h-11 w-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1 object-contain shadow-[var(--shadow-raised)]"
                 height={44}
                 priority
                 src={logoAsset}
