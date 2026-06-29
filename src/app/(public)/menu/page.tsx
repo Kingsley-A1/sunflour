@@ -31,6 +31,7 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
     getPublicMenuSafe(),
     getPublicTabularMenuSafe(),
   ]);
+  const products = menu?.categories.flatMap((category) => category.products) ?? [];
 
   return (
     <>
@@ -45,7 +46,11 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8">
         <MenuViewTabs value={view} />
         {view === "table" ? (
-          <TabularMenuBrowser checkoutHref="/checkout" content={tabularMenu} />
+          <TabularMenuBrowser
+            checkoutHref="/checkout"
+            content={tabularMenu}
+            products={products}
+          />
         ) : error || !menu ? (
           <ErrorState
             description={error ?? "Menu data is not available."}

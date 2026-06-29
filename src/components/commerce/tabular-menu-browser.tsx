@@ -4,12 +4,14 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useMemo, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { SearchBar } from "@/components/commerce/search-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PriceText } from "@/components/ui/price-text";
 import { SafeImage } from "@/components/ui/safe-image";
 import { Sheet } from "@/components/ui/sheet";
 import type {
+  PublicProduct,
   TabularMenuCategory,
   TabularMenuContent,
   TabularMenuItem,
@@ -19,12 +21,26 @@ import { formatNairaFromKobo } from "@/lib/formatters";
 interface TabularMenuBrowserProps {
   checkoutHref: Route;
   content: TabularMenuContent;
+  products?: PublicProduct[];
   initialCategoryId?: string;
+}
+
+function normalizeName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export function TabularMenuBrowser({
   checkoutHref,
   content,
+  products = [],
   initialCategoryId = "all",
 }: TabularMenuBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] =
@@ -36,6 +52,24 @@ export function TabularMenuBrowser({
     () => new Map(content.categories.map((category) => [category.id, category])),
     [content.categories],
   );
+
+  const productBySlug = useMemo(
+    () => new Map(products.map((product) => [product.slug, product])),
+    [products],
+  );
+  const productByName = useMemo(
+    () => new Map(products.map((product) => [normalizeName(product.name), product])),
+    [products],
+  );
+
+  function findProduct(item: TabularMenuItem): PublicProduct | null {
+    return (
+      productBySlug.get(item.id) ??
+      productBySlug.get(slugify(item.name)) ??
+      productByName.get(normalizeName(item.name)) ??
+      null
+    );
+  }
 
   const itemNames = useMemo(
     () => content.items.map((item) => item.name),
@@ -159,6 +193,7 @@ export function TabularMenuBrowser({
             category={categoryMap.get(selectedItem.categoryId) ?? null}
             checkoutHref={checkoutHref}
             item={selectedItem}
+            product={findProduct(selectedItem)}
           />
         ) : null}
       </Sheet>
@@ -194,10 +229,12 @@ function TabularMenuItemDetails({
   category,
   checkoutHref,
   item,
+  product,
 }: {
   category: TabularMenuCategory | null;
   checkoutHref: Route;
   item: TabularMenuItem;
+  product: PublicProduct | null;
 }) {
   return (
     <div className="grid gap-5">
@@ -268,13 +305,17 @@ function TabularMenuItemDetails({
         </div>
       ) : null}
 
-      <Link
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-hover)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
-        href={checkoutHref}
-      >
-        Go to checkout
-        <ArrowRight className="h-4 w-4" aria-hidden="true" />
-      </Link>
+      {product ? (
+        <AddToCartButton className="w-full" product={product} />
+      ) : (
+        <Link
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-hover)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
+          href={checkoutHref}
+        >
+          Go to checkout
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      )}
     </div>
   );
 }
