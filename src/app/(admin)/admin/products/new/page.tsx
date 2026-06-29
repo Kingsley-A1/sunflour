@@ -36,9 +36,8 @@ export default async function AdminNewProductPage({
         <h1 className="m-0 mt-2 text-3xl font-extrabold">
           {draftResult.draft ? "Resume product draft" : "Create product"}
         </h1>
-        <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--color-text-muted)]">
-          Your progress is saved automatically as a draft. You can close this
-          page and resume later from the Draft products view.
+        <p className="m-0 mt-2 text-sm text-[var(--color-text-muted)]">
+          Progress saves automatically as a draft.
         </p>
       </header>
       {error ? <ErrorState description={error} title="Catalog unavailable" /> : null}

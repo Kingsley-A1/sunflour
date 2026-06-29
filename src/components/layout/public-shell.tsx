@@ -11,10 +11,10 @@ import { PublicMobileNavigation } from "@/components/layout/public-mobile-naviga
 import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
 import { WelcomeModal } from "@/components/ui/welcome-modal";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
-import type { PublicMenuCategoryNavItem } from "@/types/domain";
+import type { PublicCategoryNavigationItem } from "@/types/domain";
 
 interface PublicShellProps {
-  categories: PublicMenuCategoryNavItem[];
+  categories: PublicCategoryNavigationItem[];
   children: React.ReactNode;
   isSignedIn: boolean;
 }
@@ -34,7 +34,9 @@ export async function PublicShell({
 }: PublicShellProps) {
   const contact = await getResolvedPublicContactConfig();
   const categoryLinks =
-    categories.length > 0 ? categories : [{ id: "", label: "Menu" }];
+    categories.length > 0
+      ? categories
+      : [{ id: "", name: "Menu", slug: "" }];
 
   return (
     <CartProvider>
@@ -119,13 +121,13 @@ export async function PublicShell({
               <Link
                 className="min-h-11 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
                 href={
-                  (category.id
-                    ? `/menu?view=table&category=${encodeURIComponent(category.id)}`
+                  (category.slug
+                    ? `/menu?category=${encodeURIComponent(category.slug)}`
                     : "/menu") as Route
                 }
                 key={category.id || "menu"}
               >
-                {category.label}
+                {category.name}
               </Link>
             ))}
           </nav>

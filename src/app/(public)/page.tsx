@@ -48,10 +48,6 @@ export default async function HomePage() {
               Warm bakes, ready for{" "}
               <span className="sf-text-gradient">pickup or delivery.</span>
             </h1>
-            <p className="m-0 mt-4 max-w-xl text-base leading-7 text-[var(--color-text-muted)] sm:text-lg">
-              Celebration cakes, fresh bread, and everyday pastries — order
-              online in Calabar and choose pickup or doorstep delivery.
-            </p>
           </div>
 
           {heroError ? (

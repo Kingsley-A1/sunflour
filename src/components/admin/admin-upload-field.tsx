@@ -89,14 +89,14 @@ export function AdminUploadField({
 
       onSelectedFilesChange([]);
       setMessage(
-        `${images.length} ${images.length === 1 ? "image" : "images"} uploaded. The first image is now the product card image.`,
+        `${images.length} ${images.length === 1 ? "image" : "images"} uploaded.`,
       );
       router.refresh();
     } catch (uploadError) {
       setError(
         getApiErrorMessage(
           uploadError,
-          "Image upload failed. Check the file type, size, storage configuration, and permission.",
+          "Image upload failed. Check the file type, size, and your connection.",
         ),
       );
     } finally {
@@ -108,9 +108,8 @@ export function AdminUploadField({
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div>
         <h2 className="m-0 text-xl font-bold">Product images</h2>
-        <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-          Choose 1–{MAX_PRODUCT_IMAGES} images. The first image is used on product cards.
-          Large photos are optimized automatically before upload.
+        <p className="m-0 mt-1 text-sm text-[var(--color-text-muted)]">
+          The first image is used on the product card.
         </p>
       </div>
 
@@ -155,7 +154,6 @@ export function AdminUploadField({
 
       <Input
         accept="image/jpeg,image/png,image/webp,image/avif"
-        helpText="JPEG, PNG, WebP, or AVIF. Large photos are optimized automatically before upload."
         label={productId ? "Add images" : "Select images (required)"}
         multiple
         onChange={(event) => selectFiles(Array.from(event.target.files ?? []))}
@@ -214,11 +212,7 @@ export function AdminUploadField({
         >
           Upload selected images
         </Button>
-      ) : (
-        <p className="m-0 text-sm text-[var(--color-text-muted)]">
-          Images upload securely when you save the product.
-        </p>
-      )}
+      ) : null}
     </section>
   );
 }

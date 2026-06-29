@@ -314,7 +314,7 @@ export function ProductEditorForm({
           />
           {product ? (
             <Input
-              helpText="Optional. Leave blank to generate from product name."
+              helpText="Leave blank to generate from the product name."
               label="Slug"
               onChange={(event) => setSlug(event.target.value)}
               value={slug}
@@ -377,15 +377,7 @@ export function ProductEditorForm({
                 onChange={(event) => setIsPopular(event.target.checked)}
               />
             </section>
-          ) : (
-            <section className="grid gap-2 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
-              <h2 className="m-0 text-sm font-bold">Almost done</h2>
-              <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
-                New products go live as Active. You can set featured, popular,
-                status, and variants from the product edit page after creating it.
-              </p>
-            </section>
-          )}
+          ) : null}
         </aside>
       </div>
 
@@ -395,7 +387,7 @@ export function ProductEditorForm({
             {draftSaveState === "saving"
               ? "Saving draft…"
               : draftSaveState === "saved"
-                ? "Draft saved. You can close and resume later."
+                ? "Draft saved."
                 : draftSaveState === "error"
                   ? "Draft not saved. Check your connection."
                   : "Progress autosaves as a draft."}
