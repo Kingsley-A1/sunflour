@@ -13,6 +13,7 @@ import { getPublicMediaUrl, getR2Config, getR2Endpoint } from "@/server/modules/
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type AllowedImageContentType = (typeof ALLOWED_IMAGE_CONTENT_TYPES)[number];
 

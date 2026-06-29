@@ -1,20 +1,14 @@
 // Browser-side image downscaling + re-encoding.
 //
-// Routing multi-megabyte photos through a serverless API route is the most
-// common cause of "Failed to fetch" upload errors: many hosting platforms cap
-// the request body (~4.5 MB on Vercel) and reset the connection before the
-// route handler runs, which surfaces in the browser as a network error even on
-// a fast connection. Phone photos routinely exceed that cap.
-//
-// Shrinking images in the browser first keeps uploads well under the limit,
-// avoids any cross-origin upload path, and produces lighter images for the
-// storefront. If anything fails we fall back to the original file so uploads
-// still work.
+// Routing photos through an API route is fragile on slow/mobile connections:
+// a multi-megabyte upload over a weak uplink can stall long enough for the
+// platform or browser to drop the request, surfacing as a "network error".
+// Shrinking images in the browser first makes uploads small and fast, avoids
+// any cross-origin upload path, and produces lighter images for the storefront.
+// If anything fails we fall back to the original file so uploads still work.
 
-const MAX_DIMENSION = 1600;
-const WEBP_QUALITY = 0.82;
-
-const COMPRESSIBLE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_DIMENSION = 1280;
+const WEBP_QUALITY = 0.72;
 
 function canCompressInBrowser(): boolean {
   return (
@@ -33,7 +27,7 @@ async function decodeBitmap(file: File): Promise<ImageBitmap> {
 }
 
 export async function compressImage(file: File): Promise<File> {
-  if (!canCompressInBrowser() || !COMPRESSIBLE_TYPES.has(file.type)) {
+  if (!canCompressInBrowser() || !file.type.startsWith("image/")) {
     return file;
   }
 

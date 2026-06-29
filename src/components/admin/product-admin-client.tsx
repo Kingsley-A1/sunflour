@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import {
+  apiRequest,
   getApiErrorMessage,
   updateAdminProductStatus,
 } from "@/lib/api/client";
@@ -34,23 +35,28 @@ export function ProductAdminClient({
 }: ProductAdminClientProps) {
   const router = useRouter();
   const [statusOverrides, setStatusOverrides] = useState<Record<string, ProductStatus>>({});
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [categoryId, setCategoryId] = useState("all");
   const [status, setStatus] = useState<ProductStatus | "all">("all");
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     product: AdminProduct;
     nextStatus: ProductStatus;
   } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminProduct | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const visibleProducts = useMemo(
     () =>
-      products.map((product) => ({
-        ...product,
-        status: statusOverrides[product.id] ?? product.status,
-      })),
-    [products, statusOverrides],
+      products
+        .filter((product) => !deletedIds.includes(product.id))
+        .map((product) => ({
+          ...product,
+          status: statusOverrides[product.id] ?? product.status,
+        })),
+    [products, statusOverrides, deletedIds],
   );
 
   const filteredProducts = useMemo(
@@ -107,6 +113,30 @@ export function ProductAdminClient({
       setError(getApiErrorMessage(statusError, "Status update failed."));
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function deleteProduct() {
+    if (!pendingDelete) {
+      return;
+    }
+
+    setMessage(null);
+    setError(null);
+    setIsDeleting(true);
+
+    try {
+      await apiRequest(`/api/v1/admin/products/${pendingDelete.id}`, {
+        method: "DELETE",
+      });
+      setDeletedIds((current) => [...current, pendingDelete.id]);
+      setMessage(`${pendingDelete.name} was deleted from the catalog.`);
+      setPendingDelete(null);
+      router.refresh();
+    } catch (deleteError) {
+      setError(getApiErrorMessage(deleteError, "Delete failed."));
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -220,19 +250,31 @@ export function ProductAdminClient({
                     </select>
                   </td>
                   <td className="p-3">
-                    {canEditProductContent ? (
-                      <Link
-                        className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 font-semibold"
-                        href={`/admin/products/${product.id}`}
-                      >
-                        <Pencil className="h-4 w-4" aria-hidden="true" />
-                        Edit
-                      </Link>
-                    ) : (
-                      <span className="text-sm text-[var(--color-text-muted)]">
-                        Restricted
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {canEditProductContent ? (
+                        <Link
+                          className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 font-semibold"
+                          href={`/admin/products/${product.id}`}
+                        >
+                          <Pencil className="h-4 w-4" aria-hidden="true" />
+                          Edit
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-[var(--color-text-muted)]">
+                          Restricted
+                        </span>
+                      )}
+                      {isSuperAdmin ? (
+                        <button
+                          className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-danger)] px-3 font-semibold text-[var(--color-danger)] transition hover:bg-[var(--color-danger-soft)]"
+                          onClick={() => setPendingDelete(product)}
+                          type="button"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          Delete
+                        </button>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -253,6 +295,20 @@ export function ProductAdminClient({
         onConfirm={updateStatus}
         open={Boolean(pendingStatusChange)}
         title="Confirm product availability change"
+      />
+      <ConfirmDialog
+        confirmLabel="Delete product"
+        description={
+          pendingDelete
+            ? `Delete ${pendingDelete.name} from the catalog? It will be removed from the public menu. Past orders keep their saved details.`
+            : "Confirm this product deletion."
+        }
+        destructive
+        loading={isDeleting}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={deleteProduct}
+        open={Boolean(pendingDelete)}
+        title="Delete product"
       />
     </div>
   );
