@@ -107,11 +107,10 @@ export function AdminUploadField({
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div>
-        <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Step 1</p>
-        <h2 className="m-0 mt-1 text-xl font-bold">Product images</h2>
+        <h2 className="m-0 text-xl font-bold">Product images</h2>
         <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
           Choose 1–{MAX_PRODUCT_IMAGES} images. The first image is used on product cards.
-          Accessible alt text is generated from the product name.
+          Large photos are optimized automatically before upload.
         </p>
       </div>
 
@@ -156,7 +155,7 @@ export function AdminUploadField({
 
       <Input
         accept="image/jpeg,image/png,image/webp,image/avif"
-        helpText="JPEG, PNG, WebP, or AVIF. Backend file-size and content checks still apply."
+        helpText="JPEG, PNG, WebP, or AVIF. Large photos are optimized automatically before upload."
         label={productId ? "Add images" : "Select images (required)"}
         multiple
         onChange={(event) => selectFiles(Array.from(event.target.files ?? []))}

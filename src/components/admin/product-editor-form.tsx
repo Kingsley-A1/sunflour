@@ -79,8 +79,6 @@ export function ProductEditorForm({
   const [isPopular, setIsPopular] = useState(
     product?.isPopular ?? draftData.isPopular ?? false,
   );
-  const [variantName, setVariantName] = useState(draftData.variantName ?? "");
-  const [variantPrice, setVariantPrice] = useState(draftData.variantPrice ?? "");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -104,8 +102,6 @@ export function ProductEditorForm({
       showWhenOutOfStock,
       isFeatured,
       isPopular,
-      variantName,
-      variantPrice,
     };
   }
 
@@ -159,8 +155,6 @@ export function ProductEditorForm({
       categoryId,
       description,
       basePrice,
-      variantName,
-      variantPrice,
     ].some((value) => value.trim().length > 0);
 
     if (!hasContent) {
@@ -184,8 +178,6 @@ export function ProductEditorForm({
     showWhenOutOfStock,
     isFeatured,
     isPopular,
-    variantName,
-    variantPrice,
   ]);
 
   async function discardDraftAfterCreate() {
@@ -269,15 +261,6 @@ export function ProductEditorForm({
           status,
           showWhenOutOfStock,
           images,
-          variants: variantName
-            ? [
-                {
-                  name: variantName,
-                  price: nairaInputToKobo(variantPrice),
-                  isActive: true,
-                },
-              ]
-            : undefined,
         });
 
         await discardDraftAfterCreate();
@@ -318,54 +301,30 @@ export function ProductEditorForm({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <div>
-            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Step 2</p>
-            <h2 className="m-0 mt-1 text-xl font-bold">Product details</h2>
-            <p className="m-0 mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-              Lead with the customer-facing name and description. The slug is generated automatically when left blank.
-            </p>
-          </div>
+          <h2 className="m-0 text-xl font-bold">Product details</h2>
           <Input
             label="Product name"
             onChange={(event) => setName(event.target.value)}
             value={name}
           />
           <Textarea
-            label="Description"
+            label="Description (optional)"
             onChange={(event) => setDescription(event.target.value)}
             value={description}
           />
-          <Input
-            helpText="Optional. Leave blank to generate from product name."
-            label="Slug"
-            onChange={(event) => setSlug(event.target.value)}
-            value={slug}
-          />
-
-          {!product && isSuperAdmin ? (
-            <fieldset className="grid gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)] p-3">
-              <legend className="px-1 text-base font-bold">Optional first variant</legend>
-              <Input
-                label="Variant name"
-                onChange={(event) => setVariantName(event.target.value)}
-                value={variantName}
-              />
-              <Input
-                inputMode="decimal"
-                label="Variant price in naira"
-                onChange={(event) => setVariantPrice(event.target.value)}
-                value={variantPrice}
-              />
-            </fieldset>
+          {product ? (
+            <Input
+              helpText="Optional. Leave blank to generate from product name."
+              label="Slug"
+              onChange={(event) => setSlug(event.target.value)}
+              value={slug}
+            />
           ) : null}
         </section>
 
         <aside className="grid gap-5">
           <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <div>
-              <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Step 3</p>
-              <h2 className="m-0 mt-1 text-lg font-bold">Pricing and category</h2>
-            </div>
+            <h2 className="m-0 text-lg font-bold">Pricing and category</h2>
             <Select
               disabled={!isSuperAdmin}
               label="Category"
@@ -388,38 +347,45 @@ export function ProductEditorForm({
             />
           </section>
 
-          <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <div>
-              <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Step 4</p>
-              <h2 className="m-0 mt-1 text-lg font-bold">Visibility</h2>
-            </div>
-            <Select
-              disabled={!isSuperAdmin}
-              label="Status"
-              onChange={(event) => setStatus(event.target.value as ProductStatus)}
-              value={status}
-            >
-              <option value="ACTIVE">Active</option>
-              <option value="OUT_OF_STOCK">Out of stock</option>
-              <option value="HIDDEN">Hidden</option>
-            </Select>
-            <Checkbox
-              checked={showWhenOutOfStock}
-              disabled={!isSuperAdmin}
-              label="Show when out of stock"
-              onChange={(event) => setShowWhenOutOfStock(event.target.checked)}
-            />
-            <Checkbox
-              checked={isFeatured}
-              label="Featured product"
-              onChange={(event) => setIsFeatured(event.target.checked)}
-            />
-            <Checkbox
-              checked={isPopular}
-              label="Popular product"
-              onChange={(event) => setIsPopular(event.target.checked)}
-            />
-          </section>
+          {product ? (
+            <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+              <h2 className="m-0 text-lg font-bold">Visibility</h2>
+              <Select
+                disabled={!isSuperAdmin}
+                label="Status"
+                onChange={(event) => setStatus(event.target.value as ProductStatus)}
+                value={status}
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="OUT_OF_STOCK">Out of stock</option>
+                <option value="HIDDEN">Hidden</option>
+              </Select>
+              <Checkbox
+                checked={showWhenOutOfStock}
+                disabled={!isSuperAdmin}
+                label="Show when out of stock"
+                onChange={(event) => setShowWhenOutOfStock(event.target.checked)}
+              />
+              <Checkbox
+                checked={isFeatured}
+                label="Featured product"
+                onChange={(event) => setIsFeatured(event.target.checked)}
+              />
+              <Checkbox
+                checked={isPopular}
+                label="Popular product"
+                onChange={(event) => setIsPopular(event.target.checked)}
+              />
+            </section>
+          ) : (
+            <section className="grid gap-2 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
+              <h2 className="m-0 text-sm font-bold">Almost done</h2>
+              <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
+                New products go live as Active. You can set featured, popular,
+                status, and variants from the product edit page after creating it.
+              </p>
+            </section>
+          )}
         </aside>
       </div>
 

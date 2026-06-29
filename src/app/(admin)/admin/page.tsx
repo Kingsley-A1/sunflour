@@ -1,7 +1,9 @@
+import Link from "next/link";
+import type { Route } from "next";
+import { PlusCircle } from "lucide-react";
 import { MetricCard } from "@/components/admin/metric-card";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
-import type { Route } from "next";
 import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { requireRole } from "@/server/auth/rbac";
 import { ADMIN_ROLES } from "@/server/auth/roles";
@@ -14,8 +16,9 @@ export const metadata = {
 };
 
 export default async function AdminDashboardPage() {
-  await requireRole(ADMIN_ROLES);
+  const user = await requireRole(ADMIN_ROLES);
   const metrics = await getDashboardMetrics({});
+  const canCreateProduct = user.role === "SUPER_ADMIN";
 
   return (
     <div className="grid gap-6">
@@ -27,6 +30,29 @@ export default async function AdminDashboardPage() {
           {formatDateTime(metrics.range.to)} in {metrics.range.timeZone}.
         </p>
       </header>
+
+      {canCreateProduct ? (
+        <Link
+          className="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-primary)] p-4 text-[var(--color-on-primary)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-fast)] hover:opacity-95"
+          href={"/admin/products/new" as Route}
+        >
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--color-on-primary)]/15">
+              <PlusCircle className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="m-0 text-base font-extrabold">Create a new product</p>
+              <p className="m-0 mt-1 text-sm opacity-90">
+                Add images, name, category, and price in a few fields.
+              </p>
+            </div>
+          </div>
+          <span className="hidden text-sm font-bold sm:inline" aria-hidden="true">
+            Open →
+          </span>
+        </Link>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <MetricCard
           description="Orders created in the selected range."
