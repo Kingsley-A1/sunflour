@@ -4,12 +4,14 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useMemo, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { SearchBar } from "@/components/commerce/search-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PriceText } from "@/components/ui/price-text";
 import { SafeImage } from "@/components/ui/safe-image";
 import { Sheet } from "@/components/ui/sheet";
 import type {
+  PublicProduct,
   TabularMenuCategory,
   TabularMenuContent,
   TabularMenuItem,
@@ -19,12 +21,26 @@ import { formatNairaFromKobo } from "@/lib/formatters";
 interface TabularMenuBrowserProps {
   checkoutHref: Route;
   content: TabularMenuContent;
+  products?: PublicProduct[];
   initialCategoryId?: string;
+}
+
+function normalizeName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export function TabularMenuBrowser({
   checkoutHref,
   content,
+  products = [],
   initialCategoryId = "all",
 }: TabularMenuBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] =
@@ -37,6 +53,24 @@ export function TabularMenuBrowser({
     [content.categories],
   );
 
+  const productBySlug = useMemo(
+    () => new Map(products.map((product) => [product.slug, product])),
+    [products],
+  );
+  const productByName = useMemo(
+    () => new Map(products.map((product) => [normalizeName(product.name), product])),
+    [products],
+  );
+
+  function findProduct(item: TabularMenuItem): PublicProduct | null {
+    return (
+      productBySlug.get(item.id) ??
+      productBySlug.get(slugify(item.name)) ??
+      productByName.get(normalizeName(item.name)) ??
+      null
+    );
+  }
+
   const itemNames = useMemo(
     () => content.items.map((item) => item.name),
     [content.items],
@@ -44,188 +78,109 @@ export function TabularMenuBrowser({
 
   const visibleItems = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const categoryFilteredItems =
+    const byCategory =
       activeCategoryId === "all"
         ? content.items
         : content.items.filter((item) => item.categoryId === activeCategoryId);
 
     if (!normalizedQuery) {
-      return categoryFilteredItems;
+      return byCategory;
     }
 
-    return categoryFilteredItems.filter((item) => {
+    return byCategory.filter((item) => {
       const categoryLabel = categoryMap.get(item.categoryId)?.label ?? "";
-      const searchableText = [
+      return [
         item.name,
         item.description,
         item.details,
         categoryLabel,
         ...item.tags,
         ...item.ingredients,
-        ...item.prices.flatMap((price) => [
-          price.label ?? "",
-          formatNairaFromKobo(price.amount),
-        ]),
       ]
         .join(" ")
-        .toLowerCase();
-
-      return searchableText.includes(normalizedQuery);
+        .toLowerCase()
+        .includes(normalizedQuery);
     });
   }, [activeCategoryId, categoryMap, content.items, query]);
 
   const selectedItem =
-    visibleItems.find((item) => item.id === selectedItemId) ??
-    content.items.find((item) => item.id === selectedItemId) ??
-    null;
+    content.items.find((item) => item.id === selectedItemId) ?? null;
 
   return (
-    <section className="grid gap-6" aria-label="Tabular menu browser">
-      <div className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-raised)]">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <CategoryPill
-              active={activeCategoryId === "all"}
-              label="All"
-              onClick={() => setActiveCategoryId("all")}
-            />
-            {content.categories.map((category) => (
-              <CategoryPill
-                active={activeCategoryId === category.id}
-                key={category.id}
-                label={category.label}
-                onClick={() => setActiveCategoryId(category.id)}
-              />
-            ))}
-          </div>
-          <SearchBar
-            label="Search menu"
-            onChange={setQuery}
-            placeholder="Cake, burger, pizza..."
-            suggestions={itemNames}
-            value={query}
+    <section className="grid gap-4" aria-label="Tabular menu">
+      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Filter by category">
+        <CategoryPill
+          active={activeCategoryId === "all"}
+          label="All"
+          onClick={() => setActiveCategoryId("all")}
+        />
+        {content.categories.map((category) => (
+          <CategoryPill
+            active={activeCategoryId === category.id}
+            key={category.id}
+            label={category.label}
+            onClick={() => setActiveCategoryId(category.id)}
           />
-        </div>
-
-        <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)]">
-          <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-canvas-muted)] px-4 py-3">
-            <div>
-              <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-primary)]">
-                Price list
-              </p>
-              <p className="m-0 mt-1 text-sm text-[var(--color-text-muted)]">
-                Tap any row for details.
-              </p>
-            </div>
-            <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
-              {visibleItems.length} item{visibleItems.length === 1 ? "" : "s"}
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[38rem] border-collapse text-left">
-              <caption className="sr-only">
-                Sunflour Bakery tabular menu items and prices
-              </caption>
-              <thead className="bg-[var(--color-surface)]">
-                <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
-                  <th className="px-4 py-3 font-bold" scope="col">
-                    Product
-                  </th>
-                  <th className="px-4 py-3 font-bold" scope="col">
-                    Image
-                  </th>
-                  <th className="px-4 py-3 font-bold text-right" scope="col">
-                    Price
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
-                {visibleItems.map((item) => (
-                  <tr
-                    className="transition hover:bg-[var(--color-canvas-muted)]"
-                    key={item.id}
-                  >
-                    <th className="p-0" scope="row">
-                      <button
-                        className="min-h-14 w-full px-4 py-3 text-left focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-focus)]"
-                        onClick={() => setSelectedItemId(item.id)}
-                        type="button"
-                      >
-                        <span className="block text-sm font-bold text-[var(--color-text)] sm:text-base">
-                          {item.name}
-                        </span>
-                        <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
-                          {item.description}
-                        </span>
-                      </button>
-                    </th>
-                    <td className="px-4 py-3">
-                      <button
-                        aria-label={`View ${item.name}`}
-                        className="block h-12 w-12 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-canvas-muted)] transition hover:opacity-90 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
-                        onClick={() => setSelectedItemId(item.id)}
-                        type="button"
-                      >
-                        <span className="relative block h-12 w-12">
-                          <SafeImage
-                            alt={item.imageAlt}
-                            className="object-cover"
-                            fallback={
-                              <span className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-[var(--color-text-muted)]">
-                                {item.name.slice(0, 2).toUpperCase()}
-                              </span>
-                            }
-                            fill
-                            loading="lazy"
-                            sizes="48px"
-                            src={item.imageUrl}
-                            unoptimized
-                          />
-                        </span>
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-bold text-[var(--color-primary)]">
-                      {formatPriceSummary(item)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {visibleItems.length === 0 ? (
-              <div className="border-t border-[var(--color-border)] p-6">
-                <EmptyState
-                  description="Try another product name, category, or ingredient."
-                  title="No matching menu items"
-                />
-              </div>
-            ) : null}
-          </div>
-        </div>
+        ))}
       </div>
 
-      <section className="grid gap-4">
-        <div className="grid gap-1">
-          <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
-            Menu cards
-          </p>
-          <h3 className="m-0 text-xl font-bold">Browse the same list visually</h3>
-        </div>
+      <SearchBar
+        label="Search menu"
+        onChange={setQuery}
+        placeholder="Cake, burger, pizza..."
+        showLabel={false}
+        suggestions={itemNames}
+        value={query}
+      />
 
-        {visibleItems.length === 0 ? null : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {visibleItems.map((item) => (
-              <MenuCard
-                category={categoryMap.get(item.categoryId) ?? null}
-                item={item}
-                key={item.id}
-                onSelect={() => setSelectedItemId(item.id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {visibleItems.length === 0 ? (
+        <EmptyState
+          description="Try another product name or category."
+          title="No matching items"
+        />
+      ) : (
+        <ul className="m-0 grid list-none gap-2 p-0">
+          {visibleItems.map((item) => (
+            <li key={item.id}>
+              <button
+                className="flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
+                onClick={() => setSelectedItemId(item.id)}
+                type="button"
+              >
+                <span className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--color-surface-muted)]">
+                  <SafeImage
+                    alt={item.imageAlt}
+                    className="object-cover"
+                    fallback={
+                      <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[var(--color-text-muted)]">
+                        {item.name.slice(0, 2).toUpperCase()}
+                      </span>
+                    }
+                    fill
+                    loading="lazy"
+                    sizes="56px"
+                    src={item.imageUrl}
+                    unoptimized
+                  />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold sm:text-base">
+                    {item.name}
+                  </span>
+                  {item.description ? (
+                    <span className="mt-0.5 block truncate text-xs text-[var(--color-text-muted)] sm:text-sm">
+                      {item.description}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="shrink-0 text-sm font-bold text-[var(--color-primary)]">
+                  {rowPriceSummary(item)}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <Sheet
         onClose={() => setSelectedItemId(null)}
@@ -238,6 +193,7 @@ export function TabularMenuBrowser({
             category={categoryMap.get(selectedItem.categoryId) ?? null}
             checkoutHref={checkoutHref}
             item={selectedItem}
+            product={findProduct(selectedItem)}
           />
         ) : null}
       </Sheet>
@@ -258,8 +214,8 @@ function CategoryPill({
     <button
       className={
         active
-          ? "min-h-11 shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
-          : "min-h-11 shrink-0 rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-semibold text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+          ? "min-h-10 shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
+          : "min-h-10 shrink-0 rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-semibold text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
       }
       onClick={onClick}
       type="button"
@@ -269,82 +225,16 @@ function CategoryPill({
   );
 }
 
-function MenuCard({
-  category,
-  item,
-  onSelect,
-}: {
-  category: TabularMenuCategory | null;
-  item: TabularMenuItem;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      aria-label={`View ${item.name} details`}
-      className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] text-left shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-standard)] hover:-translate-y-[2px] hover:shadow-[var(--shadow-floating)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
-      onClick={onSelect}
-      type="button"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-canvas-muted)]">
-        <SafeImage
-          alt={item.imageAlt}
-          className="object-cover transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] group-hover:scale-[1.02]"
-          fallback={
-            <div className="flex h-full items-center justify-center px-4 text-center text-sm font-semibold text-[var(--color-text-muted)]">
-              {item.name}
-            </div>
-          }
-          fill
-          loading="lazy"
-          sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
-          src={item.imageUrl}
-          unoptimized
-        />
-      </div>
-      <div className="grid flex-1 gap-3 p-4">
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {category ? (
-              <span className="rounded-[var(--radius-pill)] bg-[var(--color-accent-soft)] px-2 py-1 text-xs font-semibold text-[var(--color-text)]">
-                {category.label}
-              </span>
-            ) : null}
-            {item.tags.slice(0, 2).map((tag) => (
-              <span
-                className="rounded-[var(--radius-pill)] border border-[var(--color-border)] px-2 py-1 text-xs font-semibold text-[var(--color-text-muted)]"
-                key={tag}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <h4 className="m-0 text-lg font-bold">{item.name}</h4>
-          <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
-            {item.description}
-          </p>
-        </div>
-
-        <div className="mt-auto grid gap-1">
-          <span className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--color-primary)]">
-            Price
-          </span>
-          <span className="text-sm font-bold text-[var(--color-text)]">
-            {formatPriceSummary(item)}
-          </span>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 function TabularMenuItemDetails({
   category,
   checkoutHref,
   item,
+  product,
 }: {
   category: TabularMenuCategory | null;
   checkoutHref: Route;
   item: TabularMenuItem;
+  product: PublicProduct | null;
 }) {
   return (
     <div className="grid gap-5">
@@ -364,7 +254,7 @@ function TabularMenuItemDetails({
         />
       </div>
 
-      <div className="grid gap-2">
+      {category || item.tags.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           {category ? (
             <span className="rounded-[var(--radius-pill)] bg-[var(--color-accent-soft)] px-2 py-1 text-xs font-semibold text-[var(--color-text)]">
@@ -380,75 +270,59 @@ function TabularMenuItemDetails({
             </span>
           ))}
         </div>
+      ) : null}
+
+      {item.details ? (
         <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
           {item.details}
         </p>
-      </div>
+      ) : null}
 
-      <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4">
-        <h3 className="m-0 text-sm font-bold uppercase tracking-[0.14em] text-[var(--color-primary)]">
-          Price options
-        </h3>
-        <div className="mt-3 grid gap-2">
-          {item.prices.map((price) => (
-            <div
-              className="flex items-center justify-between gap-4 rounded-[var(--radius-sm)] bg-[var(--color-surface)] px-3 py-2"
-              key={price.id}
-            >
-              <span className="text-sm font-medium text-[var(--color-text-muted)]">
-                {price.label ?? "Order"}
-              </span>
-              <PriceText amount={price.amount} />
-            </div>
-          ))}
-        </div>
+      <div className="grid gap-2">
+        {item.prices.map((price) => (
+          <div
+            className="flex items-center justify-between gap-4 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 py-2"
+            key={price.id}
+          >
+            <span className="text-sm font-medium text-[var(--color-text-muted)]">
+              {price.label ?? "Order"}
+            </span>
+            <PriceText amount={price.amount} />
+          </div>
+        ))}
       </div>
 
       {item.ingredients.length > 0 ? (
-        <div className="grid gap-3">
-          <h3 className="m-0 text-sm font-bold uppercase tracking-[0.14em] text-[var(--color-primary)]">
-            Includes
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {item.ingredients.map((ingredient) => (
-              <span
-                className="rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)]"
-                key={ingredient}
-              >
-                {ingredient}
-              </span>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {item.ingredients.map((ingredient) => (
+            <span
+              className="rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)]"
+              key={ingredient}
+            >
+              {ingredient}
+            </span>
+          ))}
         </div>
       ) : null}
 
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-        <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
-          Checkout uses live product data, trusted totals, and current delivery
-          rules. Add items from the Products tab before placing an order.
-        </p>
+      {product ? (
+        <AddToCartButton className="w-full" product={product} />
+      ) : (
         <Link
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:bg-[var(--color-primary-hover)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-hover)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
           href={checkoutHref}
         >
+          Go to checkout
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          <span>Go to checkout</span>
         </Link>
-      </div>
+      )}
     </div>
   );
 }
 
-function formatPriceSummary(item: TabularMenuItem): string {
-  if (item.prices.length === 1) {
-    return formatNairaFromKobo(item.prices[0]?.amount ?? 0);
-  }
-
-  return item.prices
-    .map((price) =>
-      price.label
-        ? `${price.label}: ${formatNairaFromKobo(price.amount)}`
-        : formatNairaFromKobo(price.amount),
-    )
-    .join(" / ");
+function rowPriceSummary(item: TabularMenuItem): string {
+  const first = item.prices[0]?.amount ?? 0;
+  return item.prices.length > 1
+    ? `${formatNairaFromKobo(first)}+`
+    : formatNairaFromKobo(first);
 }

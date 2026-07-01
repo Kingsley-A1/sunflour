@@ -25,26 +25,17 @@ function first(value: string | string[] | undefined): string | undefined {
 export default async function MenuPage({ searchParams }: MenuPageProps) {
   const params = await searchParams;
   const query = first(params.query)?.trim() ?? "";
-  const categoryId = first(params.category)?.trim() ?? "";
+  const categorySlug = first(params.category)?.trim() ?? "";
   const view: MenuView = first(params.view) === "table" ? "table" : "products";
   const [{ menu, error }, tabularMenu] = await Promise.all([
     getPublicMenuSafe(),
     getPublicTabularMenuSafe(),
   ]);
-  const sortedCategories = [...tabularMenu.categories].sort(
-    (left, right) =>
-      left.sortOrder - right.sortOrder || left.label.localeCompare(right.label),
-  );
-  const activeCategoryId = sortedCategories.some(
-    (category) => category.id === categoryId,
-  )
-    ? categoryId
-    : "";
+  const products = menu?.categories.flatMap((category) => category.products) ?? [];
 
   return (
     <>
       <PageHero
-        description="Search the full menu, switch between product cards and the quick price list, then add what you love to your cart."
         eyebrow="Menu"
         title={
           <>
@@ -58,7 +49,7 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
           <TabularMenuBrowser
             checkoutHref="/checkout"
             content={tabularMenu}
-            initialCategoryId={activeCategoryId || "all"}
+            products={products}
           />
         ) : error || !menu ? (
           <ErrorState
@@ -66,7 +57,12 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
             title="Menu unavailable"
           />
         ) : (
-          <MenuBrowser initialQuery={query} key={query} menu={menu} />
+          <MenuBrowser
+            initialCategorySlug={categorySlug}
+            initialQuery={query}
+            key={`${query}-${categorySlug}`}
+            menu={menu}
+          />
         )}
       </main>
     </>

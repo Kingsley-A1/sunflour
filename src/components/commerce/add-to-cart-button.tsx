@@ -1,6 +1,7 @@
 "use client";
 
-import { ShoppingCart } from "lucide-react";
+import { ArrowRight, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useCart } from "@/features/cart/cart-store";
@@ -22,17 +23,47 @@ export function AddToCartButton({
   buttonVariant = "primary",
 }: AddToCartButtonProps) {
   const cart = useCart();
+  const router = useRouter();
   const { notify } = useToast();
   const image = product.images[0];
   const unitPrice = variant?.price ?? product.basePrice;
   const disabled = !product.isOrderable;
+  const itemKey = cart.getItemKey({
+    productId: product.id,
+    variantId: variant?.id,
+  });
+  const inCart = cart.items.some((item) => cart.getItemKey(item) === itemKey);
+
+  if (disabled) {
+    return (
+      <Button
+        className={className}
+        disabled
+        icon={<ShoppingCart className="h-4 w-4" aria-hidden="true" />}
+        variant={buttonVariant}
+      >
+        Unavailable
+      </Button>
+    );
+  }
+
+  if (inCart) {
+    return (
+      <Button
+        className={className}
+        icon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
+        onClick={() => router.push("/checkout")}
+        variant={buttonVariant}
+      >
+        Go to checkout
+      </Button>
+    );
+  }
 
   return (
     <Button
       className={className}
-      disabled={disabled}
       icon={<ShoppingCart className="h-4 w-4" aria-hidden="true" />}
-      variant={buttonVariant}
       onClick={() => {
         cart.addItem({
           productId: product.id,
@@ -47,8 +78,9 @@ export function AddToCartButton({
         });
         notify(`${product.name} added to cart.`, "success");
       }}
+      variant={buttonVariant}
     >
-      {disabled ? "Unavailable" : "Add to cart"}
+      Add to cart
     </Button>
   );
 }

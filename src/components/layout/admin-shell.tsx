@@ -18,6 +18,7 @@ import {
   MessageSquareText,
   Package,
   Phone,
+  PlusCircle,
   Settings,
   ShieldCheck,
   Tags,
@@ -41,6 +42,7 @@ export const adminNavItems = [
   { href: "/admin" as Route, label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["ATTENDANT", "MEDIA_MANAGER", "MODERATOR", "SUPER_ADMIN"] as const },
   { href: "/admin/orders" as Route, label: "Orders", icon: ClipboardList, allowedRoles: ["ATTENDANT", "MODERATOR", "SUPER_ADMIN"] as const },
   { href: "/admin/products" as Route, label: "Products", icon: Package, allowedRoles: ["MEDIA_MANAGER", "MODERATOR", "SUPER_ADMIN"] as const },
+  { href: "/admin/products/new" as Route, label: "New product", icon: PlusCircle, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/tabular-menu" as Route, label: "Tabular menu", icon: ListOrdered, allowedRoles: ["MEDIA_MANAGER", "SUPER_ADMIN"] as const },
   { href: "/admin/categories" as Route, label: "Categories", icon: Tags, allowedRoles: ["SUPER_ADMIN"] as const },
   { href: "/admin/delivery" as Route, label: "Delivery", icon: Truck, allowedRoles: ["SUPER_ADMIN"] as const },
@@ -66,9 +68,20 @@ function canSee(role: UserRole, allowedRoles: readonly Exclude<UserRole, "CUSTOM
 }
 
 function isCurrentRoute(pathname: string, href: Route) {
-  return href === "/admin"
-    ? pathname === href
-    : pathname === href || pathname.startsWith(`${href}/`);
+  if (href === "/admin") {
+    return pathname === href;
+  }
+  // Exact match for the create page so it doesn't also light up "Products".
+  if (href === "/admin/products/new") {
+    return pathname === href;
+  }
+  if (href === "/admin/products") {
+    return (
+      pathname === href ||
+      (pathname.startsWith(`${href}/`) && pathname !== "/admin/products/new")
+    );
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function AdminNavigation({
@@ -197,6 +210,7 @@ export function AdminShell({ role, userName, userEmail, children }: AdminShellPr
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const canCreateProduct = role === "SUPER_ADMIN";
 
   return (
     <div
@@ -289,12 +303,23 @@ export function AdminShell({ role, userName, userEmail, children }: AdminShellPr
                 </p>
               </div>
             </div>
-            <Link
-              className="inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm font-semibold hover:bg-[var(--color-surface-muted)]"
-              href="/"
-            >
-              Public site
-            </Link>
+            <div className="flex shrink-0 items-center gap-2">
+              {canCreateProduct ? (
+                <Link
+                  className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm font-semibold text-[var(--color-on-primary)]"
+                  href="/admin/products/new"
+                >
+                  <PlusCircle className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">New product</span>
+                </Link>
+              ) : null}
+              <Link
+                className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm font-semibold hover:bg-[var(--color-surface-muted)]"
+                href="/"
+              >
+                Public site
+              </Link>
+            </div>
           </div>
         </header>
         <main className="mx-auto w-full max-w-7xl px-4 py-6">{children}</main>

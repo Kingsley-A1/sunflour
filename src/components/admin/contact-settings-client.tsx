@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save } from "lucide-react";
+import { Pencil, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -15,8 +15,28 @@ interface ContactValues {
   address?: string | null;
 }
 
+type FieldKey = keyof ContactValues;
+
+const FIELDS: { key: FieldKey; label: string; help?: string; type?: string }[] = [
+  { key: "phoneNumber", label: "Phone number" },
+  { key: "whatsappNumber", label: "WhatsApp number", help: "Digits only or full wa.me URL." },
+  { key: "emailAddress", label: "Email address", type: "email" },
+  { key: "instagram", label: "Instagram", help: "Handle (e.g. @sunflourbakery) or full URL." },
+  { key: "tiktok", label: "TikTok", help: "Handle (e.g. @sunflourbakery) or full URL." },
+  { key: "facebook", label: "Facebook", help: "Handle or full URL." },
+  { key: "address", label: "Physical address", help: "Shown on the contact page and linked to Google Maps." },
+];
+
+type Mode = "loading" | "view" | "edit";
+
+function hasAnyValue(values: ContactValues): boolean {
+  return Object.values(values).some((value) => (value ?? "").trim().length > 0);
+}
+
 export function ContactSettingsClient() {
   const [values, setValues] = useState<ContactValues>({});
+  const [savedValues, setSavedValues] = useState<ContactValues>({});
+  const [mode, setMode] = useState<Mode>("loading");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,14 +45,15 @@ export function ContactSettingsClient() {
     fetch("/api/v1/admin/settings/contacts")
       .then((r) => r.json())
       .then((payload: { ok?: boolean; data?: { contacts: ContactValues | null } }) => {
-        if (payload?.ok && payload.data?.contacts) {
-          setValues(payload.data.contacts);
-        }
+        const loaded = (payload?.ok ? payload.data?.contacts : null) ?? {};
+        setValues(loaded);
+        setSavedValues(loaded);
+        setMode(hasAnyValue(loaded) ? "view" : "edit");
       })
-      .catch(() => {});
+      .catch(() => setMode("edit"));
   }, []);
 
-  function update(field: keyof ContactValues, value: string) {
+  function update(field: FieldKey, value: string) {
     setValues((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -42,24 +63,27 @@ export function ContactSettingsClient() {
     setMessage(null);
 
     try {
-      const body = {
-        phoneNumber: values.phoneNumber?.trim() || null,
-        whatsappNumber: values.whatsappNumber?.trim() || null,
-        emailAddress: values.emailAddress?.trim() || null,
-        instagram: values.instagram?.trim() || null,
-        tiktok: values.tiktok?.trim() || null,
-        facebook: values.facebook?.trim() || null,
-        address: values.address?.trim() || null,
-      };
+      const body: ContactValues = {};
+      for (const { key } of FIELDS) {
+        body[key] = (values[key] ?? "").trim() || null;
+      }
 
       const response = await fetch("/api/v1/admin/settings/contacts", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
-      const payload = (await response.json()) as { ok?: boolean; error?: { message?: string } };
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        data?: { contacts: ContactValues | null };
+        error?: { message?: string };
+      };
 
       if (payload?.ok) {
+        const next = payload.data?.contacts ?? body;
+        setValues(next);
+        setSavedValues(next);
+        setMode("view");
         setMessage("Contact settings saved.");
       } else {
         setError(payload?.error?.message ?? "Failed to save. Try again.");
@@ -71,51 +95,83 @@ export function ContactSettingsClient() {
     }
   }
 
+  function cancelEdit() {
+    setValues(savedValues);
+    setError(null);
+    setMode("view");
+  }
+
+  if (mode === "loading") {
+    return (
+      <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm text-[var(--color-text-muted)]">
+        Loading contact settings…
+      </div>
+    );
+  }
+
+  if (mode === "view") {
+    return (
+      <div className="grid gap-4">
+        {message ? (
+          <p
+            className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success)]"
+            role="status"
+          >
+            {message}
+          </p>
+        ) : null}
+        <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="m-0 text-xl font-bold">Contact details</h2>
+            <Button
+              icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+              onClick={() => {
+                setMessage(null);
+                setMode("edit");
+              }}
+              variant="secondary"
+            >
+              Edit
+            </Button>
+          </div>
+          <dl className="m-0 grid gap-4 sm:grid-cols-2">
+            {FIELDS.map((field) => {
+              const value = (values[field.key] ?? "").trim();
+              return (
+                <div className="grid gap-1" key={field.key}>
+                  <dt className="m-0 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {field.label}
+                  </dt>
+                  <dd className="m-0 break-words text-sm font-medium">
+                    {value ? (
+                      value
+                    ) : (
+                      <span className="text-[var(--color-text-soft)]">Not set</span>
+                    )}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6">
       <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <h2 className="m-0 text-xl font-bold">Contact details</h2>
-        <Input
-          label="Phone number"
-          value={values.phoneNumber ?? ""}
-          onChange={(e) => update("phoneNumber", e.target.value)}
-        />
-        <Input
-          label="WhatsApp number"
-          helpText="Digits only or full wa.me URL."
-          value={values.whatsappNumber ?? ""}
-          onChange={(e) => update("whatsappNumber", e.target.value)}
-        />
-        <Input
-          label="Email address"
-          type="email"
-          value={values.emailAddress ?? ""}
-          onChange={(e) => update("emailAddress", e.target.value)}
-        />
-        <Input
-          label="Instagram"
-          helpText="Handle (e.g. @sunflourbakery) or full URL."
-          value={values.instagram ?? ""}
-          onChange={(e) => update("instagram", e.target.value)}
-        />
-        <Input
-          label="TikTok"
-          helpText="Handle (e.g. @sunflourbakery) or full URL."
-          value={values.tiktok ?? ""}
-          onChange={(e) => update("tiktok", e.target.value)}
-        />
-        <Input
-          label="Facebook"
-          helpText="Handle or full URL."
-          value={values.facebook ?? ""}
-          onChange={(e) => update("facebook", e.target.value)}
-        />
-        <Input
-          label="Physical address"
-          helpText="Shown on the contact page and linked to Google Maps."
-          value={values.address ?? ""}
-          onChange={(e) => update("address", e.target.value)}
-        />
+        <h2 className="m-0 text-xl font-bold">Edit contact details</h2>
+        {FIELDS.map((field) => (
+          <Input
+            key={field.key}
+            helpText={field.help}
+            label={field.label}
+            onChange={(event) => update(field.key, event.target.value)}
+            type={field.type}
+            value={values[field.key] ?? ""}
+          />
+        ))}
       </section>
 
       {error ? (
@@ -123,13 +179,18 @@ export function ContactSettingsClient() {
           {error}
         </p>
       ) : null}
-      {message ? (
-        <p className="m-0 text-sm font-semibold text-[var(--color-success)]" role="status">
-          {message}
-        </p>
-      ) : null}
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        {hasAnyValue(savedValues) ? (
+          <Button
+            icon={<X className="h-4 w-4" aria-hidden="true" />}
+            onClick={cancelEdit}
+            type="button"
+            variant="secondary"
+          >
+            Cancel
+          </Button>
+        ) : null}
         <Button
           icon={<Save className="h-4 w-4" aria-hidden="true" />}
           loading={isSaving}
