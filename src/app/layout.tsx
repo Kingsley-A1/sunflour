@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { PageLoadingLine } from "@/components/ui/page-loading-line";
 import { ToastProvider } from "@/components/ui/toast";
@@ -12,6 +13,26 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ),
+  icons: {
+    icon: [
+      {
+        url: "/logo.png",
+        type: "image/png",
+      },
+    ],
+    shortcut: [
+      {
+        url: "/logo.png",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "/logo.png",
+        type: "image/png",
+      },
+    ],
+  },
   title: {
     default: "Sunflour Bakery | Fresh cakes, breads & pastries in Calabar",
     template: "%s | Sunflour Bakery",
@@ -54,6 +75,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         </Suspense>
         <OfflineBanner />
         <ToastProvider>{children}</ToastProvider>
+        <Analytics />
       </body>
     </html>
   );

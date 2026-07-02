@@ -26,7 +26,9 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
   const params = await searchParams;
   const query = first(params.query)?.trim() ?? "";
   const categorySlug = first(params.category)?.trim() ?? "";
-  const view: MenuView = first(params.view) === "table" ? "table" : "products";
+  const tableCategoryId = first(params.tableCategory)?.trim() ?? "";
+  const view: MenuView =
+    first(params.view) === "table" || tableCategoryId ? "table" : "products";
   const [{ menu, error }, tabularMenu] = await Promise.all([
     getPublicMenuSafe(),
     getPublicTabularMenuSafe(),
@@ -49,6 +51,7 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
           <TabularMenuBrowser
             checkoutHref="/checkout"
             content={tabularMenu}
+            initialCategoryId={tableCategoryId}
             products={products}
           />
         ) : error || !menu ? (

@@ -1,5 +1,5 @@
 import { PublicShell } from "@/components/layout/public-shell";
-import { getPublicMenuCategoryNavigationSafe } from "@/lib/api/server";
+import { getPublicCategoryNavigationSafe } from "@/lib/api/server";
 import { getOptionalAuth } from "@/server/auth/rbac";
 
 export default async function CustomerLayout({
@@ -8,7 +8,7 @@ export default async function CustomerLayout({
   children: React.ReactNode;
 }) {
   const [categories, user] = await Promise.all([
-    getPublicMenuCategoryNavigationSafe(),
+    getPublicCategoryNavigationSafe(),
     getOptionalAuth(),
   ]);
 

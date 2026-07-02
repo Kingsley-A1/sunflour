@@ -11,10 +11,17 @@ import { PublicMobileNavigation } from "@/components/layout/public-mobile-naviga
 import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
 import { WelcomeModal } from "@/components/ui/welcome-modal";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
-import type { PublicCategoryNavigationItem } from "@/types/domain";
+import type {
+  PublicCategoryNavigationItem,
+  PublicMenuCategoryNavItem,
+} from "@/types/domain";
+
+type PublicShellCategory =
+  | PublicCategoryNavigationItem
+  | PublicMenuCategoryNavItem;
 
 interface PublicShellProps {
-  categories: PublicCategoryNavigationItem[];
+  categories: PublicShellCategory[];
   children: React.ReactNode;
   isSignedIn: boolean;
 }
@@ -26,6 +33,26 @@ const navItems = [
   { href: "/contact" as Route, label: "Contact" },
   { href: "/reviews" as Route, label: "Reviews" },
 ];
+
+function isCatalogCategory(
+  category: PublicShellCategory,
+): category is PublicCategoryNavigationItem {
+  return "name" in category && "slug" in category;
+}
+
+function getCategoryLabel(category: PublicShellCategory): string {
+  return isCatalogCategory(category) ? category.name : category.label;
+}
+
+function getCategoryHref(category: PublicShellCategory): Route {
+  if (isCatalogCategory(category)) {
+    return (category.slug
+      ? `/menu?category=${encodeURIComponent(category.slug)}`
+      : "/menu") as Route;
+  }
+
+  return `/menu?view=table&tableCategory=${encodeURIComponent(category.id)}` as Route;
+}
 
 export async function PublicShell({
   categories,
@@ -120,14 +147,10 @@ export async function PublicShell({
             {categoryLinks.map((category) => (
               <Link
                 className="min-h-11 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
-                href={
-                  (category.slug
-                    ? `/menu?category=${encodeURIComponent(category.slug)}`
-                    : "/menu") as Route
-                }
-                key={category.id || "menu"}
+                href={getCategoryHref(category)}
+                key={category.id || getCategoryLabel(category)}
               >
-                {category.name}
+                {getCategoryLabel(category)}
               </Link>
             ))}
           </nav>

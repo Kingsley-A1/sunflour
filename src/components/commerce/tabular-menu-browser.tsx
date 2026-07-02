@@ -43,8 +43,12 @@ export function TabularMenuBrowser({
   products = [],
   initialCategoryId = "all",
 }: TabularMenuBrowserProps) {
-  const [activeCategoryId, setActiveCategoryId] =
-    useState<string>(initialCategoryId);
+  const hasInitialCategory = content.categories.some(
+    (category) => category.id === initialCategoryId,
+  );
+  const [activeCategoryId, setActiveCategoryId] = useState<string>(
+    hasInitialCategory ? initialCategoryId : "all",
+  );
   const [query, setQuery] = useState("");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
