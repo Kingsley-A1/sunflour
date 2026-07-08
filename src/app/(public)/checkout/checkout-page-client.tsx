@@ -72,6 +72,12 @@ const checkoutSchema = z
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+export interface CheckoutCustomerDefaults {
+  fullName: string;
+  phone: string;
+  email: string;
+}
+
 function applyCheckoutFieldErrors(
   fieldErrors: Record<string, string[]> | undefined,
   setFormError: UseFormSetError<CheckoutFormValues>,
@@ -101,7 +107,11 @@ function applyCheckoutFieldErrors(
   });
 }
 
-export function CheckoutPageClient() {
+interface CheckoutPageClientProps {
+  customerDefaults?: CheckoutCustomerDefaults | null;
+}
+
+export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps) {
   const cart = useCart();
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [quote, setQuote] = useState<DeliveryQuote | null>(null);
@@ -120,9 +130,9 @@ export function CheckoutPageClient() {
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       method: "PICKUP",
-      fullName: "",
-      phone: "",
-      email: "",
+      fullName: customerDefaults?.fullName ?? "",
+      phone: customerDefaults?.phone ?? "",
+      email: customerDefaults?.email ?? "",
       zoneId: "",
       address: "",
       customerNote: "",

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CircleCheck } from "lucide-react";
 import {
   getApiErrorMessage,
   updateAdminOrderNote,
@@ -90,6 +91,12 @@ export function OrderActionsClient({
     role === "ATTENDANT"
       ? (["PROOF_SENT_ON_WHATSAPP", "UNDER_REVIEW"] satisfies PaymentStatus[])
       : paymentOptions;
+  const canMarkPaymentSuccessful =
+    role !== "ATTENDANT" &&
+    currentPaymentStatus !== "CONFIRMED" &&
+    currentPaymentStatus !== "REJECTED" &&
+    currentStatus !== "CANCELLED" &&
+    currentStatus !== "REJECTED";
 
   async function updateOrderStatus() {
     if (!nextStatus) {
@@ -146,6 +153,11 @@ export function OrderActionsClient({
     }
   }
 
+  function openMarkPaymentSuccessful() {
+    setNextPaymentStatus("CONFIRMED");
+    setPaymentConfirmOpen(true);
+  }
+
   async function saveNote() {
     setIsSaving(true);
     setError(null);
@@ -177,6 +189,15 @@ export function OrderActionsClient({
       </div>
       {error ? <p className="m-0 text-sm font-semibold text-[var(--color-danger)]" role="alert">{error}</p> : null}
       {message ? <p className="m-0 text-sm font-semibold text-[var(--color-success)]" role="status">{message}</p> : null}
+      {canMarkPaymentSuccessful ? (
+        <Button
+          icon={<CircleCheck className="h-4 w-4" aria-hidden="true" />}
+          loading={isSaving}
+          onClick={openMarkPaymentSuccessful}
+        >
+          Mark payment as successful
+        </Button>
+      ) : null}
       <Select
         label="Next order status"
         onChange={(event) => setNextStatus(event.target.value as OrderStatus | "")}
@@ -253,13 +274,19 @@ export function OrderActionsClient({
       />
       <ConfirmDialog
         confirmLabel={
-          nextPaymentStatus === "REJECTED" ? "Reject payment" : "Update payment"
+          nextPaymentStatus === "REJECTED"
+            ? "Reject payment"
+            : nextPaymentStatus === "CONFIRMED"
+              ? "Mark as successful"
+              : "Update payment"
         }
         destructive={nextPaymentStatusIsDestructive}
         description={
           nextPaymentStatus === "REJECTED"
             ? "Rejected payment closes this order as rejected. Enter a clear reason before confirming."
-            : "This payment change will be validated by the backend and recorded for audit."
+            : nextPaymentStatus === "CONFIRMED"
+              ? "This confirms the transfer was received and moves the order to Payment confirmed."
+              : "This payment change will be validated by the backend and recorded for audit."
         }
         loading={isSaving}
         onCancel={() => setPaymentConfirmOpen(false)}

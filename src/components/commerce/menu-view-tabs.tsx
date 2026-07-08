@@ -49,11 +49,13 @@ export function MenuViewTabs({ value }: MenuViewTabsProps) {
   }
 
   return (
-    <Tabs
-      items={[...items]}
-      label="Menu views"
-      onChange={updateView}
-      value={value}
-    />
+    <div className="flex justify-center">
+      <Tabs
+        items={[...items]}
+        label="Menu views"
+        onChange={updateView}
+        value={value}
+      />
+    </div>
   );
 }
