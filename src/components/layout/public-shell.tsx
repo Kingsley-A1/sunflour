@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { CreditCard, ShoppingBag, UserPlus, UserRound } from "lucide-react";
+import { CreditCard, UserPlus, UserRound } from "lucide-react";
 import logoAsset from "../../../public/logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
-import { StickyCartBar } from "@/components/commerce/sticky-cart-bar";
 import { Footer } from "@/components/layout/footer";
 import { HeaderSearch } from "@/components/layout/header-search";
+import { PublicBottomNav } from "@/components/layout/public-bottom-nav";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
 import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
 import { WelcomeModal } from "@/components/ui/welcome-modal";
@@ -129,14 +129,6 @@ export async function PublicShell({
                 <CreditCard className="h-4 w-4" aria-hidden="true" />
                 Checkout
               </Link>
-              <Link
-                aria-label="Review cart"
-                className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:bg-[var(--color-surface-muted)]"
-                href="/cart"
-              >
-                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Cart</span>
-              </Link>
               <PublicMobileNavigation isSignedIn={isSignedIn} />
             </div>
           </div>
@@ -162,7 +154,7 @@ export async function PublicShell({
           businessName={contact.businessName}
           href={contact.whatsappHref}
         />
-        <StickyCartBar />
+        <PublicBottomNav />
       </div>
     </CartProvider>
   );

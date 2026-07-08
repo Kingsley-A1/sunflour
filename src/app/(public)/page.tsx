@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
+import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { ProductGrid } from "@/components/commerce/product-grid";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
@@ -40,11 +41,7 @@ export default async function HomePage() {
       <section className="sf-hero-surface border-b border-[var(--color-border)]">
         <div className="mx-auto grid max-w-6xl gap-7 px-4 py-12 lg:py-16">
           <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[var(--color-primary)] shadow-[var(--shadow-raised)] backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              Fresh from Sunflour Bakery
-            </span>
-            <h1 className="m-0 mt-4 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+            <h1 className="m-0 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
               Warm bakes, ready for{" "}
               <span className="sf-text-gradient">pickup or delivery.</span>
             </h1>
@@ -53,7 +50,7 @@ export default async function HomePage() {
           {heroError ? (
             <ErrorState description={heroError} title="Hero products unavailable" />
           ) : heroProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
               {heroProducts.map((product) => (
                 <HeroProductCard key={product.id} product={product} />
               ))}
@@ -113,39 +110,49 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
   const image = product.images[0];
 
   return (
-    <Link
-      aria-label={`View ${product.name}`}
-      className="group grid min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]"
-      href={`/products/${product.slug}`}
-    >
-      <div className="relative aspect-square overflow-hidden bg-[var(--color-surface-muted)]">
-        {image?.url ? (
-          <SafeImage
-            alt={image.altText ?? product.name}
-            className="object-cover transition duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-standard)] group-hover:scale-[1.02]"
-            fill
-            fallback={
-              <HeroImageFallback productName={product.name} />
-            }
-            sizes="(min-width: 1024px) 18vw, 45vw"
-            src={image.url}
-          />
-        ) : (
-          <HeroImageFallback productName={product.name} />
-        )}
-      </div>
+    <div className="group grid min-w-0 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]">
+      <Link
+        aria-label={`View ${product.name}`}
+        className="block"
+        href={`/products/${product.slug}`}
+      >
+        <div className="relative aspect-square overflow-hidden bg-[var(--color-surface-muted)]">
+          {image?.url ? (
+            <SafeImage
+              alt={image.altText ?? product.name}
+              className="object-cover transition duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-standard)] group-hover:scale-[1.02]"
+              fill
+              fallback={
+                <HeroImageFallback productName={product.name} />
+              }
+              sizes="(min-width: 1024px) 18vw, 45vw"
+              src={image.url}
+            />
+          ) : (
+            <HeroImageFallback productName={product.name} />
+          )}
+        </div>
+      </Link>
       <div className="grid min-w-0 gap-2 p-3">
         <Badge className="w-fit max-w-full truncate" tone="neutral">
           {product.category.name}
         </Badge>
-        <h2 className="m-0 line-clamp-2 text-sm font-extrabold leading-snug text-[var(--color-text)] sm:text-base">
+        <Link
+          className="line-clamp-2 text-sm font-extrabold leading-snug text-[var(--color-text)] hover:underline sm:text-base"
+          href={`/products/${product.slug}`}
+        >
           {product.name}
-        </h2>
+        </Link>
         <p className="m-0 text-sm text-[var(--color-text-muted)]">
           <PriceText amount={product.basePrice} />
         </p>
+        <AddToCartButton
+          buttonVariant="secondary"
+          className="mt-1 w-full"
+          product={product}
+        />
       </div>
-    </Link>
+    </div>
   );
 }
 

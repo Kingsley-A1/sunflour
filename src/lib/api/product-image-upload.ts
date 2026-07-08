@@ -119,8 +119,8 @@ export async function uploadProductImageFiles(
   // Upload one at a time so a single weak connection is not split across
   // several concurrent requests (which makes each more likely to stall).
   const uploaded: UploadedProductImage[] = [];
-  for (let index = 0; index < files.length; index += 1) {
-    const mediaAsset = await uploadThroughServer(files[index]);
+  for (const [index, file] of files.entries()) {
+    const mediaAsset = await uploadThroughServer(file);
     uploaded.push({
       mediaAssetId: mediaAsset.id,
       altText: buildProductImageAltText(productName, index, files.length),
