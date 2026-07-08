@@ -1,12 +1,6 @@
+import { getSiteUrl } from "@/lib/seo/site-url";
 import type { PublicContactConfig } from "@/server/config/public-contact";
 import type { PublicProduct } from "@/types/domain";
-
-export function getSeoBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
-}
 
 /**
  * schema.org Bakery / LocalBusiness for the homepage. Powers local rich results
@@ -15,7 +9,7 @@ export function getSeoBaseUrl(): string {
 export function buildBakeryJsonLd(
   contact: PublicContactConfig,
 ): Record<string, unknown> {
-  const baseUrl = getSeoBaseUrl();
+  const baseUrl = getSiteUrl();
   const sameAs = [
     contact.instagramHref,
     contact.tiktokHref,
@@ -27,7 +21,7 @@ export function buildBakeryJsonLd(
     "@type": "Bakery",
     name: contact.businessName,
     url: baseUrl,
-    image: `${baseUrl}/opengraph-image`,
+    image: `${baseUrl}/og-image.png`,
     priceRange: "₦₦",
     servesCuisine: "Bakery",
   };
@@ -64,7 +58,7 @@ export function buildProductJsonLd(
   product: PublicProduct,
   categoryName?: string,
 ): Record<string, unknown> {
-  const baseUrl = getSeoBaseUrl();
+  const baseUrl = getSiteUrl();
   const images = product.images
     .map((image) => image.url)
     .filter((url): url is string => Boolean(url));

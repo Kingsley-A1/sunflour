@@ -4,15 +4,14 @@ import { Analytics } from "@vercel/analytics/next";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { PageLoadingLine } from "@/components/ui/page-loading-line";
 import { ToastProvider } from "@/components/ui/toast";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
 const siteDescription =
   "Sunflour Bakery in Calabar — order fresh breads, celebration cakes, and everyday pastries online for pickup or delivery, with secure bank-transfer checkout.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(getSiteUrl()),
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
