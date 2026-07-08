@@ -66,7 +66,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
           <PriceText amount={product.basePrice} />
         </p>
-        <AddToCartButton buttonVariant="secondary" product={product} />
+        <AddToCartButton className="w-full" buttonVariant="secondary" product={product} />
       </div>
     </div>
   );
