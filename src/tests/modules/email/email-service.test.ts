@@ -65,7 +65,9 @@ function order(overrides = {}) {
     customerNameSnapshot: "Ada Baker",
     customerPhoneSnapshot: "+2348012345678",
     customerEmailSnapshot: "ada@example.com",
+    subtotal: 500_000,
     total: 700_000,
+    deliveryTotalFeeSnapshot: 200_000,
     status: OrderStatus.PENDING_PAYMENT,
     deliveredAt: null,
     paymentInstructionSnapshot: "Transfer to Sunflour Bakery.",
@@ -187,6 +189,7 @@ describe("email service", () => {
       payload: {
         orderNumber: "SFB-20260101-ABC123",
         customerName: "Ada Baker",
+        amountPaid: 500_000,
         total: 700_000,
         invoiceNumber: "INV-SFB-20260101-ABC123",
         invoiceUrl:

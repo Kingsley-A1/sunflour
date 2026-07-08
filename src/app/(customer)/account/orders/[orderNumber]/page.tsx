@@ -65,9 +65,17 @@ export default async function AccountOrderDetailPage({
             </li>
           ))}
         </ul>
-        <div className="flex justify-between border-t border-[var(--color-border)] pt-3 font-bold">
-          <span>Total</span>
-          <span>{formatNairaFromKobo(order.total)}</span>
+        <div className="grid gap-1 border-t border-[var(--color-border)] pt-3">
+          <div className="flex justify-between font-bold">
+            <span>Paid by bank transfer</span>
+            <span>{formatNairaFromKobo(order.subtotal)}</span>
+          </div>
+          {order.deliveryTotalFeeSnapshot > 0 ? (
+            <div className="flex justify-between text-sm text-[var(--color-text-muted)]">
+              <span>Pay on delivery (cash to delivery person)</span>
+              <span>{formatNairaFromKobo(order.deliveryTotalFeeSnapshot)}</span>
+            </div>
+          ) : null}
         </div>
       </Card>
       {invoiceHref ? (

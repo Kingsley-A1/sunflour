@@ -10,7 +10,9 @@ export interface PaymentInstructionSource {
 export interface WhatsAppProofMessageInput {
   orderNumber: string;
   customerName: string;
-  total: number;
+  // The amount actually sent by bank transfer (the product subtotal). Delivery
+  // fees are collected by the delivery person on delivery, not by transfer.
+  amountPaid: number;
 }
 
 export function buildPaymentInstructionSnapshot({
@@ -31,14 +33,14 @@ export function buildPaymentInstructionSnapshot({
 export function buildWhatsAppProofMessage({
   orderNumber,
   customerName,
-  total,
+  amountPaid,
 }: WhatsAppProofMessageInput): string {
   return [
     "Hello Sunflour Bakery, I have made payment for my order.",
     "",
     `Order Number: ${orderNumber}`,
     `Customer Name: ${customerName}`,
-    `Total Amount: ${formatNairaFromKobo(total)}`,
+    `Amount Paid: ${formatNairaFromKobo(amountPaid)}`,
     "",
     "I am sending my payment proof now.",
   ].join("\n");

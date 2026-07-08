@@ -366,17 +366,17 @@ describe("checkout service", () => {
     expect([...generated][0]).toMatch(/^SFB-20260101-[A-Z2-9]{6}$/);
   });
 
-  it("builds WhatsApp proof messages with order number and total", () => {
+  it("builds WhatsApp proof messages with order number and amount paid", () => {
     const message = buildWhatsAppProofMessage({
       orderNumber: "SFB-20260101-ABC123",
       customerName: "Ada Baker",
-      total: 700_000,
+      amountPaid: 500_000,
     });
     const url = buildWhatsAppProofUrl(message, "2348012345678");
 
     expect(message).toContain("SFB-20260101-ABC123");
     expect(message).toContain("Ada Baker");
-    expect(message).toContain("7,000");
+    expect(message).toContain("5,000");
     expect(url).toContain("https://wa.me/2348012345678");
   });
 });

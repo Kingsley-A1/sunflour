@@ -13,7 +13,7 @@ export function DeliveryQuoteSummary({
   subtotal,
   loading = false,
 }: DeliveryQuoteSummaryProps) {
-  const total = subtotal + (quote?.totalFee ?? 0);
+  const deliveryFeeDueOnDelivery = quote?.totalFee ?? 0;
 
   return (
     <Card className="grid gap-3 p-4">
@@ -43,16 +43,27 @@ export function DeliveryQuoteSummary({
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-[var(--color-border)] pt-3 text-base">
-          <dt className="font-bold">Display estimate</dt>
+          <dt className="font-bold">Pay now (bank transfer)</dt>
           <dd className="m-0">
-            <PriceText amount={total} className="text-xl" />
+            <PriceText amount={subtotal} className="text-xl" />
           </dd>
         </div>
+        {deliveryFeeDueOnDelivery > 0 ? (
+          <div className="flex items-center justify-between gap-4">
+            <dt className="text-[var(--color-text-muted)]">
+              Pay on delivery (cash to delivery person)
+            </dt>
+            <dd className="m-0">
+              <PriceText amount={deliveryFeeDueOnDelivery} />
+            </dd>
+          </div>
+        ) : null}
       </dl>
       <p className="m-0 text-xs leading-5 text-[var(--color-text-muted)]">
         This is a display estimate. Sunflour recalculates product prices,
         delivery fee, surcharge, and total on the server when the order is
-        created.
+        created. Only the product amount is paid by bank transfer; the
+        delivery fee is paid in cash to the delivery person on delivery.
       </p>
     </Card>
   );

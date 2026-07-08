@@ -9,6 +9,8 @@ describe("email template service", () => {
       payload: {
         orderNumber: "SFB-20260101-ABC123",
         customerName: "Ada Baker",
+        amountPaid: 500_000,
+        deliveryFeeDueOnDelivery: 200_000,
         total: 700_000,
         invoiceNumber: "INV-SFB-20260101-ABC123",
         invoiceUrl:
@@ -20,6 +22,8 @@ describe("email template service", () => {
     expect(rendered.html).toContain("SFB-20260101-ABC123");
     expect(rendered.html).toContain("INV-SFB-20260101-ABC123");
     expect(rendered.html).toContain("Ada Baker");
+    expect(rendered.html).toContain("5,000");
+    expect(rendered.html).toContain("Delivery fee");
     expect(rendered.html).toContain("7,000");
   });
 

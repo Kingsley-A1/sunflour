@@ -86,10 +86,18 @@ export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
       </div>
       <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
         <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
-          Amount to transfer
+          Amount to transfer now
         </p>
-        <PriceText amount={result.total} className="text-3xl" />
+        <PriceText amount={result.subtotal} className="text-3xl" />
       </div>
+      {result.delivery.totalFee > 0 ? (
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
+          <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
+            Pay on delivery (cash to delivery person)
+          </p>
+          <PriceText amount={result.delivery.totalFee} className="text-xl" />
+        </div>
+      ) : null}
       <section className="grid gap-3 rounded-[var(--radius-md)] border-2 border-[var(--color-primary)] bg-[var(--color-accent-soft)] p-4">
         <h3 className="m-0 flex items-center gap-2 text-base font-bold">
           <Landmark className="h-5 w-5 text-[var(--color-primary)]" aria-hidden="true" />

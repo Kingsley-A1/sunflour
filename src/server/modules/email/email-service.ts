@@ -75,7 +75,9 @@ export interface EmailOrderForQueue {
   customerNameSnapshot: string;
   customerPhoneSnapshot: string;
   customerEmailSnapshot: string | null;
+  subtotal: number;
   total: number;
+  deliveryTotalFeeSnapshot: number;
   status: OrderStatusValue;
   deliveredAt?: Date | null;
   paymentInstructionSnapshot?: string | null;
@@ -171,13 +173,15 @@ function orderEmailPayload(order: EmailOrderForQueue): Record<string, unknown> {
   const whatsAppProofMessage = buildWhatsAppProofMessage({
     orderNumber: order.orderNumber,
     customerName: order.customerNameSnapshot,
-    total: order.total,
+    amountPaid: order.subtotal,
   });
 
   return {
     orderNumber: order.orderNumber,
     customerName: order.customerNameSnapshot,
     customerPhone: order.customerPhoneSnapshot,
+    amountPaid: order.subtotal,
+    deliveryFeeDueOnDelivery: order.deliveryTotalFeeSnapshot,
     total: order.total,
     invoiceNumber: order.invoice?.invoiceNumber,
     invoiceUrl: buildAbsoluteInvoiceUrl(order),

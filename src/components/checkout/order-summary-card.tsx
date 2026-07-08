@@ -10,7 +10,7 @@ interface OrderSummaryCardProps {
 }
 
 export function OrderSummaryCard({ items, subtotal, quote }: OrderSummaryCardProps) {
-  const total = subtotal + (quote?.totalFee ?? 0);
+  const deliveryFeeDueOnDelivery = quote?.totalFee ?? 0;
 
   return (
     <Card className="grid gap-4 p-4">
@@ -46,11 +46,21 @@ export function OrderSummaryCard({ items, subtotal, quote }: OrderSummaryCardPro
           </dd>
         </div>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 border-t border-[var(--color-border)] pt-3 text-base font-bold">
-          <dt className="min-w-0">Display estimate</dt>
+          <dt className="min-w-0">Pay now (bank transfer)</dt>
           <dd className="m-0">
-            <PriceText amount={total} className="shrink-0" />
+            <PriceText amount={subtotal} className="shrink-0" />
           </dd>
         </div>
+        {deliveryFeeDueOnDelivery > 0 ? (
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 text-sm">
+            <dt className="min-w-0 text-[var(--color-text-muted)]">
+              Pay on delivery (cash to delivery person)
+            </dt>
+            <dd className="m-0">
+              <PriceText amount={deliveryFeeDueOnDelivery} className="shrink-0" />
+            </dd>
+          </div>
+        ) : null}
       </dl>
     </Card>
   );
