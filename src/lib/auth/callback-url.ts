@@ -1,6 +1,6 @@
 export function resolveSafeAuthCallbackUrl(
   value: string | string[] | undefined,
-  fallback = "/account",
+  fallback = "/",
 ): string {
   const rawValue = Array.isArray(value) ? value[0] : value;
 

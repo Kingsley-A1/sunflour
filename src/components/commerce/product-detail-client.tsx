@@ -98,10 +98,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             </div>
           </fieldset>
         ) : null}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid gap-3 sm:flex sm:items-center">
           <QuantityStepper onChange={setQuantity} value={quantity} />
           <AddToCartButton
-            className="flex-1"
+            className="w-full sm:flex-1"
             product={product}
             quantity={quantity}
             variant={selectedVariant}

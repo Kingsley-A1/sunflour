@@ -10,8 +10,9 @@ describe("auth callback URL handling", () => {
   });
 
   it("falls back for external or missing callback URLs", () => {
-    expect(resolveSafeAuthCallbackUrl("https://example.com")).toBe("/account");
-    expect(resolveSafeAuthCallbackUrl("//example.com")).toBe("/account");
+    expect(resolveSafeAuthCallbackUrl("https://example.com")).toBe("/");
+    expect(resolveSafeAuthCallbackUrl("//example.com")).toBe("/");
+    expect(resolveSafeAuthCallbackUrl(undefined)).toBe("/");
     expect(resolveSafeAuthCallbackUrl(undefined, "/menu")).toBe("/menu");
   });
 });
