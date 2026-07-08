@@ -134,9 +134,11 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
         </div>
       </Link>
       <div className="grid min-w-0 gap-2 p-3">
-        <Badge className="w-fit max-w-full truncate" tone="neutral">
-          {product.category.name}
-        </Badge>
+        <div className="hidden sm:block">
+          <Badge className="w-fit max-w-full truncate" tone="neutral">
+            {product.category.name}
+          </Badge>
+        </div>
         <Link
           className="line-clamp-2 text-sm font-extrabold leading-snug text-[var(--color-text)] hover:underline sm:text-base"
           href={`/products/${product.slug}`}
@@ -148,8 +150,9 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
         </p>
         <AddToCartButton
           buttonVariant="secondary"
-          className="mt-1 w-full"
+          className="mt-1 w-full whitespace-nowrap"
           product={product}
+          size="sm"
         />
       </div>
     </div>

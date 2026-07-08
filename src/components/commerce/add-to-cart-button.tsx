@@ -13,6 +13,7 @@ interface AddToCartButtonProps {
   quantity?: number;
   className?: string;
   buttonVariant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
 }
 
 export function AddToCartButton({
@@ -21,6 +22,7 @@ export function AddToCartButton({
   quantity = 1,
   className,
   buttonVariant = "primary",
+  size = "md",
 }: AddToCartButtonProps) {
   const cart = useCart();
   const router = useRouter();
@@ -40,6 +42,7 @@ export function AddToCartButton({
         className={className}
         disabled
         icon={<ShoppingCart className="h-4 w-4" aria-hidden="true" />}
+        size={size}
         variant={buttonVariant}
       >
         Unavailable
@@ -53,6 +56,7 @@ export function AddToCartButton({
         className={className}
         icon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
         onClick={() => router.push("/checkout")}
+        size={size}
         variant={buttonVariant}
       >
         Go to checkout
@@ -78,6 +82,7 @@ export function AddToCartButton({
         });
         notify(`${product.name} added to cart.`, "success");
       }}
+      size={size}
       variant={buttonVariant}
     >
       Add to cart

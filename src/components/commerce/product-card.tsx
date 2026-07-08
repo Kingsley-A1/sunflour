@@ -41,21 +41,22 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
       </Link>
-      <div className="grid gap-3 p-4">
+      <div className="grid gap-2.5 p-3 sm:gap-3 sm:p-4">
         <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Tags are noise on the narrow mobile card — show from sm up only. */}
+          <div className="hidden gap-2 sm:flex sm:flex-wrap sm:items-center">
             {product.isPopular ? <Badge tone="warning">Popular</Badge> : null}
             <StatusPill status={product.status} />
           </div>
           <div className="grid gap-1">
             <Link
-              className="text-lg font-bold leading-snug text-[var(--color-text)] hover:underline"
+              className="line-clamp-2 text-sm font-bold leading-snug text-[var(--color-text)] hover:underline sm:text-lg"
               href={`/products/${product.slug}`}
             >
               {product.name}
             </Link>
             {product.description ? (
-              <p className="m-0 line-clamp-2 text-sm leading-6 text-[var(--color-text-muted)]">
+              <p className="m-0 hidden text-sm leading-6 text-[var(--color-text-muted)] sm:line-clamp-2">
                 {product.description}
               </p>
             ) : null}
@@ -66,7 +67,12 @@ export function ProductCard({ product }: ProductCardProps) {
             <PriceText amount={product.basePrice} />
           </p>
         </div>
-        <AddToCartButton buttonVariant="secondary" product={product} />
+        <AddToCartButton
+          buttonVariant="secondary"
+          className="w-full whitespace-nowrap"
+          product={product}
+          size="sm"
+        />
       </div>
     </div>
   );
