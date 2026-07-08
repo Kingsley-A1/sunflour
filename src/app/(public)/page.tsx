@@ -53,7 +53,7 @@ export default async function HomePage() {
           {heroError ? (
             <ErrorState description={heroError} title="Hero products unavailable" />
           ) : heroProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
               {heroProducts.map((product) => (
                 <HeroProductCard key={product.id} product={product} />
               ))}
@@ -115,7 +115,7 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
   return (
     <Link
       aria-label={`View ${product.name}`}
-      className="group grid min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]"
+      className="group grid min-w-0 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]"
       href={`/products/${product.slug}`}
     >
       <div className="relative aspect-square overflow-hidden bg-[var(--color-surface-muted)]">

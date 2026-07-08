@@ -1,3 +1,4 @@
+import { MenuBoard } from "@/components/commerce/menu-board";
 import { MenuBrowser } from "@/components/commerce/menu-browser";
 import {
   MenuViewTabs,
@@ -27,8 +28,13 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
   const query = first(params.query)?.trim() ?? "";
   const categorySlug = first(params.category)?.trim() ?? "";
   const tableCategoryId = first(params.tableCategory)?.trim() ?? "";
+  const viewParam = first(params.view);
   const view: MenuView =
-    first(params.view) === "table" || tableCategoryId ? "table" : "products";
+    viewParam === "table" || tableCategoryId
+      ? "table"
+      : viewParam === "products" || categorySlug || query
+        ? "products"
+        : "full";
   const [{ menu, error }, tabularMenu] = await Promise.all([
     getPublicMenuSafe(),
     getPublicTabularMenuSafe(),
@@ -47,7 +53,9 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
       />
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8">
         <MenuViewTabs value={view} />
-        {view === "table" ? (
+        {view === "full" ? (
+          <MenuBoard />
+        ) : view === "table" ? (
           <TabularMenuBrowser
             checkoutHref="/checkout"
             content={tabularMenu}

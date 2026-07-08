@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { PriceText } from "@/components/ui/price-text";
 import { SafeImage } from "@/components/ui/safe-image";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -15,7 +14,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const image = product.images[0];
 
   return (
-    <Card className="grid overflow-hidden transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]">
+    <div className="grid overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]">
       <Link
         className="group block"
         href={`/products/${product.slug}`}
@@ -32,7 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
                   Image unavailable
                 </div>
               }
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw"
+              sizes="(min-width: 1024px) 33vw, 50vw"
               src={image.url}
             />
           ) : (
@@ -69,6 +68,6 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         <AddToCartButton buttonVariant="secondary" product={product} />
       </div>
-    </Card>
+    </div>
   );
 }

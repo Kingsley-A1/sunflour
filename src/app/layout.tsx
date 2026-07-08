@@ -15,22 +15,13 @@ export const metadata: Metadata = {
   ),
   icons: {
     icon: [
-      {
-        url: "/logo.png",
-        type: "image/png",
-      },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
     ],
-    shortcut: [
-      {
-        url: "/logo.png",
-        type: "image/png",
-      },
-    ],
+    shortcut: [{ url: "/favicon.ico" }],
     apple: [
-      {
-        url: "/logo.png",
-        type: "image/png",
-      },
+      { url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" },
     ],
   },
   title: {
@@ -54,11 +45,21 @@ export const metadata: Metadata = {
     siteName: "Sunflour Bakery",
     locale: "en_NG",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Sunflour Bakery",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sunflour Bakery | Fresh cakes, breads & pastries in Calabar",
     description: siteDescription,
+    images: ["/og-image.png"],
   },
 };
 

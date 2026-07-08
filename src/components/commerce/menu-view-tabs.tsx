@@ -4,13 +4,17 @@ import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs } from "@/components/ui/tabs";
 
-export type MenuView = "products" | "table";
+export type MenuView = "full" | "products" | "table";
 
 interface MenuViewTabsProps {
   value: MenuView;
 }
 
 const items = [
+  {
+    value: "full",
+    label: "Full menu",
+  },
   {
     value: "products",
     label: "Products",
@@ -29,10 +33,20 @@ export function MenuViewTabs({ value }: MenuViewTabsProps) {
   function updateView(nextView: string) {
     const params = new URLSearchParams(searchParams.toString());
 
-    if (nextView === "products") {
+    // "full" is the default view, so it carries no query params.
+    if (nextView === "full") {
       params.delete("view");
     } else {
       params.set("view", nextView);
+    }
+
+    // Drop params that belong to the view we are leaving.
+    if (nextView !== "products") {
+      params.delete("category");
+      params.delete("query");
+    }
+    if (nextView !== "table") {
+      params.delete("tableCategory");
     }
 
     const href = params.toString() ? `${pathname}?${params.toString()}` : pathname;
