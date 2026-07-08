@@ -48,10 +48,11 @@ function getCategoryHref(category: PublicShellCategory): Route {
   if (isCatalogCategory(category)) {
     return (category.slug
       ? `/menu?category=${encodeURIComponent(category.slug)}`
-      : "/menu") as Route;
+      : "/menu?view=products") as Route;
   }
 
-  return `/menu?view=table&tableCategory=${encodeURIComponent(category.id)}` as Route;
+  // Legacy tabular-menu categories now open the Products view (product nav).
+  return "/menu?view=products" as Route;
 }
 
 export async function PublicShell({

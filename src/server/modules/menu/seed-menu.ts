@@ -52,24 +52,63 @@ export interface MenuSeedResult {
   variants: number;
 }
 
+// The complete set of real Sunflour product categories. This is the single
+// source of truth shared by the public product nav and the admin "Choose
+// category" selector, so both always match the menu the bakery actually sells.
 export const canonicalProductCategories = [
   {
     name: "Cakes",
     slug: "cakes",
     description: "Cakes and celebration bakes.",
+    sortOrder: 10,
+  },
+  {
+    name: "Burgers",
+    slug: "burgers",
+    description: "Chicken, beef, double protein, and Lebanese-style burgers.",
+    sortOrder: 20,
+  },
+  {
+    name: "Sandwiches",
+    slug: "sandwiches",
+    description: "Shawarma, fajita, fries sandwich, and chicken tabouk.",
     sortOrder: 30,
   },
   {
-    name: "Treats",
-    slug: "treats",
-    description: "Small chops, sweet bites, and bakery treats.",
+    name: "Protein",
+    slug: "protein",
+    description: "Peppered fried chicken and filling protein bites.",
     sortOrder: 40,
+  },
+  {
+    name: "Pizza",
+    slug: "pizza",
+    description: "Regular and special pizzas in four serving sizes.",
+    sortOrder: 50,
   },
   {
     name: "Ice Cream",
     slug: "ice-cream",
     description: "Ice cream and cold desserts.",
+    sortOrder: 60,
+  },
+  {
+    name: "Pastries",
+    slug: "pastries",
+    description: "Pies, biscuits, cookies, doughnuts, and mini pizza.",
+    sortOrder: 70,
+  },
+  {
+    name: "Chops",
+    slug: "chops",
+    description: "Party-style small chops and quick snacks.",
     sortOrder: 80,
+  },
+  {
+    name: "Treats",
+    slug: "treats",
+    description: "Small chops, sweet bites, and bakery treats.",
+    sortOrder: 90,
   },
   {
     name: "Others",

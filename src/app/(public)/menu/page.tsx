@@ -4,10 +4,9 @@ import {
   MenuViewTabs,
   type MenuView,
 } from "@/components/commerce/menu-view-tabs";
-import { TabularMenuBrowser } from "@/components/commerce/tabular-menu-browser";
 import { PageHero } from "@/components/layout/page-hero";
 import { ErrorState } from "@/components/ui/error-state";
-import { getPublicMenuSafe, getPublicTabularMenuSafe } from "@/lib/api/server";
+import { getPublicMenuSafe } from "@/lib/api/server";
 
 export const dynamic = "force-dynamic";
 
@@ -27,19 +26,17 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
   const params = await searchParams;
   const query = first(params.query)?.trim() ?? "";
   const categorySlug = first(params.category)?.trim() ?? "";
-  const tableCategoryId = first(params.tableCategory)?.trim() ?? "";
   const viewParam = first(params.view);
+  // The tabular menu was retired: any legacy ?view=table / ?tableCategory link
+  // now resolves to the Products view (the product nav).
   const view: MenuView =
-    viewParam === "table" || tableCategoryId
-      ? "table"
-      : viewParam === "products" || categorySlug || query
-        ? "products"
-        : "full";
-  const [{ menu, error }, tabularMenu] = await Promise.all([
-    getPublicMenuSafe(),
-    getPublicTabularMenuSafe(),
-  ]);
-  const products = menu?.categories.flatMap((category) => category.products) ?? [];
+    viewParam === "products" ||
+    viewParam === "table" ||
+    categorySlug ||
+    query
+      ? "products"
+      : "full";
+  const { menu, error } = await getPublicMenuSafe();
 
   return (
     <>
@@ -55,13 +52,6 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
         <MenuViewTabs value={view} />
         {view === "full" ? (
           <MenuBoard />
-        ) : view === "table" ? (
-          <TabularMenuBrowser
-            checkoutHref="/checkout"
-            content={tabularMenu}
-            initialCategoryId={tableCategoryId}
-            products={products}
-          />
         ) : error || !menu ? (
           <ErrorState
             description={error ?? "Menu data is not available."}
