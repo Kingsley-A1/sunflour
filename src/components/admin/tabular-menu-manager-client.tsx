@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Upload } from "lucide-react";
 import { SearchBar } from "@/components/commerce/search-bar";
 import {
@@ -391,14 +390,6 @@ export function TabularMenuManagerClient({
             </p>
             <h2 className="m-0 mt-1 text-xl font-bold">Current content health</h2>
           </div>
-          <Link
-            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:underline"
-            href="/menu?view=table"
-            target="_blank"
-          >
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            Open public tabular menu
-          </Link>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">

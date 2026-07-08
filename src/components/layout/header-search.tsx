@@ -13,11 +13,13 @@ import { Sheet } from "@/components/ui/sheet";
 function menuSearchHref(query: string): Route {
   const trimmedQuery = query.trim();
 
+  // Search always lands on the Products view (the product nav), not the
+  // full-menu image board.
   if (!trimmedQuery) {
-    return "/menu" as Route;
+    return "/menu?view=products" as Route;
   }
 
-  return `/menu?query=${encodeURIComponent(trimmedQuery)}` as Route;
+  return `/menu?view=products&query=${encodeURIComponent(trimmedQuery)}` as Route;
 }
 
 export function HeaderSearch() {

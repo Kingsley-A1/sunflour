@@ -41,31 +41,31 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
       </Link>
-      <div className="grid gap-3 p-4">
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="grid gap-2 p-3 sm:gap-3 sm:p-4">
+        <div className="grid gap-1 sm:gap-2">
+          {/* Status/popularity tags add clutter and height on small cards, so
+              they are reserved for larger screens. */}
+          <div className="hidden flex-wrap items-center gap-2 sm:flex">
             {product.isPopular ? <Badge tone="warning">Popular</Badge> : null}
             <StatusPill status={product.status} />
           </div>
-          <div className="grid gap-1">
+          <div className="grid gap-0.5 sm:gap-1">
             <Link
-              className="text-lg font-bold leading-snug text-[var(--color-text)] hover:underline"
+              className="text-sm font-bold leading-snug text-[var(--color-text)] hover:underline sm:text-lg"
               href={`/products/${product.slug}`}
             >
               {product.name}
             </Link>
             {product.description ? (
-              <p className="m-0 line-clamp-2 text-sm leading-6 text-[var(--color-text-muted)]">
+              <p className="m-0 line-clamp-1 text-xs leading-5 text-[var(--color-text-muted)] sm:line-clamp-2 sm:text-sm sm:leading-6">
                 {product.description}
               </p>
             ) : null}
           </div>
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
-            <PriceText amount={product.basePrice} />
-          </p>
-        </div>
+        <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
+          <PriceText amount={product.basePrice} />
+        </p>
         <AddToCartButton buttonVariant="secondary" product={product} />
       </div>
     </div>

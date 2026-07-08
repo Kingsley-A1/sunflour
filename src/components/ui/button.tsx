@@ -66,7 +66,7 @@ export function Button({
       ) : (
         icon
       )}
-      <span>{children}</span>
+      <span className="whitespace-nowrap">{children}</span>
     </button>
   );
 }

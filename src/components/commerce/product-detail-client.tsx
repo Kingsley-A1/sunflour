@@ -55,7 +55,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       </div>
       <section className="grid content-start gap-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <div className="grid gap-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="hidden flex-wrap gap-2 sm:flex">
             <Badge tone="neutral">{product.category.name}</Badge>
             <StatusPill status={product.status} />
           </div>

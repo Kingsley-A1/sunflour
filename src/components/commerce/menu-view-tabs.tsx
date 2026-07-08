@@ -4,7 +4,7 @@ import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs } from "@/components/ui/tabs";
 
-export type MenuView = "full" | "products" | "table";
+export type MenuView = "full" | "products";
 
 interface MenuViewTabsProps {
   value: MenuView;
@@ -18,10 +18,6 @@ const items = [
   {
     value: "products",
     label: "Products",
-  },
-  {
-    value: "table",
-    label: "Tabular menu",
   },
 ] as const;
 
@@ -45,9 +41,8 @@ export function MenuViewTabs({ value }: MenuViewTabsProps) {
       params.delete("category");
       params.delete("query");
     }
-    if (nextView !== "table") {
-      params.delete("tableCategory");
-    }
+    // The tabular menu was retired; never carry its legacy param forward.
+    params.delete("tableCategory");
 
     const href = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(href as Route, { scroll: false });
