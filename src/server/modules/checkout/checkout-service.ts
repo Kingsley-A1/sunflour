@@ -222,7 +222,7 @@ function mapCheckoutOrderResponse(order: CheckoutOrder): CheckoutOrderResponse {
   const whatsAppProofMessage = buildWhatsAppProofMessage({
     orderNumber: order.orderNumber,
     customerName: order.customerNameSnapshot,
-    total: order.total,
+    amountPaid: order.subtotal,
   });
 
   return {

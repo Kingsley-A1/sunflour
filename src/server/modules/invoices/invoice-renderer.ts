@@ -209,10 +209,17 @@ export function renderInvoiceHtml({
       </section>
 
       <section class="summary">
-        <div class="summary-row"><span>Subtotal</span><span>${formatNairaFromKobo(order.subtotal)}</span></div>
+        <div class="summary-row total"><span>Amount to pay now (bank transfer)</span><span>${formatNairaFromKobo(order.subtotal)}</span></div>
+        ${
+          order.deliveryTotalFeeSnapshot > 0
+            ? `
         <div class="summary-row"><span>Delivery base fee</span><span>${formatNairaFromKobo(order.deliveryBaseFeeSnapshot)}</span></div>
         <div class="summary-row"><span>Delivery surcharge</span><span>${formatNairaFromKobo(order.deliverySurchargeSnapshot)}</span></div>
-        <div class="summary-row total"><span>Total</span><span>${formatNairaFromKobo(order.total)}</span></div>
+        <div class="summary-row"><span>Delivery fee (pay the delivery person on delivery)</span><span>${formatNairaFromKobo(order.deliveryTotalFeeSnapshot)}</span></div>
+        `
+            : ""
+        }
+        <div class="summary-row"><span>Order total</span><span>${formatNairaFromKobo(order.total)}</span></div>
       </section>
 
       <section class="payment">

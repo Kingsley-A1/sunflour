@@ -88,6 +88,11 @@ function totalLine(label: string, amount: number): string {
 const orderEmailPayloadSchema = z.object({
   orderNumber: z.string().min(1),
   customerName: z.string().min(1),
+  // The amount collected upfront by bank transfer (the product subtotal).
+  amountPaid: z.number().int().nonnegative(),
+  // Owed in cash to the delivery person when the order is handed over; 0 for
+  // pickup orders or when no delivery fee applies.
+  deliveryFeeDueOnDelivery: z.number().int().nonnegative().default(0),
   total: z.number().int().nonnegative(),
   invoiceNumber: z.string().min(1).optional(),
   invoiceUrl: z.string().min(1).optional(),
@@ -152,6 +157,13 @@ const registry = {
           title,
           [
             paragraph(`Hello ${escapeHtml(data.customerName)}, your order has been received and is waiting for manual payment confirmation.`),
+            totalLine("Amount to pay now (bank transfer)", data.amountPaid),
+            data.deliveryFeeDueOnDelivery > 0
+              ? totalLine(
+                  "Delivery fee (pay the delivery person on delivery)",
+                  data.deliveryFeeDueOnDelivery,
+                )
+              : "",
             totalLine("Order total", data.total),
             data.invoiceNumber
               ? paragraph(`<strong>Invoice:</strong> ${escapeHtml(data.invoiceNumber)}`)
@@ -181,6 +193,13 @@ const registry = {
           title,
           [
             paragraph(`Hello ${escapeHtml(data.customerName)}, here is the invoice for order ${escapeHtml(data.orderNumber)}.`),
+            totalLine("Amount paid now (bank transfer)", data.amountPaid),
+            data.deliveryFeeDueOnDelivery > 0
+              ? totalLine(
+                  "Delivery fee (pay the delivery person on delivery)",
+                  data.deliveryFeeDueOnDelivery,
+                )
+              : "",
             totalLine("Invoice total", data.total),
             actionLink("View invoice", data.invoiceUrl),
           ].join(""),
@@ -223,6 +242,13 @@ const registry = {
           [
             paragraph(`<strong>Customer:</strong> ${escapeHtml(data.customerName)}`),
             paragraph(`<strong>Phone:</strong> ${escapeHtml(data.customerPhone)}`),
+            totalLine("Amount paid now (bank transfer)", data.amountPaid),
+            data.deliveryFeeDueOnDelivery > 0
+              ? totalLine(
+                  "Delivery fee (collect on delivery)",
+                  data.deliveryFeeDueOnDelivery,
+                )
+              : "",
             totalLine("Order total", data.total),
             actionLink("View invoice", data.invoiceUrl),
           ].join(""),
