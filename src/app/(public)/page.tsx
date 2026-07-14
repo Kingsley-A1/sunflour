@@ -102,7 +102,20 @@ export default async function HomePage() {
         {error ? (
           <ErrorState description={error} title="Menu unavailable" />
         ) : (
-          <ProductGrid products={popularProducts} />
+          <>
+            <ProductGrid products={popularProducts} />
+            {popularProducts.length > 0 ? (
+              <div className="flex justify-center">
+                <Link
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-6 text-sm font-bold text-[var(--color-on-primary)] sm:text-base"
+                  href="/menu"
+                >
+                  See More
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
+            ) : null}
+          </>
         )}
       </section>
 
