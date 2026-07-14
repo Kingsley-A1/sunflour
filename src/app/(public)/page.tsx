@@ -29,11 +29,18 @@ export default async function HomePage() {
       getHomepageHeroProductsSafe(),
       getResolvedPublicContactConfig(),
     ]);
-  const popularProducts =
-    menu?.categories
-      .flatMap((category) => category.products)
-      .filter((product) => product.isPopular || product.isFeatured)
-      .slice(0, 4) ?? [];
+  // Show a fuller menu preview on the homepage: lead with popular/featured
+  // products, then backfill with the rest of the catalog so shoppers always
+  // see a healthy set (up to 8) before the quality cards.
+  const HOMEPAGE_PRODUCT_LIMIT = 8;
+  const allProducts =
+    menu?.categories.flatMap((category) => category.products) ?? [];
+  const isHighlighted = (product: (typeof allProducts)[number]) =>
+    product.isPopular || product.isFeatured;
+  const popularProducts = [
+    ...allProducts.filter(isHighlighted),
+    ...allProducts.filter((product) => !isHighlighted(product)),
+  ].slice(0, HOMEPAGE_PRODUCT_LIMIT);
 
   return (
     <main>
