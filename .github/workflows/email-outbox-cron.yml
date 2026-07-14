@@ -42,7 +42,13 @@ jobs:
             exit 1
           fi
           echo "Processing email outbox via $EMAIL_CRON_URL"
-          curl -fsS -X POST "$EMAIL_CRON_URL" \
+          # -L with --post30x follows any canonical-host redirect (e.g. apex to
+          # www) while keeping the POST + secret header, so the request actually
+          # reaches the handler instead of stopping at a 3xx "Redirecting..."
+          # response. -w prints the final HTTP status for observability.
+          curl -fsS -L --post301 --post302 --post303 \
+            -X POST "$EMAIL_CRON_URL" \
             -H "x-cron-secret: $EMAIL_CRON_SECRET" \
             -H "content-type: application/json" \
-            -d '{}'
+            -d '{}' \
+            -w '\nHTTP %{http_code} (final URL: %{url_effective})\n'
