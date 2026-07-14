@@ -1,13 +1,20 @@
 name: Process email outbox
 
 # External scheduler for the transactional email outbox. The app only sends
-# queued emails when this endpoint is called. Configure two repository secrets:
-#   EMAIL_CRON_URL    e.g. https://sunflourbakery.ng/api/v1/webhooks/cron/email-outbox
-#                     (use the vercel.app URL until the custom domain is live)
+# queued emails when this endpoint is called.
+#
+# The endpoint URL is public (auth is the EMAIL_CRON_SECRET header), so it
+# defaults to the production endpoint below and needs no secret. The only
+# required secret is:
 #   EMAIL_CRON_SECRET must equal the EMAIL_CRON_SECRET env var set in Vercel
+# Optionally override the URL with an EMAIL_CRON_URL repository variable or
+# secret (e.g. to point at a preview/staging deployment).
 #
 # GitHub's scheduled runs fire about every 5 minutes at best and can be delayed
 # under load. For tighter timing, point cron-job.org at the same URL/header.
+
+env:
+  DEFAULT_EMAIL_CRON_URL: https://sunflourbakery.ng/api/v1/webhooks/cron/email-outbox
 
 on:
   schedule:
@@ -25,13 +32,16 @@ jobs:
     steps:
       - name: Trigger email outbox processing
         env:
-          EMAIL_CRON_URL: ${{ secrets.EMAIL_CRON_URL }}
+          # Prefer an explicit override (variable or secret); otherwise use the
+          # production endpoint. The URL is not sensitive.
+          EMAIL_CRON_URL: ${{ vars.EMAIL_CRON_URL || secrets.EMAIL_CRON_URL || env.DEFAULT_EMAIL_CRON_URL }}
           EMAIL_CRON_SECRET: ${{ secrets.EMAIL_CRON_SECRET }}
         run: |
-          if [ -z "$EMAIL_CRON_URL" ] || [ -z "$EMAIL_CRON_SECRET" ]; then
-            echo "Missing EMAIL_CRON_URL or EMAIL_CRON_SECRET repository secret." >&2
+          if [ -z "$EMAIL_CRON_SECRET" ]; then
+            echo "Missing EMAIL_CRON_SECRET repository secret. Set it to match the EMAIL_CRON_SECRET env var in Vercel." >&2
             exit 1
           fi
+          echo "Processing email outbox via $EMAIL_CRON_URL"
           curl -fsS -X POST "$EMAIL_CRON_URL" \
             -H "x-cron-secret: $EMAIL_CRON_SECRET" \
             -H "content-type: application/json" \
