@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
 import { DownloadInvoiceButton } from "@/components/invoice/download-invoice-button";
 import { PrintButton } from "@/components/invoice/print-button";
+import { OrderSuccessScreen } from "@/components/checkout/order-success-screen";
 import { StatusPill } from "@/components/ui/status-pill";
 import { getPublicInvoiceSafe } from "@/lib/api/server";
 import { formatDateTime } from "@/lib/formatters";
@@ -20,7 +20,13 @@ export default async function InvoicePage({
   const { invoice } = await getPublicInvoiceSafe(orderNumber, query.token);
 
   if (!invoice) {
-    notFound();
+    // The invoice link may have expired or lost its access token (e.g. the
+    // customer returns to it later). Reassure them instead of a bare 404.
+    return (
+      <main className="mx-auto grid max-w-5xl gap-5 px-4 py-12">
+        <OrderSuccessScreen />
+      </main>
+    );
   }
 
   return (

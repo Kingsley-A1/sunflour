@@ -85,9 +85,67 @@ function totalLine(label: string, amount: number): string {
   return `<p style="font-size:15px;line-height:1.6;margin:0 0 14px;"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(formatNairaFromKobo(amount))}</p>`;
 }
 
+function referenceLine(orderNumber: string, invoiceNumber?: string): string {
+  const invoicePart = invoiceNumber
+    ? ` &middot; Invoice ${escapeHtml(invoiceNumber)}`
+    : "";
+
+  return `<p style="font-size:12px;line-height:1.5;margin:18px 0 0;color:#6f4b33;">Order reference: ${escapeHtml(orderNumber)}${invoicePart}</p>`;
+}
+
+function signOff(): string {
+  return `<p style="font-size:15px;line-height:1.6;margin:18px 0 0;">Warm regards,<br /><strong>The Sunflour Bakery Team</strong></p>`;
+}
+
+interface OrderEmailItem {
+  name: string;
+  quantity: number;
+  lineTotal: number;
+}
+
+function itemsTable(items: OrderEmailItem[]): string {
+  if (items.length === 0) {
+    return "";
+  }
+
+  const headCell =
+    "text-align:left;padding:8px 10px;font-size:13px;color:#6f4b33;border-bottom:2px solid #e9dcc8;";
+  const cell =
+    "padding:8px 10px;font-size:14px;border-bottom:1px solid #f0e6d6;";
+  const rows = items
+    .map(
+      (item) => `<tr>
+              <td style="${cell}">${escapeHtml(item.name)}</td>
+              <td style="${cell}text-align:center;white-space:nowrap;">${escapeHtml(String(item.quantity))}</td>
+              <td style="${cell}text-align:right;white-space:nowrap;">${escapeHtml(formatNairaFromKobo(item.lineTotal))}</td>
+            </tr>`,
+    )
+    .join("");
+
+  return `<table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 18px;">
+          <thead>
+            <tr>
+              <th style="${headCell}">Item</th>
+              <th style="${headCell}text-align:center;">Qty</th>
+              <th style="${headCell}text-align:right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+}
+
+const orderItemSchema = z.object({
+  name: z.string().min(1),
+  quantity: z.number().int().positive(),
+  lineTotal: z.number().int().nonnegative(),
+});
+
 const orderEmailPayloadSchema = z.object({
   orderNumber: z.string().min(1),
   customerName: z.string().min(1),
+  // Line items so customers see product names, not opaque IDs. Optional +
+  // defaulted so older queued payloads (without items) still render.
+  items: z.array(orderItemSchema).default([]),
   // The amount collected upfront by bank transfer (the product subtotal).
   amountPaid: z.number().int().nonnegative(),
   // Owed in cash to the delivery person when the order is handed over; 0 for
@@ -108,6 +166,9 @@ const statusUpdatePayloadSchema = z.object({
   orderNumber: z.string().min(1),
   customerName: z.string().min(1),
   status: z.string().min(1),
+  // Raw order-status enum value, so payment confirmation can render a warmer,
+  // dedicated message instead of the generic status line.
+  statusKey: z.string().optional(),
 });
 
 const appreciationPayloadSchema = z.object({
@@ -149,14 +210,15 @@ const registry = {
     bodySchemaOrComponentKey: "order-confirmation-v1",
     render(payload) {
       const data = parsePayload(orderEmailPayloadSchema, payload);
-      const title = `Order ${data.orderNumber} received`;
+      const title = "Order Received!";
 
       return {
-        subject: `Order ${data.orderNumber} received - Sunflour Bakery`,
+        subject: "We received your order - Sunflour Bakery",
         html: renderLayout(
           title,
           [
-            paragraph(`Hello ${escapeHtml(data.customerName)}, your order has been received and is waiting for manual payment confirmation.`),
+            paragraph(`Hello ${escapeHtml(data.customerName)}, thank you for your order! Here is what you ordered:`),
+            itemsTable(data.items),
             totalLine("Amount to pay now (bank transfer)", data.amountPaid),
             data.deliveryFeeDueOnDelivery > 0
               ? totalLine(
@@ -165,14 +227,13 @@ const registry = {
                 )
               : "",
             totalLine("Order total", data.total),
-            data.invoiceNumber
-              ? paragraph(`<strong>Invoice:</strong> ${escapeHtml(data.invoiceNumber)}`)
-              : "",
             data.paymentInstruction
               ? paragraph(`<strong>Payment instruction:</strong><br />${escapeHtml(data.paymentInstruction).replaceAll("\n", "<br />")}`)
               : "",
+            paragraph("Once we confirm your payment, we'll start packaging your order right away."),
             actionLink("View invoice", data.invoiceUrl),
             actionLink("Send payment proof on WhatsApp", data.whatsAppProofUrl),
+            referenceLine(data.orderNumber, data.invoiceNumber),
           ].join(""),
         ),
       };
@@ -192,7 +253,8 @@ const registry = {
         html: renderLayout(
           title,
           [
-            paragraph(`Hello ${escapeHtml(data.customerName)}, here is the invoice for order ${escapeHtml(data.orderNumber)}.`),
+            paragraph(`Hello ${escapeHtml(data.customerName)}, here is the invoice for your order.`),
+            itemsTable(data.items),
             totalLine("Amount paid now (bank transfer)", data.amountPaid),
             data.deliveryFeeDueOnDelivery > 0
               ? totalLine(
@@ -202,6 +264,7 @@ const registry = {
               : "",
             totalLine("Invoice total", data.total),
             actionLink("View invoice", data.invoiceUrl),
+            referenceLine(data.orderNumber, data.invoiceNumber),
           ].join(""),
         ),
       };
@@ -262,6 +325,22 @@ const registry = {
     bodySchemaOrComponentKey: "order-status-update-v1",
     render(payload) {
       const data = parsePayload(statusUpdatePayloadSchema, payload);
+
+      if (data.statusKey === "PAYMENT_CONFIRMED") {
+        return {
+          subject: "Payment confirmed - Sunflour Bakery",
+          html: renderLayout(
+            "Payment confirmed",
+            [
+              paragraph(`Hello ${escapeHtml(data.customerName)}, great news - we've confirmed your payment. Your order is now being packaged with care.`),
+              paragraph("Thank you for choosing Sunflour Bakery. We truly appreciate you, and we can't wait to serve you again - please call again!"),
+              signOff(),
+              referenceLine(data.orderNumber),
+            ].join(""),
+          ),
+        };
+      }
+
       const title = `Order ${data.orderNumber} update`;
 
       return {

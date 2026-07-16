@@ -107,6 +107,58 @@ function applyCheckoutFieldErrors(
   });
 }
 
+// Persist the most recent successful checkout so a customer who leaves (e.g. to
+// send WhatsApp proof or view the invoice) and returns to /checkout sees their
+// order confirmation again instead of an empty "no items" screen.
+const LAST_ORDER_STORAGE_KEY = "sunflour-last-order-v1";
+const LAST_ORDER_TTL_MS = 24 * 60 * 60_000;
+
+function persistLastOrder(result: CheckoutResult): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      LAST_ORDER_STORAGE_KEY,
+      JSON.stringify({ savedAt: Date.now(), result }),
+    );
+  } catch {
+    // Storage may be unavailable (private mode / quota); non-fatal.
+  }
+}
+
+function readLastOrder(): CheckoutResult | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(LAST_ORDER_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as {
+      savedAt?: number;
+      result?: CheckoutResult;
+    };
+
+    if (
+      !parsed.result ||
+      typeof parsed.savedAt !== "number" ||
+      Date.now() - parsed.savedAt > LAST_ORDER_TTL_MS
+    ) {
+      window.localStorage.removeItem(LAST_ORDER_STORAGE_KEY);
+      return null;
+    }
+
+    return parsed.result;
+  } catch {
+    return null;
+  }
+}
+
 interface CheckoutPageClientProps {
   customerDefaults?: CheckoutCustomerDefaults | null;
 }
@@ -119,6 +171,23 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<CheckoutResult | null>(null);
+
+  // On return to /checkout with an empty cart, restore the last confirmation
+  // from storage. This runs post-mount (not during render) to avoid a
+  // server/client hydration mismatch, since localStorage is client-only.
+  useEffect(() => {
+    if (cart.items.length > 0) {
+      return;
+    }
+
+    const lastOrder = readLastOrder();
+    if (lastOrder) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResult(lastOrder);
+    }
+    // Run once on mount; cart is read at that point intentionally.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     register,
@@ -277,6 +346,7 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
       );
 
       setResult(checkoutResult);
+      persistLastOrder(checkoutResult);
       cart.clearCart();
     } catch (error) {
       if (error instanceof ApiClientError) {
@@ -289,7 +359,10 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
     }
   }
 
-  if (result) {
+  // Show the confirmation right after ordering, and again when the customer
+  // returns with an empty cart (hydrated from storage). Once they add new
+  // items, fall through to the checkout form so they can order again.
+  if (result && cart.items.length === 0) {
     return (
       <div className="grid gap-5">
         <CheckoutStepper currentStep={4} />

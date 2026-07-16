@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
-import { Check, Copy, FileText, Landmark } from "lucide-react";
+import { ArrowRight, Check, CircleCheck, Copy, FileText, Home, Landmark } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PriceText } from "@/components/ui/price-text";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -76,12 +76,19 @@ export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
     <Card className="grid gap-5 p-5">
       <div className="grid gap-2">
         <div className="flex flex-wrap items-center gap-2">
+          <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--color-success-soft)]">
+            <CircleCheck
+              className="h-6 w-6 text-[var(--color-success)]"
+              aria-hidden="true"
+            />
+          </span>
           <StatusPill status={result.status} />
         </div>
-        <h2 className="m-0 text-2xl font-extrabold">Order created, awaiting payment</h2>
+        <h2 className="m-0 text-2xl font-extrabold">Order received!</h2>
         <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
-          Order {result.orderNumber} is waiting for manual Moniepoint transfer
-          verification. Payment is not confirmed until Sunflour staff verifies it.
+          Thanks for your order. Complete the transfer below and send your proof
+          on WhatsApp so we can confirm your payment and start packaging your
+          order.
         </p>
       </div>
       <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
@@ -164,6 +171,22 @@ export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
           orderNumber={result.orderNumber}
           proofToken={invoiceAccessToken(result)}
         />
+      </div>
+      <div className="flex flex-col gap-2 border-t border-[var(--color-border)] pt-4 sm:flex-row">
+        <Link
+          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-hover)]"
+          href={"/menu" as Route}
+        >
+          Browse menu
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+        <Link
+          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 text-sm font-semibold hover:bg-[var(--color-surface-muted)]"
+          href={"/" as Route}
+        >
+          <Home className="h-4 w-4" aria-hidden="true" />
+          Back to home
+        </Link>
       </div>
     </Card>
   );
