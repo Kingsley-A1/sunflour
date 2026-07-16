@@ -68,6 +68,14 @@ function order(overrides = {}) {
     subtotal: 500_000,
     total: 700_000,
     deliveryTotalFeeSnapshot: 200_000,
+    items: [
+      {
+        productNameSnapshot: "Chocolate Cake",
+        variantNameSnapshot: "Slice",
+        quantity: 2,
+        lineTotal: 500_000,
+      },
+    ],
     status: OrderStatus.PENDING_PAYMENT,
     deliveredAt: null,
     paymentInstructionSnapshot: "Transfer to Sunflour Bakery.",

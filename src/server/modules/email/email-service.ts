@@ -69,6 +69,13 @@ export interface EmailSendResult {
   errorMessage?: string;
 }
 
+export interface EmailOrderForQueueItem {
+  productNameSnapshot: string;
+  variantNameSnapshot: string | null;
+  quantity: number;
+  lineTotal: number;
+}
+
 export interface EmailOrderForQueue {
   id: string;
   orderNumber: string;
@@ -78,6 +85,7 @@ export interface EmailOrderForQueue {
   subtotal: number;
   total: number;
   deliveryTotalFeeSnapshot: number;
+  items: EmailOrderForQueueItem[];
   status: OrderStatusValue;
   deliveredAt?: Date | null;
   paymentInstructionSnapshot?: string | null;
@@ -180,6 +188,13 @@ function orderEmailPayload(order: EmailOrderForQueue): Record<string, unknown> {
     orderNumber: order.orderNumber,
     customerName: order.customerNameSnapshot,
     customerPhone: order.customerPhoneSnapshot,
+    items: order.items.map((item) => ({
+      name: item.variantNameSnapshot
+        ? `${item.productNameSnapshot} (${item.variantNameSnapshot})`
+        : item.productNameSnapshot,
+      quantity: item.quantity,
+      lineTotal: item.lineTotal,
+    })),
     amountPaid: order.subtotal,
     deliveryFeeDueOnDelivery: order.deliveryTotalFeeSnapshot,
     total: order.total,
@@ -360,6 +375,7 @@ export async function queueOrderStatusUpdateEmailForOrder(
       orderNumber: order.orderNumber,
       customerName: order.customerNameSnapshot,
       status: orderStatusEmailLabels[status],
+      statusKey: status,
     },
   });
 }
