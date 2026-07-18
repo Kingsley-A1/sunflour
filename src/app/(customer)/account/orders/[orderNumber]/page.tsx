@@ -72,7 +72,7 @@ export default async function AccountOrderDetailPage({
           </div>
           {order.deliveryTotalFeeSnapshot > 0 ? (
             <div className="flex justify-between text-sm text-[var(--color-text-muted)]">
-              <span>Pay on delivery (cash to delivery person)</span>
+              <span>Pay on delivery (to the delivery person)</span>
               <span>{formatNairaFromKobo(order.deliveryTotalFeeSnapshot)}</span>
             </div>
           ) : null}
