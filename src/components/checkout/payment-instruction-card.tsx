@@ -9,6 +9,7 @@ import { PriceText } from "@/components/ui/price-text";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useToast } from "@/components/ui/toast";
 import { WhatsAppProofButton } from "@/components/checkout/whatsapp-proof-button";
+import { CancelOrderWindow } from "@/components/checkout/cancel-order-window";
 import type { CheckoutResult } from "@/types/domain";
 
 interface ParsedPaymentInstruction {
@@ -44,6 +45,15 @@ function invoiceAccessToken(result: CheckoutResult): string | undefined {
   }
 }
 
+// The proof WhatsApp URL already encodes the business number as `wa.me/<digits>`.
+// Reuse it so the cancellation notice reaches the same inbox without threading a
+// separate number through the checkout response.
+function proofWhatsAppNumber(result: CheckoutResult): string | null {
+  const match = /wa\.me\/(\d+)/.exec(result.whatsAppProofUrl);
+
+  return match?.[1] ?? null;
+}
+
 function invoicePageUrl(result: CheckoutResult): string {
   const token = invoiceAccessToken(result);
 
@@ -52,7 +62,13 @@ function invoicePageUrl(result: CheckoutResult): string {
     : `/orders/${encodeURIComponent(result.orderNumber)}/invoice`;
 }
 
-export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
+export function PaymentInstructionCard({
+  result,
+  placedAt,
+}: {
+  result: CheckoutResult;
+  placedAt: number;
+}) {
   const { notify } = useToast();
   const [copied, setCopied] = useState(false);
   const instruction = parsePaymentInstruction(result.paymentInstruction);
@@ -91,6 +107,11 @@ export function PaymentInstructionCard({ result }: { result: CheckoutResult }) {
           order.
         </p>
       </div>
+      <CancelOrderWindow
+        orderNumber={result.orderNumber}
+        placedAt={placedAt}
+        whatsAppNumber={proofWhatsAppNumber(result)}
+      />
       <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
         <p className="m-0 text-sm font-semibold text-[var(--color-text-muted)]">
           Amount to transfer now

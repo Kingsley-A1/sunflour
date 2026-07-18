@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success";
 type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,6 +21,8 @@ const variantClasses: Record<ButtonVariant, string> = {
     "bg-transparent text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
   danger:
     "bg-[var(--color-danger)] text-[var(--color-text-inverse)] hover:brightness-95",
+  success:
+    "bg-[var(--color-success)] text-[var(--color-text-inverse)] hover:brightness-95",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -54,7 +56,7 @@ export function Button({
       style={
         variant === "primary"
           ? { ...style, color: "var(--color-on-primary)" }
-          : variant === "danger"
+          : variant === "danger" || variant === "success"
             ? { ...style, color: "var(--color-text-inverse)" }
             : style
       }

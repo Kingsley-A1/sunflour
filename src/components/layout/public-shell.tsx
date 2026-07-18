@@ -9,7 +9,6 @@ import { HeaderSearch } from "@/components/layout/header-search";
 import { PublicBottomNav } from "@/components/layout/public-bottom-nav";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
 import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
-import { WelcomeModal } from "@/components/ui/welcome-modal";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 import type {
   PublicCategoryNavigationItem,
@@ -148,7 +147,6 @@ export async function PublicShell({
             ))}
           </nav>
         </header>
-        <WelcomeModal />
         <div className="flex-grow">{children}</div>
         <Footer />
         <PublicWhatsAppFab

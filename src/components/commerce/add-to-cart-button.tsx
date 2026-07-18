@@ -53,7 +53,7 @@ export function AddToCartButton({
         className={className}
         icon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
         onClick={() => router.push("/checkout")}
-        variant={buttonVariant}
+        variant="success"
       >
         Go to checkout
       </Button>

@@ -128,7 +128,7 @@ function persistLastOrder(result: CheckoutResult): void {
   }
 }
 
-function readLastOrder(): CheckoutResult | null {
+function readLastOrder(): { result: CheckoutResult; savedAt: number } | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -153,7 +153,7 @@ function readLastOrder(): CheckoutResult | null {
       return null;
     }
 
-    return parsed.result;
+    return { result: parsed.result, savedAt: parsed.savedAt };
   } catch {
     return null;
   }
@@ -171,6 +171,9 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<CheckoutResult | null>(null);
+  // Epoch ms the confirmed order was placed, used to time the short
+  // quick-cancel window on the confirmation screen.
+  const [placedAt, setPlacedAt] = useState<number>(() => Date.now());
 
   // On return to /checkout with an empty cart, restore the last confirmation
   // from storage. This runs post-mount (not during render) to avoid a
@@ -183,7 +186,9 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
     const lastOrder = readLastOrder();
     if (lastOrder) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setResult(lastOrder);
+      setResult(lastOrder.result);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPlacedAt(lastOrder.savedAt);
     }
     // Run once on mount; cart is read at that point intentionally.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -346,6 +351,7 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
       );
 
       setResult(checkoutResult);
+      setPlacedAt(Date.now());
       persistLastOrder(checkoutResult);
       cart.clearCart();
     } catch (error) {
@@ -366,7 +372,7 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
     return (
       <div className="grid gap-5">
         <CheckoutStepper currentStep={4} />
-        <PaymentInstructionCard result={result} />
+        <PaymentInstructionCard placedAt={placedAt} result={result} />
       </div>
     );
   }
