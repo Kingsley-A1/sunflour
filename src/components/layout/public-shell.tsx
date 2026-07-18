@@ -153,7 +153,7 @@ export async function PublicShell({
           businessName={contact.businessName}
           href={contact.whatsappHref}
         />
-        <PublicBottomNav />
+        <PublicBottomNav isSignedIn={isSignedIn} />
       </div>
     </CartProvider>
   );

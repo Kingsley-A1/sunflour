@@ -201,10 +201,10 @@ export function ProductAdminClient({
         />
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
-          <table className="min-w-[48rem] border-collapse text-left text-sm">
+          <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
             <thead className="bg-[var(--color-surface-muted)]">
               <tr>
-                <th className="p-3">Product</th>
+                <th className="w-full p-3">Product</th>
                 <th className="p-3">Category</th>
                 <th className="p-3">Price</th>
                 <th className="p-3">Status</th>

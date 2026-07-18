@@ -30,10 +30,10 @@ export function EmailSettingsClient() {
         </p>
       </section>
       <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
-        <table className="min-w-[42rem] text-left text-sm">
+        <table className="w-full min-w-[42rem] text-left text-sm">
           <thead className="bg-[var(--color-surface-muted)]">
             <tr>
-              <th className="p-3">Template</th>
+              <th className="w-full p-3">Template</th>
               <th className="p-3">Subject</th>
               <th className="p-3">State</th>
             </tr>

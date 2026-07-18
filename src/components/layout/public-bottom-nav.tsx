@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Route } from "next";
-import { CreditCard, Home, ShoppingCart, Utensils } from "lucide-react";
+import { CreditCard, Home, LogIn, ShoppingCart, Utensils } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useCart } from "@/features/cart/cart-store";
 import { cn } from "@/lib/utils";
@@ -15,12 +15,28 @@ interface BottomNavItem {
   showCount?: boolean;
 }
 
-const bottomNavItems: BottomNavItem[] = [
+const baseNavItems: BottomNavItem[] = [
   { href: "/" as Route, label: "Home", icon: Home },
   { href: "/menu" as Route, label: "Menu", icon: Utensils },
   { href: "/cart" as Route, label: "Cart", icon: ShoppingCart, showCount: true },
-  { href: "/checkout" as Route, label: "Checkout", icon: CreditCard },
 ];
+
+// Guests get a "Sign in" entry point where signed-in visitors get "Checkout",
+// so the last slot is always relevant to the visitor's state.
+const checkoutItem: BottomNavItem = {
+  href: "/checkout" as Route,
+  label: "Checkout",
+  icon: CreditCard,
+};
+const signInItem: BottomNavItem = {
+  href: "/sign-in" as Route,
+  label: "Sign in",
+  icon: LogIn,
+};
+
+interface PublicBottomNavProps {
+  isSignedIn: boolean;
+}
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") {
@@ -30,9 +46,13 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function PublicBottomNav() {
+export function PublicBottomNav({ isSignedIn }: PublicBottomNavProps) {
   const pathname = usePathname();
   const { itemCount } = useCart();
+  const bottomNavItems: BottomNavItem[] = [
+    ...baseNavItems,
+    isSignedIn ? checkoutItem : signInItem,
+  ];
 
   return (
     <>

@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 interface SignOutButtonProps {
   className?: string;
   label?: string;
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "danger-outline";
 }
 
 export function SignOutButton({
   className,
   label = "Sign out",
-  variant = "secondary",
+  // Signing out ends the session, so it reads as a distinct exit action rather
+  // than sharing the neutral styling of navigation buttons beside it.
+  variant = "danger-outline",
 }: SignOutButtonProps) {
   return (
     <Button

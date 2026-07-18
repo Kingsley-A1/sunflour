@@ -73,10 +73,10 @@ export function ProductDraftsList({ drafts, error }: ProductDraftsListProps) {
         />
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
-          <table className="min-w-[40rem] border-collapse text-left text-sm">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
             <thead className="bg-[var(--color-surface-muted)]">
               <tr>
-                <th className="p-3">Draft</th>
+                <th className="w-full p-3">Draft</th>
                 <th className="p-3">Last saved</th>
                 <th className="p-3">Actions</th>
               </tr>

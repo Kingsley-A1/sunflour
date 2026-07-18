@@ -304,10 +304,10 @@ export function DeliverySettingsClient() {
         </section>
       </div>
       <section className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
-        <table className="min-w-[44rem] text-left text-sm">
+        <table className="w-full min-w-[44rem] text-left text-sm">
           <thead className="bg-[var(--color-surface-muted)]">
             <tr>
-              <th className="p-3">Zone</th>
+              <th className="w-full p-3">Zone</th>
               <th className="p-3">Base fee</th>
               <th className="p-3">State</th>
               <th className="p-3">Actions</th>
@@ -432,10 +432,10 @@ export function DeliverySettingsClient() {
         </table>
       </section>
       <section className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
-        <table className="min-w-[52rem] text-left text-sm">
+        <table className="w-full min-w-[52rem] text-left text-sm">
           <thead className="bg-[var(--color-surface-muted)]">
             <tr>
-              <th className="p-3">Rule</th>
+              <th className="w-full p-3">Rule</th>
               <th className="p-3">Starts</th>
               <th className="p-3">Amount</th>
               <th className="p-3">State</th>
