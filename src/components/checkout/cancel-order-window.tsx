@@ -86,13 +86,13 @@ export function CancelOrderWindow({
 
   if (phase === "counting") {
     return (
-      <div
-        className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3"
-        role="status"
-      >
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
         <p className="m-0 text-sm text-[var(--color-text-muted)]">
           Placed by mistake? You can cancel for the next{" "}
-          <span className="font-bold text-[var(--color-text)] [font-variant-numeric:tabular-nums]">
+          <span
+            aria-hidden="true"
+            className="font-bold text-[var(--color-text)] [font-variant-numeric:tabular-nums]"
+          >
             {secondsLeft}s
           </span>
           .
