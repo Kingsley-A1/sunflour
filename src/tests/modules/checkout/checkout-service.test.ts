@@ -379,4 +379,25 @@ describe("checkout service", () => {
     expect(message).toContain("5,000");
     expect(url).toContain("https://wa.me/2348012345678");
   });
+
+  it("builds WhatsApp proof messages listing product names and prices instead of IDs", () => {
+    const message = buildWhatsAppProofMessage({
+      orderNumber: "SFB-20260101-ABC123",
+      customerName: "Ada Baker",
+      amountPaid: 500_000,
+      items: [
+        {
+          productName: "Banana Bread",
+          variantName: "Large",
+          quantity: 2,
+          lineTotal: 500_000,
+        },
+      ],
+    });
+
+    expect(message).toContain("Banana Bread (Large)");
+    expect(message).toContain("x2");
+    expect(message).toContain("5,000");
+    expect(message).not.toMatch(/cl[a-z0-9]{20,}/i);
+  });
 });

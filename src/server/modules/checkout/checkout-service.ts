@@ -223,6 +223,12 @@ function mapCheckoutOrderResponse(order: CheckoutOrder): CheckoutOrderResponse {
     orderNumber: order.orderNumber,
     customerName: order.customerNameSnapshot,
     amountPaid: order.subtotal,
+    items: order.items.map((item) => ({
+      productName: item.productNameSnapshot,
+      variantName: item.variantNameSnapshot,
+      quantity: item.quantity,
+      lineTotal: item.lineTotal,
+    })),
   });
 
   return {
