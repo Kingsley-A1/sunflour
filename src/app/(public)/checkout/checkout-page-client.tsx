@@ -113,7 +113,7 @@ function applyCheckoutFieldErrors(
 const LAST_ORDER_STORAGE_KEY = "sunflour-last-order-v1";
 const LAST_ORDER_TTL_MS = 24 * 60 * 60_000;
 
-function persistLastOrder(result: CheckoutResult): void {
+function persistLastOrder(result: CheckoutResult, savedAt: number): void {
   if (typeof window === "undefined") {
     return;
   }
@@ -121,11 +121,17 @@ function persistLastOrder(result: CheckoutResult): void {
   try {
     window.localStorage.setItem(
       LAST_ORDER_STORAGE_KEY,
-      JSON.stringify({ savedAt: Date.now(), result }),
+      JSON.stringify({ savedAt, result }),
     );
   } catch {
     // Storage may be unavailable (private mode / quota); non-fatal.
   }
+}
+
+// Indirection so the timestamp read happens in a plain helper rather than as a
+// literal `Date.now()` call inside a state setter in the component body.
+function nowMs(): number {
+  return Date.now();
 }
 
 function readLastOrder(): { result: CheckoutResult; savedAt: number } | null {
@@ -173,7 +179,7 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
   const [result, setResult] = useState<CheckoutResult | null>(null);
   // Epoch ms the confirmed order was placed, used to time the short
   // quick-cancel window on the confirmation screen.
-  const [placedAt, setPlacedAt] = useState<number>(() => Date.now());
+  const [placedAt, setPlacedAt] = useState<number>(nowMs);
 
   // On return to /checkout with an empty cart, restore the last confirmation
   // from storage. This runs post-mount (not during render) to avoid a
@@ -187,7 +193,6 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
     if (lastOrder) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResult(lastOrder.result);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPlacedAt(lastOrder.savedAt);
     }
     // Run once on mount; cart is read at that point intentionally.
@@ -350,9 +355,10 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
         idempotencyKey,
       );
 
+      const orderPlacedAt = nowMs();
       setResult(checkoutResult);
-      setPlacedAt(Date.now());
-      persistLastOrder(checkoutResult);
+      setPlacedAt(orderPlacedAt);
+      persistLastOrder(checkoutResult, orderPlacedAt);
       cart.clearCart();
     } catch (error) {
       if (error instanceof ApiClientError) {

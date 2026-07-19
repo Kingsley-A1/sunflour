@@ -3,6 +3,7 @@ import type { Route } from "next";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
+import { CancelOrderWindow } from "@/components/checkout/cancel-order-window";
 import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { requireAuth } from "@/server/auth/rbac";
 import { getCustomerOrderDetail } from "@/server/modules/customers";
@@ -52,6 +53,12 @@ export default async function AccountOrderDetailPage({
           <StatusPill status={order.paymentStatus} />
         </div>
       </header>
+      <CancelOrderWindow
+        orderNumber={order.orderNumber}
+        orderStatus={order.status}
+        placedAt={new Date(order.createdAt).getTime()}
+        whatsAppNumber={order.proofWhatsappNumberSnapshot}
+      />
       <Card className="grid gap-3 p-4">
         <h2 className="m-0 text-xl font-bold">Order summary</h2>
         <p className="m-0 text-sm text-[var(--color-text-muted)]">

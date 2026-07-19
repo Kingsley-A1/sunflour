@@ -109,6 +109,7 @@ export function PaymentInstructionCard({
       </div>
       <CancelOrderWindow
         orderNumber={result.orderNumber}
+        orderStatus={result.status}
         placedAt={placedAt}
         whatsAppNumber={proofWhatsAppNumber(result)}
       />

@@ -3,6 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { MessageCircle, Undo2, X } from "lucide-react";
 
+// Statuses where the order has already left the "can still back out" stage.
+// Kept separate from the time window so a stale link (e.g. an old tab) can't
+// offer to cancel an order that's already out for delivery or resolved.
+const NON_CANCELLABLE_STATUSES = new Set([
+  "READY_FOR_PICKUP",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "REJECTED",
+]);
+
 interface CancelOrderWindowProps {
   orderNumber: string;
   // Digits-only WhatsApp number to receive the cancellation notice. When null,
@@ -11,15 +22,25 @@ interface CancelOrderWindowProps {
   // Epoch ms when the order was placed. The quick-cancel affordance is only
   // offered for a short window after this moment.
   placedAt: number;
+  // Current order status. When omitted (e.g. right after checkout, before any
+  // status change could occur), the window is time-gated only.
+  orderStatus?: string;
 }
 
 // Customers get a brief grace period to reverse an order they placed by
 // mistake. This is a client-side convenience only: it never mutates order state
 // itself — it hands the customer a pre-filled WhatsApp cancellation notice so
 // staff can act on it, matching the manual-payment operating model.
-const CANCEL_WINDOW_MS = 10_000;
+const CANCEL_WINDOW_MS = 10 * 60 * 1000;
 
 type Phase = "counting" | "reason" | "closed";
+
+function formatCountdown(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 function buildCancelWhatsAppUrl(
   orderNumber: string,
@@ -45,6 +66,7 @@ export function CancelOrderWindow({
   orderNumber,
   whatsAppNumber,
   placedAt,
+  orderStatus,
 }: CancelOrderWindowProps) {
   const [now, setNow] = useState(() => Date.now());
   const [phase, setPhase] = useState<Phase>("counting");
@@ -54,12 +76,15 @@ export function CancelOrderWindow({
     0,
     Math.ceil((placedAt + CANCEL_WINDOW_MS - now) / 1000),
   );
+  const ineligible = Boolean(
+    orderStatus && NON_CANCELLABLE_STATUSES.has(orderStatus),
+  );
 
   // Tick once a second while the window counts down. Once the customer opens
   // the reason form we stop caring about the clock — they keep the ability to
   // send the notice for as long as this screen is open.
   useEffect(() => {
-    if (phase !== "counting") {
+    if (phase !== "counting" || ineligible) {
       return;
     }
 
@@ -71,7 +96,7 @@ export function CancelOrderWindow({
 
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
-  }, [phase, secondsLeft]);
+  }, [phase, secondsLeft, ineligible]);
 
   const cancelHref = useMemo(
     () => buildCancelWhatsAppUrl(orderNumber, reason, whatsAppNumber),
@@ -80,7 +105,7 @@ export function CancelOrderWindow({
 
   const reasonReady = reason.trim().length >= 3;
 
-  if (phase === "closed") {
+  if (ineligible || phase === "closed") {
     return null;
   }
 
@@ -93,7 +118,7 @@ export function CancelOrderWindow({
             aria-hidden="true"
             className="font-bold text-[var(--color-text)] [font-variant-numeric:tabular-nums]"
           >
-            {secondsLeft}s
+            {formatCountdown(secondsLeft)}
           </span>
           .
         </p>
