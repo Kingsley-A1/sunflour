@@ -400,4 +400,37 @@ describe("checkout service", () => {
     expect(message).toContain("5,000");
     expect(message).not.toMatch(/cl[a-z0-9]{20,}/i);
   });
+
+  it("builds WhatsApp proof messages with the delivery zone, address, and note", () => {
+    const message = buildWhatsAppProofMessage({
+      orderNumber: "SFB-20260101-ABC123",
+      customerName: "Ada Baker",
+      amountPaid: 500_000,
+      delivery: {
+        method: DeliveryMethod.DELIVERY,
+        zoneName: "Central Bakery Area",
+        address: "12 Bakery Street",
+        orderPlacedAt: now,
+      },
+      customerNote: "Please call on arrival.",
+    });
+
+    expect(message).toContain("Fulfillment: Delivery to Central Bakery Area — 12 Bakery Street");
+    expect(message).toContain("Note: Please call on arrival.");
+  });
+
+  it("builds WhatsApp proof messages marking pickup orders with the placed date/time", () => {
+    const message = buildWhatsAppProofMessage({
+      orderNumber: "SFB-20260101-ABC123",
+      customerName: "Ada Baker",
+      amountPaid: 500_000,
+      delivery: {
+        method: DeliveryMethod.PICKUP,
+        orderPlacedAt: now,
+      },
+    });
+
+    expect(message).toContain("Fulfillment: Pickup (ordered");
+    expect(message).not.toContain("Fulfillment: Delivery");
+  });
 });

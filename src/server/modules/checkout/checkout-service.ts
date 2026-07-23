@@ -229,6 +229,13 @@ function mapCheckoutOrderResponse(order: CheckoutOrder): CheckoutOrderResponse {
       quantity: item.quantity,
       lineTotal: item.lineTotal,
     })),
+    delivery: {
+      method: order.deliveryMethod,
+      zoneName: order.deliveryZoneNameSnapshot,
+      address: order.deliveryAddressSnapshot,
+      orderPlacedAt: order.createdAt,
+    },
+    customerNote: order.customerNote,
   });
 
   return {

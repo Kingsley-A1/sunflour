@@ -6,6 +6,7 @@ import {
   OrderStatus,
 } from "@/generated/prisma/enums";
 import type {
+  DeliveryMethod as DeliveryMethodValue,
   EmailOutboxStatus as EmailOutboxStatusValue,
   EmailTemplateKey as EmailTemplateKeyValue,
   OrderStatus as OrderStatusValue,
@@ -84,7 +85,12 @@ export interface EmailOrderForQueue {
   customerEmailSnapshot: string | null;
   subtotal: number;
   total: number;
+  deliveryMethod: DeliveryMethodValue;
+  deliveryZoneNameSnapshot: string | null;
+  deliveryAddressSnapshot: string | null;
   deliveryTotalFeeSnapshot: number;
+  customerNote?: string | null;
+  createdAt: Date;
   items: EmailOrderForQueueItem[];
   status: OrderStatusValue;
   deliveredAt?: Date | null;
@@ -188,6 +194,13 @@ function orderEmailPayload(order: EmailOrderForQueue): Record<string, unknown> {
       quantity: item.quantity,
       lineTotal: item.lineTotal,
     })),
+    delivery: {
+      method: order.deliveryMethod,
+      zoneName: order.deliveryZoneNameSnapshot,
+      address: order.deliveryAddressSnapshot,
+      orderPlacedAt: order.createdAt,
+    },
+    customerNote: order.customerNote,
   });
 
   return {

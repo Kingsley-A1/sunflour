@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import {
+  DeliveryMethod,
   EmailOutboxStatus,
   EmailTemplateKey,
   OrderStatus,
@@ -67,7 +68,12 @@ function order(overrides = {}) {
     customerEmailSnapshot: "ada@example.com",
     subtotal: 500_000,
     total: 700_000,
+    deliveryMethod: DeliveryMethod.DELIVERY,
+    deliveryZoneNameSnapshot: "Ikeja",
+    deliveryAddressSnapshot: "12 Allen Avenue, Ikeja",
     deliveryTotalFeeSnapshot: 200_000,
+    customerNote: null,
+    createdAt: now,
     items: [
       {
         productNameSnapshot: "Chocolate Cake",
