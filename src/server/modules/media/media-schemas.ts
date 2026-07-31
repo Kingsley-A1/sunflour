@@ -10,12 +10,22 @@ export const ALLOWED_IMAGE_CONTENT_TYPES = [
 
 export const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
 
+export const mediaUploadPurposeSchema = z.literal(
+  MediaUploadPurpose.PRODUCT_IMAGE,
+);
+
+export const adminMediaUploadPurposeSchema = z.enum([
+  "PRODUCT_IMAGE",
+  "CAROUSEL_BANNER",
+  "SALE_CARD_IMAGE",
+]);
+
 export const presignedUploadRequestSchema = z
   .object({
     fileName: z.string().trim().min(1).max(180),
     contentType: z.enum(ALLOWED_IMAGE_CONTENT_TYPES),
     byteSize: z.number().int().min(1).max(MAX_PRODUCT_IMAGE_BYTES),
-    purpose: z.literal(MediaUploadPurpose.PRODUCT_IMAGE),
+    purpose: mediaUploadPurposeSchema,
   })
   .strict();
 
@@ -30,4 +40,7 @@ export type PresignedUploadRequestInput = z.infer<
 >;
 export type CompleteMediaUploadInput = z.infer<
   typeof completeMediaUploadSchema
+>;
+export type AdminMediaUploadPurpose = z.infer<
+  typeof adminMediaUploadPurposeSchema
 >;

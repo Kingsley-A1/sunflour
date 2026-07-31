@@ -26,6 +26,11 @@ import {
   type CatalogLineItemSnapshot,
 } from "@/server/modules/menu/product-snapshot";
 import {
+  applyWeeklySaleDiscount,
+  getActiveWeeklySale,
+} from "@/server/modules/homepage-merchandising";
+import type { WeeklySaleSettingsValue } from "@/server/modules/homepage-merchandising/homepage-merchandising-schemas";
+import {
   buildIdempotencyRequestHash,
   generateOrderNumber,
 } from "./checkout-ids";
@@ -167,6 +172,7 @@ function findVariant(
 export function resolveCheckoutLineItems(
   items: readonly CheckoutItemInput[],
   products: readonly CheckoutProduct[],
+  weeklySale: WeeklySaleSettingsValue | null = null,
 ): ResolvedCheckoutLineItem[] {
   const productsById = new Map(products.map((product) => [product.id, product]));
 
@@ -185,7 +191,11 @@ export function resolveCheckoutLineItems(
     }
 
     const variant = findVariant(product, item, index);
-    const unitPrice = variant?.price ?? product.basePrice;
+    const catalogPrice = variant?.price ?? product.basePrice;
+    const unitPrice =
+      weeklySale?.productId === product.id
+        ? applyWeeklySaleDiscount(catalogPrice, weeklySale.discountPercent)
+        : catalogPrice;
     const snapshot = buildCatalogLineItemSnapshot({
       productName: product.name,
       variantName: variant?.name,
@@ -300,15 +310,18 @@ export async function createCheckoutOrder(
     return mapCheckoutOrderResponse(existingOrder);
   }
 
-  const products = await prisma.product.findMany({
-    where: {
-      id: {
-        in: input.items.map((item) => item.productId),
+  const [products, weeklySale] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        id: {
+          in: input.items.map((item) => item.productId),
+        },
       },
-    },
-    include: checkoutProductInclude,
-  });
-  const lineItems = resolveCheckoutLineItems(input.items, products);
+      include: checkoutProductInclude,
+    }),
+    getActiveWeeklySale(options.now),
+  ]);
+  const lineItems = resolveCheckoutLineItems(input.items, products, weeklySale);
   const subtotal = addKobo(...lineItems.map((item) => item.lineTotal));
   const deliveryQuote = await getDeliveryQuote(
     {

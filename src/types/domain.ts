@@ -80,8 +80,18 @@ export interface PublicProductVariant {
   id: string;
   name: string;
   price: number;
+  salePrice: number | null;
   sku: string | null;
   sortOrder: number;
+}
+
+export interface PublicProductSale {
+  discountPercent: number;
+  originalBasePrice: number;
+  saleBasePrice: number;
+  cardImageUrl: string;
+  weekStart: string;
+  weekEnd: string;
 }
 
 export interface PublicProduct {
@@ -95,6 +105,7 @@ export interface PublicProduct {
   isFeatured: boolean;
   isPopular: boolean;
   sortOrder: number;
+  sale: PublicProductSale | null;
   variants: PublicProductVariant[];
   images: PublicProductImage[];
 }
@@ -348,6 +359,42 @@ export interface AdminHomepageHeroProduct {
       slug: string;
     };
   };
+}
+
+export interface HomepageCarouselSlide {
+  id: string;
+  title: string;
+  imageUrl: string;
+  altText: string;
+  href: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface WeeklySaleSettings {
+  productId: string;
+  discountPercent: number;
+  weekStart: string;
+  weekEnd: string;
+  bannerImageUrl: string;
+  cardImageUrl: string;
+  isActive: boolean;
+}
+
+export interface HomepageMerchandisingSettings {
+  carousel: {
+    slides: HomepageCarouselSlide[];
+    createdAt: string | null;
+    updatedAt: string | null;
+  };
+  weeklySale: (WeeklySaleSettings & {
+    createdAt: string | null;
+    updatedAt: string | null;
+  }) | null;
+}
+
+export interface PublicHomepageMerchandising {
+  slides: HomepageCarouselSlide[];
 }
 
 export interface AdminDeliveryZone {

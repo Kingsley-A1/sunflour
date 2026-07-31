@@ -8,6 +8,7 @@ export function buildContentSecurityPolicy(
     "'unsafe-inline'",
     ...(nodeEnv === "development" ? ["'unsafe-eval'"] : []),
     "https://accounts.google.com",
+    "https://va.vercel-scripts.com",
   ].join(" ");
 
   return [

@@ -7,7 +7,11 @@ import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { prisma } from "@/server/db/prisma";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
-import { ALLOWED_IMAGE_CONTENT_TYPES, MAX_PRODUCT_IMAGE_BYTES } from "@/server/modules/media/media-schemas";
+import {
+  ALLOWED_IMAGE_CONTENT_TYPES,
+  adminMediaUploadPurposeSchema,
+  MAX_PRODUCT_IMAGE_BYTES,
+} from "@/server/modules/media/media-schemas";
 import { createMediaObjectKey } from "@/server/modules/media/media-service";
 import { getPublicMediaUrl, getR2Config, getR2Endpoint } from "@/server/modules/media/r2-config";
 
@@ -28,11 +32,22 @@ export async function POST(request: Request) {
     const actor = await requireRole(PRODUCT_CONTENT_ROLES);
     const formData = await request.formData();
     const file = formData.get("file");
+    const purposeResult = adminMediaUploadPurposeSchema.safeParse(
+      formData.get("purpose") ?? MediaUploadPurpose.PRODUCT_IMAGE,
+    );
 
     if (!(file instanceof File)) {
       throw new AppError({
         code: ERROR_CODES.VALIDATION_ERROR,
         publicMessage: "No file provided.",
+        status: 400,
+      });
+    }
+
+    if (!purposeResult.success) {
+      throw new AppError({
+        code: ERROR_CODES.VALIDATION_ERROR,
+        publicMessage: "Choose a valid image purpose.",
         status: 400,
       });
     }
@@ -56,7 +71,8 @@ export async function POST(request: Request) {
     }
 
     const config = getR2Config();
-    const objectKey = createMediaObjectKey({ contentType });
+    const purpose = purposeResult.data;
+    const objectKey = createMediaObjectKey({ contentType, purpose });
 
     const mediaAsset = await prisma.mediaAsset.create({
       data: {
@@ -104,7 +120,7 @@ export async function POST(request: Request) {
       action: "MEDIA_UPLOAD_COMPLETED",
       targetType: "media_asset",
       targetId: mediaAsset.id,
-      metadata: { objectKey, contentType, byteSize: size },
+      metadata: { objectKey, contentType, byteSize: size, purpose },
     });
 
     return apiSuccess({ mediaAsset: completed }, { status: 201 });

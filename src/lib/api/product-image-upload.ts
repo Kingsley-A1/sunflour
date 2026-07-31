@@ -1,6 +1,10 @@
 import { compressImage } from "@/lib/api/image-compression";
 
 export const MAX_PRODUCT_IMAGES = 8;
+export type AdminImageUploadPurpose =
+  | "PRODUCT_IMAGE"
+  | "CAROUSEL_BANNER"
+  | "SALE_CARD_IMAGE";
 
 // Generous per-image ceiling. On a slow connection a large request can stall
 // long enough to be dropped; we abort and retry rather than hang forever.
@@ -37,13 +41,17 @@ interface UploadedMediaAsset {
 // the file to R2 server-side, so the browser never makes a cross-origin request
 // (no R2 CORS configuration required). The image is downscaled first to keep the
 // payload small, and transient network failures are retried once.
-async function uploadThroughServer(file: File): Promise<UploadedMediaAsset> {
+async function uploadThroughServer(
+  file: File,
+  purpose: AdminImageUploadPurpose = "PRODUCT_IMAGE",
+): Promise<UploadedMediaAsset> {
   const optimized = await compressImage(file);
   let lastError: Error = new Error("Image upload failed. Try again.");
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     const form = new FormData();
     form.append("file", optimized);
+    form.append("purpose", purpose);
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
@@ -93,8 +101,9 @@ async function uploadThroughServer(file: File): Promise<UploadedMediaAsset> {
  */
 export async function uploadSingleAdminImage(
   file: File,
+  purpose: AdminImageUploadPurpose = "PRODUCT_IMAGE",
 ): Promise<UploadedImageResult> {
-  const mediaAsset = await uploadThroughServer(file);
+  const mediaAsset = await uploadThroughServer(file, purpose);
 
   if (!mediaAsset.publicUrl) {
     throw new Error(
@@ -111,6 +120,8 @@ export async function uploadSingleAdminImage(
 export async function uploadProductImageFiles(
   files: File[],
   productName: string,
+  makeFirstPrimary = true,
+  sortOrderOffset = 0,
 ): Promise<UploadedProductImage[]> {
   if (files.length < 1 || files.length > MAX_PRODUCT_IMAGES) {
     throw new Error(`Choose between 1 and ${MAX_PRODUCT_IMAGES} product images.`);
@@ -120,12 +131,12 @@ export async function uploadProductImageFiles(
   // several concurrent requests (which makes each more likely to stall).
   const uploaded: UploadedProductImage[] = [];
   for (const [index, file] of files.entries()) {
-    const mediaAsset = await uploadThroughServer(file);
+    const mediaAsset = await uploadThroughServer(file, "PRODUCT_IMAGE");
     uploaded.push({
       mediaAssetId: mediaAsset.id,
       altText: buildProductImageAltText(productName, index, files.length),
-      isPrimary: index === 0,
-      sortOrder: index,
+      isPrimary: makeFirstPrimary && index === 0,
+      sortOrder: sortOrderOffset + index,
     });
   }
 

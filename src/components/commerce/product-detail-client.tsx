@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
+import { ProductImageGallery } from "@/components/commerce/product-image-gallery";
 import { Badge } from "@/components/ui/badge";
 import { PriceText } from "@/components/ui/price-text";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
-import { SafeImage } from "@/components/ui/safe-image";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { PublicProduct, PublicProductVariant } from "@/types/domain";
 
@@ -28,31 +28,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     () => product.variants.find((variant) => variant.id === selectedVariantId),
     [product.variants, selectedVariantId],
   );
-  const image = product.images[0];
-
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-muted)]">
-        {image?.url ? (
-          <SafeImage
-            alt={image.altText ?? product.name}
-            className="object-cover"
-            fill
-            fallback={
-              <div className="grid h-full place-items-center text-lg font-bold text-[var(--color-text-muted)]">
-                Image unavailable
-              </div>
-            }
-            priority
-            sizes="(min-width: 1024px) 58vw, 100vw"
-            src={image.url}
-          />
-        ) : (
-          <div className="grid h-full place-items-center text-lg font-bold text-[var(--color-text-muted)]">
-            Sunflour Bakery
-          </div>
-        )}
-      </div>
+      <ProductImageGallery
+        images={product.images}
+        productName={product.name}
+        saleImageUrl={product.sale?.cardImageUrl}
+      />
       <section className="grid content-start gap-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <div className="grid gap-3">
           <div className="hidden flex-wrap gap-2 sm:flex">
@@ -71,7 +53,21 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             <span className="text-[var(--color-text-muted)]">
               {selectedVariant ? "Selected price " : "Price "}
             </span>
-            <PriceText amount={selectedVariant?.price ?? product.basePrice} className="text-2xl" />
+            {product.sale ? (
+              <PriceText
+                amount={selectedVariant?.price ?? product.sale.originalBasePrice}
+                className="mr-2 text-base text-[var(--color-text-muted)] line-through"
+              />
+            ) : null}
+            <PriceText
+              amount={
+                selectedVariant?.salePrice ??
+                selectedVariant?.price ??
+                product.sale?.saleBasePrice ??
+                product.basePrice
+              }
+              className="text-2xl"
+            />
           </p>
         </div>
         {product.variants.length > 0 ? (
@@ -92,7 +88,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                     />
                     <span className="font-semibold">{variant.name}</span>
                   </span>
-                  <PriceText amount={variant.price} />
+                  <span className="flex items-baseline gap-2">
+                    {variant.salePrice !== null ? (
+                      <PriceText
+                        amount={variant.price}
+                        className="text-xs text-[var(--color-text-muted)] line-through"
+                      />
+                    ) : null}
+                    <PriceText amount={variant.salePrice ?? variant.price} />
+                  </span>
                 </label>
               ))}
             </div>

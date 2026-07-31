@@ -137,6 +137,8 @@ Current `site_settings` keys include:
 ```txt
 business_profile
 tabular_menu_content
+homepage_carousel_v1
+weekly_sale_v1
 ```
 
 ## Snapshot Rules

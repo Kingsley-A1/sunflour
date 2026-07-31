@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Flame, ShoppingBag, Sun } from "lucide-react";
 import { PriceText } from "@/components/ui/price-text";
 import { SafeImage } from "@/components/ui/safe-image";
-import { StatusPill } from "@/components/ui/status-pill";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import type { PublicProduct } from "@/types/domain";
 
@@ -12,18 +11,19 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const image = product.images[0];
+  const imageUrl = product.sale?.cardImageUrl ?? image?.url;
 
   return (
-    <div className="grid overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--shadow-floating)]">
+    <article className="group grid min-w-0 overflow-hidden rounded-[var(--radius-product)] bg-[var(--color-surface-raised)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:-translate-y-[1px] hover:shadow-[var(--shadow-floating)]">
       <Link
         className="group block"
         href={`/products/${product.slug}`}
         aria-label={`View ${product.name}`}
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-surface-muted)]">
-          {image?.url ? (
+        <div className="relative aspect-square overflow-hidden bg-[var(--color-surface-muted)]">
+          {imageUrl ? (
             <SafeImage
-              alt={image.altText ?? product.name}
+              alt={image?.altText ?? product.name}
               className="object-cover transition duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-standard)] group-hover:scale-[1.02]"
               fill
               fallback={
@@ -31,43 +31,70 @@ export function ProductCard({ product }: ProductCardProps) {
                   Image unavailable
                 </div>
               }
-              sizes="(min-width: 1024px) 33vw, 50vw"
-              src={image.url}
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              src={imageUrl}
             />
           ) : (
             <div className="grid h-full place-items-center px-4 text-center text-sm font-semibold text-[var(--color-text-muted)]">
               Sunflour Bakery
             </div>
           )}
-        </div>
-      </Link>
-      <div className="grid gap-2 p-3 sm:gap-3 sm:p-4">
-        <div className="grid gap-1 sm:gap-2">
-          {/* Status/popularity tags add clutter and height on small cards, so
-              they are reserved for larger screens. */}
-          <div className="hidden flex-wrap items-center gap-2 sm:flex">
-            {product.isPopular ? <Badge tone="warning">Popular</Badge> : null}
-            <StatusPill status={product.status} />
-          </div>
-          <div className="grid gap-0.5 sm:gap-1">
-            <Link
-              className="text-sm font-bold leading-snug text-[var(--color-text)] hover:underline sm:text-lg"
-              href={`/products/${product.slug}`}
-            >
-              {product.name}
-            </Link>
-            {product.description ? (
-              <p className="m-0 line-clamp-1 text-xs leading-5 text-[var(--color-text-muted)] sm:line-clamp-2 sm:text-sm sm:leading-6">
-                {product.description}
-              </p>
+          <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+            {product.sale ? (
+              <span className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-3 py-1.5 text-xs font-extrabold text-[var(--color-on-primary)] shadow-[var(--shadow-raised)]">
+                {product.sale.discountPercent}% off this week
+              </span>
+            ) : product.status === "OUT_OF_STOCK" ? (
+              <span className="rounded-[var(--radius-pill)] bg-[var(--color-surface-floating)] px-3 py-1.5 text-xs font-extrabold text-[var(--color-text)] shadow-[var(--shadow-raised)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <ShoppingBag className="h-3.5 w-3.5" aria-hidden="true" />
+                  Sold out
+                </span>
+              </span>
+            ) : product.isPopular ? (
+              <span className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-3 py-1.5 text-xs font-extrabold text-[var(--color-on-primary)] shadow-[var(--shadow-raised)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <Flame className="h-3.5 w-3.5" aria-hidden="true" />
+                  Popular
+                </span>
+              </span>
             ) : null}
           </div>
+          <span className="absolute bottom-0 right-0 grid h-10 w-10 place-items-center rounded-tl-[var(--radius-product)] bg-[var(--color-accent)] text-[var(--color-on-accent)]">
+            <Sun className="h-5 w-5" aria-hidden="true" />
+          </span>
         </div>
-        <p className="m-0 text-sm font-semibold text-[var(--color-text)]">
-          <PriceText amount={product.basePrice} />
-        </p>
-        <AddToCartButton className="w-full" buttonVariant="secondary" product={product} />
+      </Link>
+      <div className="grid content-start gap-3 p-4">
+        <div className="grid content-start gap-1">
+          <Link
+            className="line-clamp-2 min-h-[3rem] text-lg font-extrabold leading-snug text-[var(--color-text)] hover:underline"
+            href={`/products/${product.slug}`}
+          >
+            {product.name}
+          </Link>
+          {product.description ? (
+            <p className="m-0 line-clamp-2 min-h-12 text-sm leading-6 text-[var(--color-text-muted)]">
+              {product.description}
+            </p>
+          ) : (
+            <span className="min-h-12" aria-hidden="true" />
+          )}
+        </div>
+        <div className="flex min-h-7 flex-wrap items-baseline gap-2">
+          {product.sale ? (
+            <PriceText
+              amount={product.sale.originalBasePrice}
+              className="text-sm !text-[var(--color-text-muted)] line-through"
+            />
+          ) : null}
+          <PriceText
+            amount={product.sale?.saleBasePrice ?? product.basePrice}
+            className="text-xl font-extrabold !text-[var(--color-primary)]"
+          />
+        </div>
+        <AddToCartButton className="w-full" product={product} />
       </div>
-    </div>
+    </article>
   );
 }

@@ -1,6 +1,6 @@
 # Design System - Sunflour Bakery
 
-Status: phases `1-8` production contract. Framework-neutral foundation package: `@sunflour/design-tokens` v0.1.0.
+Status: phases `1-8` production contract. Framework-neutral foundation package: `@sunflour/design-tokens` v0.2.0.
 
 ## Source Architecture
 
@@ -31,6 +31,8 @@ Use semantic versioning for `@sunflour/design-tokens`:
 - Major: token removal, rename, or semantic meaning change.
 
 Compatibility aliases remain available for older consumers in v0.1.0, but current Sunflour route and component code uses canonical semantic names.
+
+The additive v0.2.0 contract introduces `--radius-product` (`12px`) for product imagery, cards, and merchandising previews.
 
 ## Source Of Truth
 

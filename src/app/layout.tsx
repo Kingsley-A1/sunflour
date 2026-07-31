@@ -39,6 +39,7 @@ export const metadata: Metadata = {
   ],
   applicationName: "Sunflour Bakery",
   openGraph: {
+    url: "/",
     title: "Sunflour Bakery | Fresh cakes, breads & pastries in Calabar",
     description: siteDescription,
     siteName: "Sunflour Bakery",

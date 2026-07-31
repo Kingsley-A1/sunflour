@@ -55,8 +55,12 @@ export function AdminUploadField({
     setError(null);
     setMessage(null);
 
-    if (files.length > MAX_PRODUCT_IMAGES) {
-      setError(`Choose no more than ${MAX_PRODUCT_IMAGES} images.`);
+    if (existingImages.length + files.length > MAX_PRODUCT_IMAGES) {
+      setError(
+        `A product can have up to ${MAX_PRODUCT_IMAGES} images. Choose ${
+          MAX_PRODUCT_IMAGES - existingImages.length
+        } or fewer.`,
+      );
       return;
     }
 
@@ -78,7 +82,12 @@ export function AdminUploadField({
     setIsUploading(true);
 
     try {
-      const images = await uploadProductImageFiles(selectedFiles, productName);
+      const images = await uploadProductImageFiles(
+        selectedFiles,
+        productName,
+        false,
+        existingImages.length,
+      );
 
       for (const image of images) {
         await attachProductImage({
@@ -109,7 +118,8 @@ export function AdminUploadField({
       <div>
         <h2 className="m-0 text-xl font-bold">Product images</h2>
         <p className="m-0 mt-1 text-sm text-[var(--color-text-muted)]">
-          The first image is used on the product card.
+          Add up to {MAX_PRODUCT_IMAGES} views at once. The primary image is
+          used on the product card; a weekly sale can temporarily override it.
         </p>
       </div>
 

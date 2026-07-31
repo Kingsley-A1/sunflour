@@ -7,6 +7,12 @@ import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import {
+  applyWeeklySaleDiscount,
+  buildPublicProductSale,
+  getActiveWeeklySale,
+} from "@/server/modules/homepage-merchandising";
+import type { WeeklySaleSettingsValue } from "@/server/modules/homepage-merchandising/homepage-merchandising-schemas";
+import {
   requireSlug,
   type CategoryCreateInput,
   type CategoryUpdateInput,
@@ -110,8 +116,11 @@ function mapPublicImage(
 
 function mapPublicProduct(
   product: Prisma.ProductGetPayload<{ include: typeof publicProductInclude }>,
+  weeklySale: WeeklySaleSettingsValue | null = null,
 ) {
   const visibility = getProductVisibility(product);
+  const activeSale =
+    weeklySale?.productId === product.id ? weeklySale : null;
 
   return {
     id: product.id,
@@ -124,10 +133,16 @@ function mapPublicProduct(
     isFeatured: product.isFeatured,
     isPopular: product.isPopular,
     sortOrder: product.sortOrder,
+    sale: activeSale
+      ? buildPublicProductSale(product.basePrice, activeSale)
+      : null,
     variants: product.variants.map((variant) => ({
       id: variant.id,
       name: variant.name,
       price: variant.price,
+      salePrice: activeSale
+        ? applyWeeklySaleDiscount(variant.price, activeSale.discountPercent)
+        : null,
       sku: variant.sku,
       sortOrder: variant.sortOrder,
     })),
@@ -146,22 +161,25 @@ function buildProductImageAltText(
 }
 
 export async function getPublicMenu() {
-  const categories = await prisma.category.findMany({
-    where: {
-      isActive: true,
-      products: {
-        some: publicProductWhere(),
+  const [categories, weeklySale] = await Promise.all([
+    prisma.category.findMany({
+      where: {
+        isActive: true,
+        products: {
+          some: publicProductWhere(),
+        },
       },
-    },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    include: {
-      products: {
-        where: publicProductWhere(),
-        include: publicProductInclude,
-        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      include: {
+        products: {
+          where: publicProductWhere(),
+          include: publicProductInclude,
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        },
       },
-    },
-  });
+    }),
+    getActiveWeeklySale(),
+  ]);
 
   return {
     categories: categories.map((category) => ({
@@ -169,7 +187,9 @@ export async function getPublicMenu() {
       name: category.name,
       slug: category.slug,
       description: category.description,
-      products: category.products.map(mapPublicProduct),
+      products: category.products.map((product) =>
+        mapPublicProduct(product, weeklySale),
+      ),
     })),
   };
 }
@@ -192,26 +212,29 @@ export async function listPublicCategoryNavigation() {
 }
 
 export async function getPublicProductBySlug(slug: string) {
-  const product = await prisma.product.findFirst({
-    where: {
-      slug,
-      category: {
-        isActive: true,
+  const [product, weeklySale] = await Promise.all([
+    prisma.product.findFirst({
+      where: {
+        slug,
+        category: {
+          isActive: true,
+        },
+        ...publicProductWhere(),
       },
-      ...publicProductWhere(),
-    },
-    include: {
-      category: true,
-      ...publicProductInclude,
-    },
-  });
+      include: {
+        category: true,
+        ...publicProductInclude,
+      },
+    }),
+    getActiveWeeklySale(),
+  ]);
 
   if (!product) {
     throw notFound("Product not found.");
   }
 
   return {
-    ...mapPublicProduct(product),
+    ...mapPublicProduct(product, weeklySale),
     category: {
       id: product.category.id,
       name: product.category.name,

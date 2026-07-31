@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { ProductGrid } from "@/components/commerce/product-grid";
+import { HomepageCarousel } from "@/components/commerce/homepage-carousel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { ErrorState } from "@/components/ui/error-state";
@@ -10,6 +11,7 @@ import { PriceText } from "@/components/ui/price-text";
 import { SafeImage } from "@/components/ui/safe-image";
 import {
   getHomepageHeroProductsSafe,
+  getHomepageMerchandisingSafe,
   getPublicMenuSafe,
 } from "@/lib/api/server";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
@@ -23,10 +25,16 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const [{ menu, error }, { products: heroProducts, error: heroError }, contact] =
+  const [
+    { menu, error },
+    { products: heroProducts, error: heroError },
+    merchandising,
+    contact,
+  ] =
     await Promise.all([
       getPublicMenuSafe(),
       getHomepageHeroProductsSafe(),
+      getHomepageMerchandisingSafe(),
       getResolvedPublicContactConfig(),
     ]);
   // Show a fuller menu preview on the homepage: lead with popular/featured
@@ -45,6 +53,7 @@ export default async function HomePage() {
   return (
     <main>
       <JsonLd data={buildBakeryJsonLd(contact)} />
+      <HomepageCarousel slides={merchandising.slides} />
       <section className="sf-hero-surface border-b border-[var(--color-border)]">
         <div className="mx-auto grid max-w-6xl gap-7 px-4 py-12 lg:py-16">
           <div className="max-w-3xl">
@@ -88,15 +97,24 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="grid justify-items-center gap-3 text-center">
           <div>
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
               Popular picks
             </p>
-            <h2 className="m-0 mt-1 text-3xl font-extrabold">Start with the menu</h2>
+            <h2 className="m-0 mt-1 text-3xl font-extrabold sm:text-4xl">
+              Start with the menu
+            </h2>
           </div>
-          <Link className="text-sm font-bold text-[var(--color-primary)] hover:underline" href="/menu">
+          <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)] sm:text-base">
+            Handcrafted treats and hearty favourites, made fresh daily.
+          </p>
+          <Link
+            className="inline-flex items-center gap-2 text-sm font-bold text-[var(--color-primary)] hover:underline sm:text-base"
+            href="/menu"
+          >
             See all products
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
         {error ? (

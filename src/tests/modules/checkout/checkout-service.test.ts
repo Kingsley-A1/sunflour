@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
   cartDeleteMany: vi.fn(),
   transaction: vi.fn(),
   getDeliveryQuote: vi.fn(),
+  getActiveWeeklySale: vi.fn(),
   getActivePaymentSnapshot: vi.fn(),
   queueOrderConfirmationEmailForOrder: vi.fn(),
   queueAdminNewOrderAlertEmailsForOrder: vi.fn(),
@@ -53,6 +54,12 @@ vi.mock("@/server/modules/delivery/delivery-service", () => ({
 
 vi.mock("@/server/modules/payments/payment-service", () => ({
   getActivePaymentSnapshot: mocks.getActivePaymentSnapshot,
+}));
+
+vi.mock("@/server/modules/homepage-merchandising", () => ({
+  applyWeeklySaleDiscount: (price: number, discountPercent: number) =>
+    Math.max(0, Math.round((price * (100 - discountPercent)) / 100)),
+  getActiveWeeklySale: mocks.getActiveWeeklySale,
 }));
 
 vi.mock("@/server/modules/email", () => ({
@@ -169,6 +176,7 @@ function checkoutOrder(overrides = {}) {
 describe("checkout service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mocks.getActiveWeeklySale.mockResolvedValue(null);
     mocks.transaction.mockImplementation(async (callback) =>
       callback({
         order: {
@@ -355,6 +363,26 @@ describe("checkout service", () => {
         activeProduct({ status: ProductStatus.OUT_OF_STOCK }),
       ]),
     ).toThrow("This item is not available for ordering.");
+  });
+
+  it("applies the active weekly discount to trusted checkout snapshots", () => {
+    const [lineItem] = resolveCheckoutLineItems(
+      checkoutInput.items,
+      [activeProduct()],
+      {
+        productId: "product_1",
+        discountPercent: 20,
+        weekStart: "2025-12-29",
+        weekEnd: "2026-01-04",
+        bannerImageUrl: "/sale-banner.png",
+        cardImageUrl: "/sale-card.png",
+        isActive: true,
+      },
+    );
+
+    expect(lineItem?.unitPriceSnapshot).toBe(200_000);
+    expect(lineItem?.lineTotal).toBe(400_000);
+    expect(lineItem?.productNameSnapshot).toBe("Chocolate Cake");
   });
 
   it("generates customer-safe unique order numbers", () => {

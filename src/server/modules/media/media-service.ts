@@ -12,7 +12,10 @@ import type { AuthenticatedUser } from "@/server/auth/rbac";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
-import type { PresignedUploadRequestInput } from "./media-schemas";
+import type {
+  AdminMediaUploadPurpose,
+  PresignedUploadRequestInput,
+} from "./media-schemas";
 import { getPublicMediaUrl, getR2Config, getR2Endpoint } from "./r2-config";
 import type { R2Config } from "./r2-config";
 
@@ -92,12 +95,20 @@ function invalidMediaUpload(
 }
 
 export function createMediaObjectKey(
-  input: Pick<PresignedUploadRequestInput, "contentType">,
+  input: {
+    contentType: string;
+    purpose: AdminMediaUploadPurpose;
+  },
 ): string {
   const extension = extensionByContentType[input.contentType] ?? "bin";
   const datePrefix = new Date().toISOString().slice(0, 10);
+  const directoryByPurpose: Record<AdminMediaUploadPurpose, string> = {
+    PRODUCT_IMAGE: "product-images",
+    CAROUSEL_BANNER: "carousel-banners",
+    SALE_CARD_IMAGE: "sale-card-images",
+  };
 
-  return `product-images/${datePrefix}/${randomUUID()}.${extension}`;
+  return `${directoryByPurpose[input.purpose]}/${datePrefix}/${randomUUID()}.${extension}`;
 }
 
 export async function createPresignedProductImageUpload(

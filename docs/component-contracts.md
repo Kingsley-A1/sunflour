@@ -106,6 +106,8 @@ Do not pass raw database records directly to UI primitives. Business components 
 | `CategoryPills` | Filter menu by category | categories, active category, change handler | Fetch products directly unless route-scoped. |
 | `ProductCard` | Show product summary and orderability | product DTO, status, image, price display, action handlers | Trust price for checkout. |
 | `ProductGrid` | Lay out menu products | product list, view state, empty/loading state | Own search/filter business rules. |
+| `HomepageCarousel` | Present ordered 21:9 promotions with automatic and manual navigation | public slide DTOs and internal destinations | Fetch admin settings or ignore reduced-motion preferences. |
+| `ProductImageGallery` | Present one or more product images with swipe, arrows, and thumbnails | ordered public product images and optional weekly-sale card image | Mutate product media or determine trusted pricing. |
 | `MenuViewTabs` | Switch `/menu` between live catalog and tabular reference modes | current view, change handler | Change trusted checkout state or pricing rules. |
 | `TabularMenuBrowser` | Show quick-reference menu table and cards | tabular menu content DTO, checkout href | Pretend reference prices are the source of truth for checkout. |
 | `ProductDetailSheet` | Show product details and add-to-cart UI | product detail DTO, variants, availability | Confirm backend orderability. |

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ShoppingCart } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -25,8 +25,12 @@ export function AddToCartButton({
   const cart = useCart();
   const router = useRouter();
   const { notify } = useToast();
-  const image = product.images[0];
-  const unitPrice = variant?.price ?? product.basePrice;
+  const imageUrl = product.sale?.cardImageUrl ?? product.images[0]?.url ?? null;
+  const unitPrice =
+    variant?.salePrice ??
+    variant?.price ??
+    product.sale?.saleBasePrice ??
+    product.basePrice;
   const disabled = !product.isOrderable;
   const itemKey = cart.getItemKey({
     productId: product.id,
@@ -39,7 +43,7 @@ export function AddToCartButton({
       <Button
         className={className}
         disabled
-        icon={<ShoppingCart className="h-4 w-4" aria-hidden="true" />}
+        icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
         variant={buttonVariant}
       >
         Unavailable
@@ -63,13 +67,13 @@ export function AddToCartButton({
   return (
     <Button
       className={className}
-      icon={<ShoppingCart className="h-4 w-4" aria-hidden="true" />}
+      icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
       onClick={() => {
         cart.addItem({
           productId: product.id,
           slug: product.slug,
           name: product.name,
-          imageUrl: image?.url ?? null,
+          imageUrl,
           variantId: variant?.id,
           variantName: variant?.name,
           unitPrice,

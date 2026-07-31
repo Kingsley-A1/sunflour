@@ -96,7 +96,7 @@ Note: `frontend-implimentation.md` lists `/account/orders/[orderNumber]` and `/a
 
 | Route | Purpose | Primary users | Rendering | Primary components |
 | --- | --- | --- | --- | --- |
-| `/` | Homepage | Guests, returning customers | Server Component first | public shell, featured categories, popular items, review preview |
+| `/` | Homepage | Guests, returning customers | Server Component first | public shell, 21:9 promotion carousel, hero products, popular product grid |
 | `/menu` | Menu catalog and tabular reference view | Guests, returning customers | Server-rendered initial data with client search/filter | SearchBar, CategoryPills, ProductGrid, ProductCard, Tabs |
 | `/products/[slug]` | Product detail page when page route is used | Buyers comparing variants | Server Component for initial detail, client add-to-cart | ProductDetailSheet or detail view, VariantSelector, AddToCartButton |
 | `/cart` | Cart and delivery quote | Buyers preparing checkout | Client cart with server delivery quote call | CartItemRow, QuantityStepper, DeliveryZoneSelector, DeliveryQuoteSummary |
@@ -110,6 +110,7 @@ Goal: make Sunflour feel fresh, trusted, local, and easy to order from.
 
 Build:
 
+- Swipeable 21:9 promotion carousel directly below navigation, rotating every two seconds unless reduced motion is requested.
 - Hero with warm bakery message.
 - `View Menu` as the primary CTA.
 - WhatsApp as secondary CTA.
@@ -159,7 +160,7 @@ Goal: show product details, variants, availability, imagery, and order actions c
 
 Build:
 
-- Product name, description, image, status, and price display.
+- Product name, description, swipeable multi-image gallery with 12px image corners, status, and price display.
 - Variant selector where variants exist.
 - Quantity selection.
 - Add-to-cart action.
@@ -288,6 +289,7 @@ Acceptance:
 | `/admin/products` | Product list | MODERATOR for availability, SUPER_ADMIN for full edits depending policy | ProductTable |
 | `/admin/products/new` | Create product | SUPER_ADMIN | ProductEditorForm |
 | `/admin/products/[id]` | Edit product | SUPER_ADMIN, limited moderator availability controls if approved | ProductEditorForm |
+| `/admin/homepage` | Promotion carousel and weekly sale manager | MEDIA_MANAGER for carousel, SUPER_ADMIN for weekly sale | HomepageMerchandisingClient |
 | `/admin/tabular-menu` | Reference menu content editor | MEDIA_MANAGER | TabularMenuManagerClient |
 | `/admin/categories` | Category manager | SUPER_ADMIN | CategoryEditorForm |
 | `/admin/users` | Admin users and registration code panel | SUPER_ADMIN | AdminRegistrationCodesClient, staff account list |

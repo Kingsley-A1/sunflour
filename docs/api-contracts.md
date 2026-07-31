@@ -615,6 +615,8 @@ Rules:
 ```txt
 GET   /api/v1/admin/homepage/hero-products       MODERATOR | SUPER_ADMIN
 PATCH /api/v1/admin/homepage/hero-products       SUPER_ADMIN
+GET   /api/v1/admin/homepage/merchandising       MEDIA_MANAGER | SUPER_ADMIN
+PATCH /api/v1/admin/homepage/merchandising       MEDIA_MANAGER for carousel, SUPER_ADMIN for weekly sale
 ```
 
 Rules:
@@ -625,6 +627,11 @@ Rules:
 - Public homepage fallback selection is backend-owned and deterministic.
 - Missing product-click tracking must not be faked as most-clicked data.
 - PATCH writes HOMEPAGE_HERO_PRODUCTS_UPDATE audit logs.
+- Carousel slides accept 1-20 ordered 21:9 images and internal Sunflour destinations.
+- Weekly sales cover exactly seven calendar days and target one ACTIVE product.
+- Active weekly-sale discounts are recalculated server-side for base and variant prices during checkout.
+- Weekly-sale banners appear first in the homepage carousel and their card image temporarily overrides the product's primary card image.
+- Carousel and weekly-sale changes write HOMEPAGE_CAROUSEL_UPDATE and WEEKLY_SALE_UPDATE audit logs.
 ```
 
 ### Media Admin
@@ -632,6 +639,7 @@ Rules:
 ```txt
 POST /api/v1/admin/media/presign-upload       SUPER_ADMIN
 POST /api/v1/admin/media/[id]/complete        SUPER_ADMIN
+POST /api/v1/admin/media/upload               MEDIA_MANAGER | SUPER_ADMIN
 ```
 
 Upload validation:
@@ -639,7 +647,7 @@ Upload validation:
 ```txt
 Allowed types: image/jpeg, image/png, image/webp, image/avif
 Max product image size: 5 MB
-Purpose: PRODUCT_IMAGE
+Logical request purposes: PRODUCT_IMAGE, CAROUSEL_BANNER, SALE_CARD_IMAGE. All remain compatible with the existing PRODUCT_IMAGE database enum; the logical role controls audited metadata and the R2 object prefix.
 ```
 
 Side effects:

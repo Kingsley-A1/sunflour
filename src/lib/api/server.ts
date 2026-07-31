@@ -5,15 +5,22 @@ import type {
   AdminHomepageHeroProduct,
   AdminProduct,
   AdminProductDraft,
+  HomepageMerchandisingSettings,
   InvoiceResponse,
   ProductDraftData,
   PublicCategoryNavigationItem,
   PublicHeroProduct,
   PublicMenuCategoryNavItem,
   PublicMenuResponse,
+  PublicHomepageMerchandising,
   PublicProduct,
   TabularMenuContent,
 } from "@/types/domain";
+import {
+  DEFAULT_HOMEPAGE_SLIDES,
+  getHomepageMerchandisingForAdmin,
+  getHomepageMerchandisingForPublic,
+} from "@/server/modules/homepage-merchandising";
 import type { Prisma } from "@/generated/prisma/client";
 import {
   listAdminCategories,
@@ -104,6 +111,36 @@ export async function getHomepageHeroProductsSafe(): Promise<{
       products: [],
       error:
         "Homepage products are not available yet. Check the database connection and catalog setup.",
+    };
+  }
+}
+
+export async function getHomepageMerchandisingSafe(): Promise<PublicHomepageMerchandising> {
+  try {
+    return await getHomepageMerchandisingForPublic();
+  } catch {
+    return {
+      slides: DEFAULT_HOMEPAGE_SLIDES.filter((slide) => slide.isActive).map(
+        (slide) => ({ ...slide }),
+      ),
+    };
+  }
+}
+
+export async function getAdminHomepageMerchandisingSafe(): Promise<{
+  merchandising: HomepageMerchandisingSettings | null;
+  error: string | null;
+}> {
+  try {
+    return {
+      merchandising:
+        (await getHomepageMerchandisingForAdmin()) as HomepageMerchandisingSettings,
+      error: null,
+    };
+  } catch {
+    return {
+      merchandising: null,
+      error: "Homepage merchandising settings could not be loaded.",
     };
   }
 }

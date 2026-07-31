@@ -16,11 +16,14 @@ import type {
   DeliveryQuote,
   DeliveryZone,
   EmailTemplate,
+  HomepageCarouselSlide,
+  HomepageMerchandisingSettings,
   PaymentSettings,
   ProductStatus,
   ReviewStatus,
   SafeAuthUser,
   UserRole,
+  WeeklySaleSettings,
 } from "@/types/domain";
 
 interface ApiRequestOptions extends RequestInit {
@@ -417,6 +420,40 @@ export async function updateAdminHomepageHeroProducts(input: {
   });
 
   return data.heroProducts;
+}
+
+export async function getAdminHomepageMerchandising(): Promise<HomepageMerchandisingSettings> {
+  const data = await apiRequest<{
+    merchandising: HomepageMerchandisingSettings;
+  }>("/api/v1/admin/homepage/merchandising");
+
+  return data.merchandising;
+}
+
+export async function updateAdminHomepageCarousel(input: {
+  slides: HomepageCarouselSlide[];
+}): Promise<HomepageMerchandisingSettings["carousel"]> {
+  const data = await apiRequest<{
+    carousel: HomepageMerchandisingSettings["carousel"];
+  }>("/api/v1/admin/homepage/merchandising", {
+    method: "PATCH",
+    body: JSON.stringify({ carousel: input }),
+  });
+
+  return data.carousel;
+}
+
+export async function updateAdminWeeklySale(
+  input: WeeklySaleSettings,
+): Promise<NonNullable<HomepageMerchandisingSettings["weeklySale"]>> {
+  const data = await apiRequest<{
+    weeklySale: NonNullable<HomepageMerchandisingSettings["weeklySale"]>;
+  }>("/api/v1/admin/homepage/merchandising", {
+    method: "PATCH",
+    body: JSON.stringify({ weeklySale: input }),
+  });
+
+  return data.weeklySale;
 }
 
 export async function updateAdminOrderStatus(input: {
