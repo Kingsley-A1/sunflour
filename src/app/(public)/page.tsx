@@ -4,7 +4,6 @@ import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { ProductGrid } from "@/components/commerce/product-grid";
 import { HomepageCarousel } from "@/components/commerce/homepage-carousel";
 import { JsonLd } from "@/components/seo/json-ld";
-import { Badge } from "@/components/ui/badge";
 import { ErrorState } from "@/components/ui/error-state";
 import { FeatureCarousel } from "@/components/ui/feature-carousel";
 import { PriceText } from "@/components/ui/price-text";
@@ -172,9 +171,6 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
         </div>
       </Link>
       <div className="grid min-w-0 gap-2 p-3">
-        <Badge className="w-fit max-w-full truncate" tone="neutral">
-          {product.category.name}
-        </Badge>
         <Link
           className="line-clamp-2 text-sm font-extrabold leading-snug text-[var(--color-text)] hover:underline sm:text-base"
           href={`/products/${product.slug}`}

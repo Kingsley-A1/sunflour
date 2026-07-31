@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, ShoppingBag, Sun } from "lucide-react";
+import { Flame, ShoppingBag } from "lucide-react";
 import { PriceText } from "@/components/ui/price-text";
 import { SafeImage } from "@/components/ui/safe-image";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
@@ -60,28 +60,18 @@ export function ProductCard({ product }: ProductCardProps) {
               </span>
             ) : null}
           </div>
-          <span className="absolute bottom-0 right-0 grid h-10 w-10 place-items-center rounded-tl-[var(--radius-product)] bg-[var(--color-accent)] text-[var(--color-on-accent)]">
-            <Sun className="h-5 w-5" aria-hidden="true" />
-          </span>
         </div>
       </Link>
-      <div className="grid content-start gap-3 p-4">
-        <div className="grid content-start gap-1">
-          <Link
-            className="line-clamp-2 min-h-[3rem] text-lg font-extrabold leading-snug text-[var(--color-text)] hover:underline"
-            href={`/products/${product.slug}`}
-          >
-            {product.name}
-          </Link>
-          {product.description ? (
-            <p className="m-0 line-clamp-2 min-h-12 text-sm leading-6 text-[var(--color-text-muted)]">
-              {product.description}
-            </p>
-          ) : (
-            <span className="min-h-12" aria-hidden="true" />
-          )}
-        </div>
-        <div className="flex min-h-7 flex-wrap items-baseline gap-2">
+      {/* Deliberately compact: name, price, action only. The description lives
+          on the product detail page so the grid stays short and scannable. */}
+      <div className="grid content-start gap-2 p-3">
+        <Link
+          className="line-clamp-2 text-base font-extrabold leading-snug text-[var(--color-text)] hover:underline"
+          href={`/products/${product.slug}`}
+        >
+          {product.name}
+        </Link>
+        <div className="flex flex-wrap items-baseline gap-2">
           {product.sale ? (
             <PriceText
               amount={product.sale.originalBasePrice}

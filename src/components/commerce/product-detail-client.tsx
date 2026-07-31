@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { ProductImageGallery } from "@/components/commerce/product-image-gallery";
+import { ProductShareButton } from "@/components/commerce/product-share-button";
 import { Badge } from "@/components/ui/badge";
 import { PriceText } from "@/components/ui/price-text";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
@@ -102,13 +103,19 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             </div>
           </fieldset>
         ) : null}
-        <div className="grid gap-3 sm:flex sm:items-center">
-          <QuantityStepper onChange={setQuantity} value={quantity} />
-          <AddToCartButton
-            className="w-full sm:flex-1"
-            product={product}
-            quantity={quantity}
-            variant={selectedVariant}
+        <div className="grid gap-3">
+          <div className="grid gap-3 sm:flex sm:items-center">
+            <QuantityStepper onChange={setQuantity} value={quantity} />
+            <AddToCartButton
+              className="w-full sm:flex-1"
+              product={product}
+              quantity={quantity}
+              variant={selectedVariant}
+            />
+          </div>
+          <ProductShareButton
+            productName={product.name}
+            shareText={product.description ?? undefined}
           />
         </div>
         <p className="m-0 text-xs leading-5 text-[var(--color-text-muted)]">
