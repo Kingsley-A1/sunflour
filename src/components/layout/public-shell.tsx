@@ -135,11 +135,13 @@ export async function PublicShell({
           </div>
           <nav
             aria-label="Menu categories"
-            className="flex gap-1 overflow-x-auto border-t border-[var(--color-border)] px-4 py-2 md:hidden"
+            className="flex gap-2 overflow-x-auto border-t border-[var(--color-border)] px-4 py-2.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {categoryLinks.map((category) => (
               <Link
-                className="min-h-11 shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)]"
+                // Minimal-border pills, matching the product nav category
+                // filter: a quiet tinted chip with no outline.
+                className="inline-flex min-h-10 shrink-0 items-center rounded-[var(--radius-pill)] border border-transparent bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-muted)] transition duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-standard)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-text)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
                 href={getCategoryHref(category)}
                 key={category.id || getCategoryLabel(category)}
               >
