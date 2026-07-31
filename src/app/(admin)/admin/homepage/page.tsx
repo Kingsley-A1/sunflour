@@ -30,7 +30,7 @@ export default async function AdminHomepagePage() {
           Homepage merchandising
         </h1>
         <p className="m-0 mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
-          Manage promotional banners and Sunflour&apos;s one weekly sale.
+          Manage promotional banners and Sunflour&apos;s weekly offers.
         </p>
       </header>
       {catalog.error ? (

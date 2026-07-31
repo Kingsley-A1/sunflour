@@ -7,6 +7,7 @@ import {
   ClipboardList,
   CreditCard,
   FileText,
+  Gift,
   Home,
   Info,
   LockKeyhole,
@@ -33,6 +34,7 @@ interface PublicMobileNavItem {
 export const publicMobileNavItems: PublicMobileNavItem[] = [
   { href: "/" as Route, label: "Home", icon: Home },
   { href: "/menu" as Route, label: "Menu", icon: Utensils },
+  { href: "/weekly-offers" as Route, label: "Weekly offers", icon: Gift },
   { href: "/cart" as Route, label: "Cart", icon: ShoppingCart },
   { href: "/checkout" as Route, label: "Checkout", icon: CreditCard },
   { href: "/reviews" as Route, label: "Reviews", icon: MessageSquareText },

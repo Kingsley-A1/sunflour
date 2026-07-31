@@ -11,7 +11,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const image = product.images[0];
-  const imageUrl = product.sale?.cardImageUrl ?? image?.url;
+  const imageUrl = image?.url;
 
   return (
     <article className="group grid min-w-0 overflow-hidden rounded-[var(--radius-product)] bg-[var(--color-surface-raised)] shadow-[var(--shadow-raised)] transition duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] hover:-translate-y-[1px] hover:shadow-[var(--shadow-floating)]">
@@ -40,11 +40,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
           <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-            {product.sale ? (
-              <span className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-3 py-1.5 text-xs font-extrabold text-[var(--color-on-primary)] shadow-[var(--shadow-raised)]">
-                {product.sale.discountPercent}% off this week
-              </span>
-            ) : product.status === "OUT_OF_STOCK" ? (
+            {product.status === "OUT_OF_STOCK" ? (
               <span className="rounded-[var(--radius-pill)] bg-[var(--color-surface-floating)] px-3 py-1.5 text-xs font-extrabold text-[var(--color-text)] shadow-[var(--shadow-raised)]">
                 <span className="inline-flex items-center gap-1.5">
                   <ShoppingBag className="h-3.5 w-3.5" aria-hidden="true" />
@@ -71,18 +67,10 @@ export function ProductCard({ product }: ProductCardProps) {
         >
           {product.name}
         </Link>
-        <div className="flex flex-wrap items-baseline gap-2">
-          {product.sale ? (
-            <PriceText
-              amount={product.sale.originalBasePrice}
-              className="text-sm !text-[var(--color-text-muted)] line-through"
-            />
-          ) : null}
-          <PriceText
-            amount={product.sale?.saleBasePrice ?? product.basePrice}
-            className="text-xl font-extrabold !text-[var(--color-primary)]"
-          />
-        </div>
+        <PriceText
+          amount={product.basePrice}
+          className="text-xl font-extrabold !text-[var(--color-primary)]"
+        />
         <AddToCartButton className="w-full" product={product} />
       </div>
     </article>

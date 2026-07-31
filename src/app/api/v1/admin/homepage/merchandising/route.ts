@@ -7,8 +7,8 @@ import {
   getHomepageMerchandisingForAdmin,
   homepageCarouselUpdateSchema,
   updateHomepageCarousel,
-  updateWeeklySale,
-  weeklySaleUpdateSchema,
+  updateWeeklyOffers,
+  weeklyOfferUpdateSchema,
 } from "@/server/modules/homepage-merchandising";
 
 export const dynamic = "force-dynamic";
@@ -37,9 +37,9 @@ export async function PATCH(request: Request) {
       });
     }
 
-    const weeklySale = validateInput(weeklySaleUpdateSchema, body);
+    const weeklyOffers = validateInput(weeklyOfferUpdateSchema, body);
     return apiSuccess({
-      weeklySale: await updateWeeklySale(weeklySale, actor),
+      weeklyOffers: await updateWeeklyOffers(weeklyOffers, actor),
     });
   } catch (error) {
     return apiError(error);

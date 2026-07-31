@@ -6,21 +6,19 @@ import { prisma } from "@/server/db/prisma";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit";
-import type {
-  HomepageCarouselSlide,
-  PublicProductSale,
-} from "@/types/domain";
+import type { HomepageCarouselSlide } from "@/types/domain";
 import {
   homepageCarouselSettingsSchema,
-  weeklySaleSettingsSchema,
+  weeklyOfferSettingsSchema,
   type HomepageCarouselSettings,
   type HomepageCarouselUpdateInput,
-  type WeeklySaleSettingsValue,
-  type WeeklySaleUpdateInput,
+  type WeeklyOfferSettingsValue,
+  type WeeklyOfferUpdateInput,
+  type WeeklyOfferValue,
 } from "./homepage-merchandising-schemas";
 
 export const HOMEPAGE_CAROUSEL_KEY = "homepage_carousel_v1";
-export const WEEKLY_SALE_KEY = "weekly_sale_v1";
+export const WEEKLY_OFFERS_KEY = "weekly_offers_v1";
 
 export const DEFAULT_HOMEPAGE_SLIDES: HomepageCarouselSlide[] = [
   {
@@ -126,11 +124,11 @@ function parseCarousel(
   return result.success ? result.data : defaultCarousel();
 }
 
-function parseWeeklySale(
+function parseWeeklyOffers(
   value: Prisma.JsonValue | undefined,
-): WeeklySaleSettingsValue | null {
-  const result = weeklySaleSettingsSchema.safeParse(value);
-  return result.success ? result.data : null;
+): WeeklyOfferSettingsValue {
+  const result = weeklyOfferSettingsSchema.safeParse(value);
+  return result.success ? result.data : { offers: [] };
 }
 
 export function getLocalDateKey(date: Date, timeZone: string): string {
@@ -146,44 +144,57 @@ export function getLocalDateKey(date: Date, timeZone: string): string {
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
-export function isWeeklySaleActive(
-  sale: WeeklySaleSettingsValue | null,
+export function isOfferLive(
+  offer: WeeklyOfferValue,
   now = new Date(),
   timeZone = getServerEnv().APP_TIME_ZONE,
-): sale is WeeklySaleSettingsValue {
-  if (!sale?.isActive) {
+): boolean {
+  if (!offer.isActive) {
     return false;
   }
 
   const dateKey = getLocalDateKey(now, timeZone);
-  return dateKey >= sale.weekStart && dateKey <= sale.weekEnd;
+  return dateKey >= offer.weekStart && dateKey <= offer.weekEnd;
 }
 
-export function applyWeeklySaleDiscount(
-  price: number,
-  discountPercent: number,
-): number {
-  return Math.max(0, Math.round((price * (100 - discountPercent)) / 100));
+/** The single offer running today, if any. */
+export function findCurrentOffer(
+  offers: WeeklyOfferValue[],
+  now = new Date(),
+): WeeklyOfferValue | null {
+  return offers.find((offer) => isOfferLive(offer, now)) ?? null;
 }
 
-export function buildPublicProductSale(
-  basePrice: number,
-  sale: WeeklySaleSettingsValue,
-): PublicProductSale {
-  return {
-    discountPercent: sale.discountPercent,
-    originalBasePrice: basePrice,
-    saleBasePrice: applyWeeklySaleDiscount(basePrice, sale.discountPercent),
-    cardImageUrl: sale.cardImageUrl,
-    weekStart: sale.weekStart,
-    weekEnd: sale.weekEnd,
-  };
+/** Active offers that have not started yet, soonest first. */
+export function findUpcomingOffers(
+  offers: WeeklyOfferValue[],
+  now = new Date(),
+  timeZone = getServerEnv().APP_TIME_ZONE,
+): WeeklyOfferValue[] {
+  const today = getLocalDateKey(now, timeZone);
+
+  return offers
+    .filter((offer) => offer.isActive && offer.weekStart > today)
+    .sort((first, second) => first.weekStart.localeCompare(second.weekStart));
+}
+
+/** Offers that have already finished, most recent first. */
+export function findPastOffers(
+  offers: WeeklyOfferValue[],
+  now = new Date(),
+  timeZone = getServerEnv().APP_TIME_ZONE,
+): WeeklyOfferValue[] {
+  const today = getLocalDateKey(now, timeZone);
+
+  return offers
+    .filter((offer) => offer.weekEnd < today)
+    .sort((first, second) => second.weekStart.localeCompare(first.weekStart));
 }
 
 async function getSettingsRecords() {
   return prisma.siteSetting.findMany({
     where: {
-      key: { in: [HOMEPAGE_CAROUSEL_KEY, WEEKLY_SALE_KEY] },
+      key: { in: [HOMEPAGE_CAROUSEL_KEY, WEEKLY_OFFERS_KEY] },
     },
     select: {
       key: true,
@@ -194,15 +205,83 @@ async function getSettingsRecords() {
   });
 }
 
-export async function getActiveWeeklySale(
-  now = new Date(),
-): Promise<WeeklySaleSettingsValue | null> {
+async function readOffers(): Promise<WeeklyOfferValue[]> {
   const setting = await prisma.siteSetting.findUnique({
-    where: { key: WEEKLY_SALE_KEY },
+    where: { key: WEEKLY_OFFERS_KEY },
     select: { value: true },
   });
-  const sale = parseWeeklySale(setting?.value);
-  return isWeeklySaleActive(sale, now) ? sale : null;
+
+  return parseWeeklyOffers(setting?.value).offers;
+}
+
+export interface PublicWeeklyOffer extends WeeklyOfferValue {
+  purchaseProductName: string | null;
+  purchaseProductSlug: string | null;
+}
+
+async function decorateOffers(
+  offers: WeeklyOfferValue[],
+): Promise<PublicWeeklyOffer[]> {
+  if (offers.length === 0) {
+    return [];
+  }
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: offers.map((offer) => offer.purchaseProductId) } },
+    select: { id: true, name: true, slug: true },
+  });
+  const byId = new Map(products.map((product) => [product.id, product]));
+
+  return offers.map((offer) => {
+    const product = byId.get(offer.purchaseProductId);
+
+    return {
+      ...offer,
+      purchaseProductName: product?.name ?? null,
+      purchaseProductSlug: product?.slug ?? null,
+    };
+  });
+}
+
+/** Offer running today, for the homepage section. */
+export async function getCurrentWeeklyOfferForPublic(
+  now = new Date(),
+): Promise<PublicWeeklyOffer | null> {
+  const current = findCurrentOffer(await readOffers(), now);
+
+  if (!current) {
+    return null;
+  }
+
+  return (await decorateOffers([current]))[0] ?? null;
+}
+
+/** Current offer plus upcoming and past offers for the Weekly Offer page. */
+export async function getWeeklyOffersForPublic(now = new Date()): Promise<{
+  current: PublicWeeklyOffer | null;
+  upcoming: PublicWeeklyOffer[];
+  past: PublicWeeklyOffer[];
+}> {
+  const offers = await readOffers();
+  const current = findCurrentOffer(offers, now);
+  const upcoming = findUpcomingOffers(offers, now);
+  const past = findPastOffers(offers, now);
+  const decorated = await decorateOffers([
+    ...(current ? [current] : []),
+    ...upcoming,
+    ...past,
+  ]);
+  const byId = new Map(decorated.map((offer) => [offer.id, offer]));
+  const pick = (list: WeeklyOfferValue[]) =>
+    list
+      .map((offer) => byId.get(offer.id))
+      .filter((offer): offer is PublicWeeklyOffer => Boolean(offer));
+
+  return {
+    current: current ? byId.get(current.id) ?? null : null,
+    upcoming: pick(upcoming),
+    past: pick(past),
+  };
 }
 
 export async function getHomepageMerchandisingForPublic(now = new Date()) {
@@ -210,34 +289,26 @@ export async function getHomepageMerchandisingForPublic(now = new Date()) {
   const carouselRecord = records.find(
     (record) => record.key === HOMEPAGE_CAROUSEL_KEY,
   );
-  const saleRecord = records.find((record) => record.key === WEEKLY_SALE_KEY);
+  const offersRecord = records.find((record) => record.key === WEEKLY_OFFERS_KEY);
   const carousel = parseCarousel(carouselRecord?.value);
-  const weeklySale = parseWeeklySale(saleRecord?.value);
+  const offers = parseWeeklyOffers(offersRecord?.value).offers;
   const slides = carousel.slides
     .filter((slide) => slide.isActive)
     .sort((first, second) => first.sortOrder - second.sortOrder);
+  const current = findCurrentOffer(offers, now);
 
-  if (!isWeeklySaleActive(weeklySale, now)) {
-    return { slides };
-  }
-
-  const product = await prisma.product.findUnique({
-    where: { id: weeklySale.productId },
-    select: { slug: true, name: true, status: true },
-  });
-
-  if (!product || product.status !== "ACTIVE") {
+  if (!current) {
     return { slides };
   }
 
   return {
     slides: [
       {
-        id: "weekly-sale",
-        title: `${product.name} — this week's sale`,
-        imageUrl: weeklySale.bannerImageUrl,
-        altText: `${product.name}, this week's Sunflour Bakery sale`,
-        href: `/products/${product.slug}`,
+        id: "weekly-offer",
+        title: current.headline,
+        imageUrl: current.bannerImageUrl,
+        altText: `${current.headline}, this week's Sunflour Bakery offer`,
+        href: "/weekly-offers",
         isActive: true,
         sortOrder: -1,
       },
@@ -251,8 +322,7 @@ export async function getHomepageMerchandisingForAdmin() {
   const carouselRecord = records.find(
     (record) => record.key === HOMEPAGE_CAROUSEL_KEY,
   );
-  const saleRecord = records.find((record) => record.key === WEEKLY_SALE_KEY);
-  const parsedSale = saleRecord ? parseWeeklySale(saleRecord.value) : null;
+  const offersRecord = records.find((record) => record.key === WEEKLY_OFFERS_KEY);
 
   return {
     carousel: {
@@ -260,13 +330,7 @@ export async function getHomepageMerchandisingForAdmin() {
       createdAt: carouselRecord?.createdAt.toISOString() ?? null,
       updatedAt: carouselRecord?.updatedAt.toISOString() ?? null,
     },
-    weeklySale: saleRecord && parsedSale
-      ? {
-          ...parsedSale,
-          createdAt: saleRecord.createdAt.toISOString(),
-          updatedAt: saleRecord.updatedAt.toISOString(),
-        }
-      : null,
+    weeklyOffers: parseWeeklyOffers(offersRecord?.value).offers,
   };
 }
 
@@ -323,65 +387,66 @@ export async function updateHomepageCarousel(
   });
 }
 
-export async function updateWeeklySale(
-  input: WeeklySaleUpdateInput,
+export async function updateWeeklyOffers(
+  input: WeeklyOfferUpdateInput,
   actor: AuthenticatedUser,
 ) {
   if (actor.role !== UserRole.SUPER_ADMIN) {
-    throw forbidden("Only super admins can update the weekly sale.");
+    throw forbidden("Only super admins can update weekly offers.");
   }
 
-  const product = await prisma.product.findUnique({
-    where: { id: input.weeklySale.productId },
-    select: { id: true, name: true, status: true },
+  const offers = input.weeklyOffers.offers;
+  const productIds = [...new Set(offers.map((offer) => offer.purchaseProductId))];
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: { id: true, status: true },
   });
+  const byId = new Map(products.map((product) => [product.id, product]));
+  const invalidIndex = offers.findIndex(
+    (offer) =>
+      offer.isActive && byId.get(offer.purchaseProductId)?.status !== "ACTIVE",
+  );
 
-  if (
-    input.weeklySale.isActive &&
-    (!product || product.status !== "ACTIVE")
-  ) {
+  if (invalidIndex >= 0) {
     throw new AppError({
       code: ERROR_CODES.VALIDATION_ERROR,
-      publicMessage: "Choose an active product for the weekly sale.",
+      publicMessage: "Choose an active product for each live weekly offer.",
       status: 400,
       fieldErrors: {
-        productId: ["Choose an active product for the weekly sale."],
+        [`offers.${invalidIndex}.purchaseProductId`]: [
+          "Choose an active product for this offer.",
+        ],
       },
     });
   }
 
   return prisma.$transaction(async (transaction) => {
     const before = await transaction.siteSetting.findUnique({
-      where: { key: WEEKLY_SALE_KEY },
+      where: { key: WEEKLY_OFFERS_KEY },
       select: { value: true },
     });
     const setting = await transaction.siteSetting.upsert({
-      where: { key: WEEKLY_SALE_KEY },
-      create: { key: WEEKLY_SALE_KEY, value: input.weeklySale },
-      update: { value: input.weeklySale },
+      where: { key: WEEKLY_OFFERS_KEY },
+      create: { key: WEEKLY_OFFERS_KEY, value: input.weeklyOffers },
+      update: { value: input.weeklyOffers },
       select: { value: true, createdAt: true, updatedAt: true },
     });
 
     await writeAuditLog(
       {
         actorUserId: actor.id,
-        action: "WEEKLY_SALE_UPDATE",
+        action: "WEEKLY_OFFERS_UPDATE",
         targetType: "site_setting",
-        targetId: WEEKLY_SALE_KEY,
+        targetId: WEEKLY_OFFERS_KEY,
         metadata: {
-          productId: input.weeklySale.productId,
-          productName: product?.name ?? null,
+          offerCount: offers.length,
           before: before?.value ?? null,
-          after: input.weeklySale,
+          after: input.weeklyOffers,
         },
       },
       transaction,
     );
 
-    return {
-      ...weeklySaleSettingsSchema.parse(setting.value),
-      createdAt: setting.createdAt.toISOString(),
-      updatedAt: setting.updatedAt.toISOString(),
-    };
+    return parseWeeklyOffers(setting.value).offers;
   });
 }

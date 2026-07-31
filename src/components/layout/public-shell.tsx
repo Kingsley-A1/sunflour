@@ -28,6 +28,7 @@ interface PublicShellProps {
 const navItems = [
   { href: "/" as Route, label: "Home" },
   { href: "/menu" as Route, label: "Menu" },
+  { href: "/weekly-offers" as Route, label: "Weekly offers" },
   { href: "/about" as Route, label: "About" },
   { href: "/contact" as Route, label: "Contact" },
   { href: "/reviews" as Route, label: "Reviews" },

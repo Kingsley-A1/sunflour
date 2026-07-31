@@ -23,7 +23,7 @@ import type {
   ReviewStatus,
   SafeAuthUser,
   UserRole,
-  WeeklySaleSettings,
+  WeeklyOffer,
 } from "@/types/domain";
 
 interface ApiRequestOptions extends RequestInit {
@@ -443,17 +443,18 @@ export async function updateAdminHomepageCarousel(input: {
   return data.carousel;
 }
 
-export async function updateAdminWeeklySale(
-  input: WeeklySaleSettings,
-): Promise<NonNullable<HomepageMerchandisingSettings["weeklySale"]>> {
-  const data = await apiRequest<{
-    weeklySale: NonNullable<HomepageMerchandisingSettings["weeklySale"]>;
-  }>("/api/v1/admin/homepage/merchandising", {
-    method: "PATCH",
-    body: JSON.stringify({ weeklySale: input }),
-  });
+export async function updateAdminWeeklyOffers(
+  offers: WeeklyOffer[],
+): Promise<WeeklyOffer[]> {
+  const data = await apiRequest<{ weeklyOffers: WeeklyOffer[] }>(
+    "/api/v1/admin/homepage/merchandising",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ weeklyOffers: { offers } }),
+    },
+  );
 
-  return data.weeklySale;
+  return data.weeklyOffers;
 }
 
 export async function updateAdminOrderStatus(input: {

@@ -25,12 +25,8 @@ export function AddToCartButton({
   const cart = useCart();
   const router = useRouter();
   const { notify } = useToast();
-  const imageUrl = product.sale?.cardImageUrl ?? product.images[0]?.url ?? null;
-  const unitPrice =
-    variant?.salePrice ??
-    variant?.price ??
-    product.sale?.saleBasePrice ??
-    product.basePrice;
+  const imageUrl = product.images[0]?.url ?? null;
+  const unitPrice = variant?.price ?? product.basePrice;
   const disabled = !product.isOrderable;
   const itemKey = cart.getItemKey({
     productId: product.id,

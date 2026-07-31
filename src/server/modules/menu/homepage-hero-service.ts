@@ -11,11 +11,7 @@ import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import {
-  applyWeeklySaleDiscount,
-  buildPublicProductSale,
-  getActiveWeeklySale,
 } from "@/server/modules/homepage-merchandising";
-import type { WeeklySaleSettingsValue } from "@/server/modules/homepage-merchandising/homepage-merchandising-schemas";
 import type { HomepageHeroProductUpdateInput } from "./catalog-schemas";
 import { getProductVisibility } from "./public-catalog";
 
@@ -93,11 +89,8 @@ function mapPublicImage(
 function mapPublicHeroProduct(
   product: HeroProductRecord,
   source: HeroProductSource,
-  weeklySale: WeeklySaleSettingsValue | null,
 ) {
   const visibility = getProductVisibility(product);
-  const activeSale =
-    weeklySale?.productId === product.id ? weeklySale : null;
 
   return {
     id: product.id,
@@ -110,16 +103,10 @@ function mapPublicHeroProduct(
     isFeatured: product.isFeatured,
     isPopular: product.isPopular,
     sortOrder: product.sortOrder,
-    sale: activeSale
-      ? buildPublicProductSale(product.basePrice, activeSale)
-      : null,
     variants: product.variants.map((variant) => ({
       id: variant.id,
       name: variant.name,
       price: variant.price,
-      salePrice: activeSale
-        ? applyWeeklySaleDiscount(variant.price, activeSale.discountPercent)
-        : null,
       sku: variant.sku,
       sortOrder: variant.sortOrder,
     })),
@@ -317,14 +304,12 @@ export async function getHomepageHeroProducts(
     mostBought,
     featuredPopular,
     catalogFallback,
-    weeklySale,
   ] = await Promise.all([
     getOptionalHeroCandidates(() => getAdminSelectedHeroCandidates(limit)),
     getRecentHeroCandidates(take),
     getOptionalHeroCandidates(() => getMostBoughtHeroCandidates(take)),
     getFeaturedPopularHeroCandidates(take),
     getCatalogFallbackHeroCandidates(take),
-    getActiveWeeklySale(),
   ]);
   const selected = selectHeroProducts(
     [
@@ -341,7 +326,7 @@ export async function getHomepageHeroProducts(
 
   return {
     products: selected.map((candidate) =>
-      mapPublicHeroProduct(candidate.product, candidate.source, weeklySale),
+      mapPublicHeroProduct(candidate.product, candidate.source),
     ),
     skippedSources: ["MOST_CLICKED"] as const,
   };

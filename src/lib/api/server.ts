@@ -14,12 +14,15 @@ import type {
   PublicMenuResponse,
   PublicHomepageMerchandising,
   PublicProduct,
+  PublicWeeklyOffer,
   TabularMenuContent,
 } from "@/types/domain";
 import {
   DEFAULT_HOMEPAGE_SLIDES,
+  getCurrentWeeklyOfferForPublic,
   getHomepageMerchandisingForAdmin,
   getHomepageMerchandisingForPublic,
+  getWeeklyOffersForPublic,
 } from "@/server/modules/homepage-merchandising";
 import type { Prisma } from "@/generated/prisma/client";
 import {
@@ -112,6 +115,26 @@ export async function getHomepageHeroProductsSafe(): Promise<{
       error:
         "Homepage products are not available yet. Check the database connection and catalog setup.",
     };
+  }
+}
+
+export async function getCurrentWeeklyOfferSafe(): Promise<PublicWeeklyOffer | null> {
+  try {
+    return await getCurrentWeeklyOfferForPublic();
+  } catch {
+    return null;
+  }
+}
+
+export async function getWeeklyOffersSafe(): Promise<{
+  current: PublicWeeklyOffer | null;
+  upcoming: PublicWeeklyOffer[];
+  past: PublicWeeklyOffer[];
+}> {
+  try {
+    return await getWeeklyOffersForPublic();
+  } catch {
+    return { current: null, upcoming: [], past: [] };
   }
 }
 

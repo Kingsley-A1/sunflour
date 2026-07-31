@@ -80,18 +80,27 @@ export interface PublicProductVariant {
   id: string;
   name: string;
   price: number;
-  salePrice: number | null;
   sku: string | null;
   sortOrder: number;
 }
 
-export interface PublicProductSale {
-  discountPercent: number;
-  originalBasePrice: number;
-  saleBasePrice: number;
-  cardImageUrl: string;
+/** A "buy this, get that free" weekly offer. Never alters product pricing. */
+export interface WeeklyOffer {
+  id: string;
+  purchaseProductId: string;
+  freeItemLabel: string;
+  headline: string;
+  description?: string;
   weekStart: string;
   weekEnd: string;
+  bannerImageUrl: string;
+  cardImageUrl: string;
+  isActive: boolean;
+}
+
+export interface PublicWeeklyOffer extends WeeklyOffer {
+  purchaseProductName: string | null;
+  purchaseProductSlug: string | null;
 }
 
 export interface PublicProduct {
@@ -105,7 +114,6 @@ export interface PublicProduct {
   isFeatured: boolean;
   isPopular: boolean;
   sortOrder: number;
-  sale: PublicProductSale | null;
   variants: PublicProductVariant[];
   images: PublicProductImage[];
 }
@@ -371,26 +379,13 @@ export interface HomepageCarouselSlide {
   sortOrder: number;
 }
 
-export interface WeeklySaleSettings {
-  productId: string;
-  discountPercent: number;
-  weekStart: string;
-  weekEnd: string;
-  bannerImageUrl: string;
-  cardImageUrl: string;
-  isActive: boolean;
-}
-
 export interface HomepageMerchandisingSettings {
   carousel: {
     slides: HomepageCarouselSlide[];
     createdAt: string | null;
     updatedAt: string | null;
   };
-  weeklySale: (WeeklySaleSettings & {
-    createdAt: string | null;
-    updatedAt: string | null;
-  }) | null;
+  weeklyOffers: WeeklyOffer[];
 }
 
 export interface PublicHomepageMerchandising {

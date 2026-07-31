@@ -1,7 +1,9 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { ProductGrid } from "@/components/commerce/product-grid";
+import { WeeklyOfferCard } from "@/components/commerce/weekly-offer-card";
 import { HomepageCarousel } from "@/components/commerce/homepage-carousel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ErrorState } from "@/components/ui/error-state";
@@ -9,6 +11,7 @@ import { FeatureCarousel } from "@/components/ui/feature-carousel";
 import { PriceText } from "@/components/ui/price-text";
 import { SafeImage } from "@/components/ui/safe-image";
 import {
+  getCurrentWeeklyOfferSafe,
   getHomepageHeroProductsSafe,
   getHomepageMerchandisingSafe,
   getPublicMenuSafe,
@@ -28,12 +31,14 @@ export default async function HomePage() {
     { menu, error },
     { products: heroProducts, error: heroError },
     merchandising,
+    weeklyOffer,
     contact,
   ] =
     await Promise.all([
       getPublicMenuSafe(),
       getHomepageHeroProductsSafe(),
       getHomepageMerchandisingSafe(),
+      getCurrentWeeklyOfferSafe(),
       getResolvedPublicContactConfig(),
     ]);
   // Show a fuller menu preview on the homepage: lead with popular/featured
@@ -94,6 +99,29 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {weeklyOffer ? (
+        <section className="mx-auto grid max-w-5xl gap-5 px-4 py-8">
+          <div className="grid justify-items-center gap-2 text-center">
+            <p className="m-0 text-sm font-bold text-[var(--color-primary)]">
+              Weekly offer
+            </p>
+            <h2 className="m-0 text-3xl font-extrabold sm:text-4xl">
+              Buy this, get that free
+            </h2>
+          </div>
+          <WeeklyOfferCard offer={weeklyOffer} tone="current" />
+          <div className="flex justify-center">
+            <Link
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-6 text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] sm:text-base"
+              href={"/weekly-offers" as Route}
+            >
+              See all weekly offers
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       <section className="mx-auto grid max-w-7xl gap-5 px-4 py-8">
         <div className="grid justify-items-center gap-3 text-center">

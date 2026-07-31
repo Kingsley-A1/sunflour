@@ -10,6 +10,7 @@ describe("public mobile navigation", () => {
     expect(publicMobileNavItems.map((item) => item.label)).toEqual([
       "Home",
       "Menu",
+      "Weekly offers",
       "Cart",
       "Checkout",
       "Reviews",

@@ -4,10 +4,15 @@ import { useState } from "react";
 import { Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { formatNairaFromKobo } from "@/lib/formatters";
 
 interface ProductShareButtonProps {
   productName: string;
-  shareText?: string;
+  price: number;
+}
+
+function buildShareMessage(productName: string, price: number): string {
+  return `I found this yummy ${productName} at Sunflour Bakery for ${formatNairaFromKobo(price)} — check it out!`;
 }
 
 /**
@@ -17,19 +22,20 @@ interface ProductShareButtonProps {
  */
 export function ProductShareButton({
   productName,
-  shareText,
+  price,
 }: ProductShareButtonProps) {
   const { notify } = useToast();
   const [copied, setCopied] = useState(false);
 
   async function shareProduct() {
     const url = window.location.href;
+    const message = buildShareMessage(productName, price);
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: productName,
-          text: shareText ?? `${productName} from Sunflour Bakery`,
+          text: message,
           url,
         });
         return;
@@ -43,9 +49,9 @@ export function ProductShareButton({
     }
 
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(`${message} ${url}`);
       setCopied(true);
-      notify("Link copied. Share it anywhere!", "success");
+      notify("Message copied. Share it anywhere!", "success");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       notify("Could not share. Copy the link from your address bar.", "error");

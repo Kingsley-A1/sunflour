@@ -101,7 +101,6 @@ describe("catalog API routes", () => {
       sortOrder: 0,
       variants: [],
       images: [],
-      sale: null,
       category: {
         id: "cat_1",
         name: "Cakes",

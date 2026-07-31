@@ -56,14 +56,25 @@ export const homepageCarouselSettingsSchema = z
     });
   });
 
-export const weeklySaleSettingsSchema = z
+/**
+ * A weekly offer is a "buy this, get that free" deal (e.g. "Lebanese Burger +
+ * Free Coke"). It never changes product pricing — the free item is honoured by
+ * staff when the order is fulfilled.
+ */
+export const weeklyOfferSchema = z
   .object({
-    productId: z.string().trim().min(1, "Choose the sale product."),
-    discountPercent: z
-      .number()
-      .int()
-      .min(1, "Discount must be at least 1%.")
-      .max(90, "Discount cannot exceed 90%."),
+    id: z.string().trim().min(1).max(120),
+    // The product the customer buys to qualify for the offer.
+    purchaseProductId: z.string().trim().min(1, "Choose the qualifying product."),
+    // What they get free. Free text so it can cover items that are not
+    // catalogue products (a bottled drink, a sachet, etc).
+    freeItemLabel: z
+      .string()
+      .trim()
+      .min(1, "Describe the free item, e.g. Free Coke.")
+      .max(120),
+    headline: z.string().trim().min(1, "Add a short headline.").max(140),
+    description: z.string().trim().max(500).optional(),
     weekStart: dateKeySchema,
     weekEnd: dateKeySchema,
     bannerImageUrl: imageUrlSchema,
@@ -72,17 +83,55 @@ export const weeklySaleSettingsSchema = z
   })
   .strict()
   .superRefine((input, context) => {
-    const start = Date.parse(`${input.weekStart}T00:00:00.000Z`);
-    const end = Date.parse(`${input.weekEnd}T00:00:00.000Z`);
-    const expectedEnd = start + 6 * 24 * 60 * 60 * 1_000;
-
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end !== expectedEnd) {
+    if (input.weekEnd < input.weekStart) {
       context.addIssue({
         code: "custom",
         path: ["weekEnd"],
-        message: "A weekly sale must cover exactly 7 calendar days.",
+        message: "The offer must end on or after it starts.",
       });
     }
+  });
+
+export const weeklyOfferSettingsSchema = z
+  .object({
+    offers: z.array(weeklyOfferSchema).max(200),
+  })
+  .strict()
+  .superRefine((input, context) => {
+    const ids = new Set<string>();
+
+    input.offers.forEach((offer, index) => {
+      if (ids.has(offer.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["offers", index, "id"],
+          message: "Each weekly offer must have a unique id.",
+        });
+      }
+      ids.add(offer.id);
+    });
+
+    // Active offers must not overlap, so "the current offer" is unambiguous.
+    // Inactive (draft) offers are allowed to collide freely.
+    const active = input.offers
+      .map((offer, index) => ({ offer, index }))
+      .filter((entry) => entry.offer.isActive);
+
+    active.forEach((entry, position) => {
+      const clash = active.slice(0, position).find(
+        (other) =>
+          entry.offer.weekStart <= other.offer.weekEnd &&
+          other.offer.weekStart <= entry.offer.weekEnd,
+      );
+
+      if (clash) {
+        context.addIssue({
+          code: "custom",
+          path: ["offers", entry.index, "weekStart"],
+          message: `This offer overlaps "${clash.offer.headline}". Choose dates that do not collide.`,
+        });
+      }
+    });
   });
 
 export const homepageCarouselUpdateSchema = z
@@ -91,9 +140,9 @@ export const homepageCarouselUpdateSchema = z
   })
   .strict();
 
-export const weeklySaleUpdateSchema = z
+export const weeklyOfferUpdateSchema = z
   .object({
-    weeklySale: weeklySaleSettingsSchema,
+    weeklyOffers: weeklyOfferSettingsSchema,
   })
   .strict();
 
@@ -103,7 +152,8 @@ export type HomepageCarouselSettings = z.infer<
 export type HomepageCarouselUpdateInput = z.infer<
   typeof homepageCarouselUpdateSchema
 >;
-export type WeeklySaleSettingsValue = z.infer<
-  typeof weeklySaleSettingsSchema
+export type WeeklyOfferValue = z.infer<typeof weeklyOfferSchema>;
+export type WeeklyOfferSettingsValue = z.infer<
+  typeof weeklyOfferSettingsSchema
 >;
-export type WeeklySaleUpdateInput = z.infer<typeof weeklySaleUpdateSchema>;
+export type WeeklyOfferUpdateInput = z.infer<typeof weeklyOfferUpdateSchema>;

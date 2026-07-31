@@ -9,7 +9,6 @@ import type { PublicProductImage } from "@/types/domain";
 interface ProductImageGalleryProps {
   images: PublicProductImage[];
   productName: string;
-  saleImageUrl?: string | null;
 }
 
 const SWIPE_THRESHOLD = 48;
@@ -17,20 +16,8 @@ const SWIPE_THRESHOLD = 48;
 export function ProductImageGallery({
   images,
   productName,
-  saleImageUrl,
 }: ProductImageGalleryProps) {
-  const galleryImages = saleImageUrl
-    ? [
-        {
-          id: "weekly-sale-card-image",
-          url: saleImageUrl,
-          altText: `${productName}, this week's sale`,
-          isPrimary: true,
-          sortOrder: -1,
-        },
-        ...images.filter((image) => image.url !== saleImageUrl),
-      ]
-    : images;
+  const galleryImages = images;
   const [activeIndex, setActiveIndex] = useState(0);
   const pointerStartX = useRef<number | null>(null);
   const activeImage = galleryImages[activeIndex];

@@ -31,11 +31,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   );
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
-      <ProductImageGallery
-        images={product.images}
-        productName={product.name}
-        saleImageUrl={product.sale?.cardImageUrl}
-      />
+      <ProductImageGallery images={product.images} productName={product.name} />
       <section className="grid content-start gap-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <div className="grid gap-3">
           <div className="hidden flex-wrap gap-2 sm:flex">
@@ -54,19 +50,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             <span className="text-[var(--color-text-muted)]">
               {selectedVariant ? "Selected price " : "Price "}
             </span>
-            {product.sale ? (
-              <PriceText
-                amount={selectedVariant?.price ?? product.sale.originalBasePrice}
-                className="mr-2 text-base text-[var(--color-text-muted)] line-through"
-              />
-            ) : null}
             <PriceText
-              amount={
-                selectedVariant?.salePrice ??
-                selectedVariant?.price ??
-                product.sale?.saleBasePrice ??
-                product.basePrice
-              }
+              amount={selectedVariant?.price ?? product.basePrice}
               className="text-2xl"
             />
           </p>
@@ -89,15 +74,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                     />
                     <span className="font-semibold">{variant.name}</span>
                   </span>
-                  <span className="flex items-baseline gap-2">
-                    {variant.salePrice !== null ? (
-                      <PriceText
-                        amount={variant.price}
-                        className="text-xs text-[var(--color-text-muted)] line-through"
-                      />
-                    ) : null}
-                    <PriceText amount={variant.salePrice ?? variant.price} />
-                  </span>
+                  <PriceText amount={variant.price} />
                 </label>
               ))}
             </div>
@@ -115,7 +92,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
           <ProductShareButton
             productName={product.name}
-            shareText={product.description ?? undefined}
+            price={selectedVariant?.price ?? product.basePrice}
           />
         </div>
         <p className="m-0 text-xs leading-5 text-[var(--color-text-muted)]">

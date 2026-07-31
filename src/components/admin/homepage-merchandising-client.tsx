@@ -5,10 +5,12 @@ import {
   ArrowDown,
   ArrowUp,
   ImagePlus,
+  Pencil,
   Plus,
   Save,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,7 +21,7 @@ import { Select } from "@/components/ui/select";
 import {
   getApiErrorMessage,
   updateAdminHomepageCarousel,
-  updateAdminWeeklySale,
+  updateAdminWeeklyOffers,
 } from "@/lib/api/client";
 import { uploadSingleAdminImage } from "@/lib/api/product-image-upload";
 import type {
@@ -27,7 +29,7 @@ import type {
   HomepageCarouselSlide,
   HomepageMerchandisingSettings,
   UserRole,
-  WeeklySaleSettings,
+  WeeklyOffer,
 } from "@/types/domain";
 
 interface HomepageMerchandisingClientProps {
@@ -49,17 +51,24 @@ function addDays(dateKey: string, days: number): string {
   return toDateKey(date);
 }
 
-function defaultWeeklySale(): WeeklySaleSettings {
+function newOfferDraft(): WeeklyOffer {
   const weekStart = toDateKey(new Date());
   return {
-    productId: "",
-    discountPercent: 10,
+    id: `offer-${Date.now()}`,
+    purchaseProductId: "",
+    freeItemLabel: "",
+    headline: "",
+    description: "",
     weekStart,
     weekEnd: addDays(weekStart, 6),
     bannerImageUrl: "",
     cardImageUrl: "",
     isActive: false,
   };
+}
+
+function formatOfferRange(offer: WeeklyOffer): string {
+  return `${offer.weekStart} to ${offer.weekEnd}`;
 }
 
 export function HomepageMerchandisingClient({
@@ -70,25 +79,17 @@ export function HomepageMerchandisingClient({
   const [slides, setSlides] = useState<HomepageCarouselSlide[]>(
     initialSettings.carousel.slides,
   );
-  const [weeklySale, setWeeklySale] = useState<WeeklySaleSettings>(() => {
-    const current = initialSettings.weeklySale;
-    return current
-      ? {
-          productId: current.productId,
-          discountPercent: current.discountPercent,
-          weekStart: current.weekStart,
-          weekEnd: current.weekEnd,
-          bannerImageUrl: current.bannerImageUrl,
-          cardImageUrl: current.cardImageUrl,
-          isActive: current.isActive,
-        }
-      : defaultWeeklySale();
-  });
+  const [offers, setOffers] = useState<WeeklyOffer[]>(
+    initialSettings.weeklyOffers,
+  );
+  // `draft` is the offer currently open in the form. Null means the form is
+  // closed, which is the state right after a successful save.
+  const [draft, setDraft] = useState<WeeklyOffer | null>(null);
   const [carouselMessage, setCarouselMessage] = useState<string | null>(null);
-  const [saleMessage, setSaleMessage] = useState<string | null>(null);
+  const [offerMessage, setOfferMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const canManageSale = role === "SUPER_ADMIN";
+  const canManageOffers = role === "SUPER_ADMIN";
   const activeProducts = useMemo(
     () =>
       products
@@ -147,7 +148,7 @@ export function HomepageMerchandisingClient({
     }
   }
 
-  async function uploadSaleImage(
+  async function uploadOfferImage(
     field: "bannerImageUrl" | "cardImageUrl",
     file?: File,
   ) {
@@ -159,13 +160,13 @@ export function HomepageMerchandisingClient({
     try {
       const uploaded = await uploadSingleAdminImage(
         file,
-        field === "bannerImageUrl"
-          ? "CAROUSEL_BANNER"
-          : "SALE_CARD_IMAGE",
+        field === "bannerImageUrl" ? "CAROUSEL_BANNER" : "SALE_CARD_IMAGE",
       );
-      setWeeklySale((current) => ({ ...current, [field]: uploaded.url }));
+      setDraft((current) =>
+        current ? { ...current, [field]: uploaded.url } : current,
+      );
     } catch (uploadError) {
-      setError(getApiErrorMessage(uploadError, "Sale image upload failed."));
+      setError(getApiErrorMessage(uploadError, "Offer image upload failed."));
     } finally {
       setBusyKey(null);
     }
@@ -191,27 +192,49 @@ export function HomepageMerchandisingClient({
     }
   }
 
-  async function saveWeeklySale() {
-    setBusyKey("sale-save");
+  async function persistOffers(next: WeeklyOffer[], successMessage: string) {
+    setBusyKey("offer-save");
     setError(null);
-    setSaleMessage(null);
+    setOfferMessage(null);
     try {
-      const saved = await updateAdminWeeklySale(weeklySale);
-      setWeeklySale({
-        productId: saved.productId,
-        discountPercent: saved.discountPercent,
-        weekStart: saved.weekStart,
-        weekEnd: saved.weekEnd,
-        bannerImageUrl: saved.bannerImageUrl,
-        cardImageUrl: saved.cardImageUrl,
-        isActive: saved.isActive,
-      });
-      setSaleMessage("Weekly sale saved.");
+      const saved = await updateAdminWeeklyOffers(next);
+      setOffers(saved);
+      // Close the form on success so the saved offer reads as committed; it
+      // stays editable from the list below.
+      setDraft(null);
+      setOfferMessage(successMessage);
+      return true;
     } catch (saveError) {
-      setError(getApiErrorMessage(saveError, "Weekly sale could not be saved."));
+      setError(
+        getApiErrorMessage(saveError, "Weekly offers could not be saved."),
+      );
+      return false;
     } finally {
       setBusyKey(null);
     }
+  }
+
+  async function saveDraft() {
+    if (!draft) {
+      return;
+    }
+
+    const exists = offers.some((offer) => offer.id === draft.id);
+    const next = exists
+      ? offers.map((offer) => (offer.id === draft.id ? draft : offer))
+      : [...offers, draft];
+
+    await persistOffers(
+      next,
+      exists ? "Weekly offer updated." : "Weekly offer created.",
+    );
+  }
+
+  async function deleteOffer(offerId: string) {
+    await persistOffers(
+      offers.filter((offer) => offer.id !== offerId),
+      "Weekly offer removed.",
+    );
   }
 
   function addSlide() {
@@ -384,124 +407,245 @@ export function HomepageMerchandisingClient({
             <ImagePlus className="h-4 w-4" aria-hidden="true" />
             Weekly merchandising
           </p>
-          <h2 className="m-0 mt-1 text-xl font-extrabold">One weekly sale</h2>
+          <h2 className="m-0 mt-1 text-xl font-extrabold">Weekly offers</h2>
           <p className="m-0 mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
-            The active product receives the selected discount at checkout, its
-            sale card image replaces the normal card image, and the sale banner
-            appears first in the carousel.
+            A weekly offer is a &quot;buy this, get that free&quot; deal (for
+            example, a Lebanese Burger with a free Coke). Offers never change
+            product prices &mdash; staff honour the free item when the order is
+            fulfilled. Schedule future offers here; active offers may not
+            overlap.
           </p>
         </div>
-        {!canManageSale ? (
+        {!canManageOffers ? (
           <p className="m-0 rounded-[var(--radius-sm)] bg-[var(--color-warning-soft)] p-3 text-sm font-semibold text-[var(--color-text)]">
-            Weekly sale pricing is restricted to super admins.
+            Weekly offers are restricted to super admins.
           </p>
         ) : (
           <>
-            {saleMessage ? (
-              <p className="m-0 text-sm font-semibold text-[var(--color-success)]" role="status">
-                {saleMessage}
+            {offerMessage ? (
+              <p
+                className="m-0 text-sm font-semibold text-[var(--color-success)]"
+                role="status"
+              >
+                {offerMessage}
               </p>
             ) : null}
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="grid content-start gap-4">
-                <Select
-                  label="Sale product"
-                  onChange={(event) =>
-                    setWeeklySale((current) => ({
-                      ...current,
-                      productId: event.target.value,
-                    }))
-                  }
-                  value={weeklySale.productId}
-                >
-                  <option value="">Choose product</option>
-                  {activeProducts.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </Select>
-                <Input
-                  inputMode="numeric"
-                  label="Discount percent"
-                  max="90"
-                  min="1"
-                  onChange={(event) =>
-                    setWeeklySale((current) => ({
-                      ...current,
-                      discountPercent: Number(event.target.value),
-                    }))
-                  }
-                  type="number"
-                  value={String(weeklySale.discountPercent)}
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    label="Week starts"
-                    onChange={(event) => {
-                      const weekStart = event.target.value;
-                      setWeeklySale((current) => ({
-                        ...current,
-                        weekStart,
-                        weekEnd: addDays(weekStart, 6),
-                      }));
-                    }}
-                    type="date"
-                    value={weeklySale.weekStart}
-                  />
-                  <Input
-                    helpText="Automatically set to seven calendar days."
-                    label="Week ends"
-                    readOnly
-                    type="date"
-                    value={weeklySale.weekEnd}
+
+            {offers.length === 0 ? (
+              <p className="m-0 rounded-[var(--radius-sm)] border border-dashed border-[var(--color-border-strong)] p-4 text-sm text-[var(--color-text-muted)]">
+                No weekly offers yet. Create the first one below.
+              </p>
+            ) : (
+              <ul className="m-0 grid list-none gap-2 p-0">
+                {offers.map((offer) => (
+                  <li
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3"
+                    key={offer.id}
+                  >
+                    <div className="min-w-0">
+                      <p className="m-0 font-bold">
+                        {offer.headline || "Untitled offer"}
+                      </p>
+                      <p className="m-0 mt-1 text-sm text-[var(--color-text-muted)]">
+                        {offer.freeItemLabel
+                          ? `Free: ${offer.freeItemLabel} · `
+                          : ""}
+                        {formatOfferRange(offer)} ·{" "}
+                        {offer.isActive ? "Active" : "Draft"}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+                        onClick={() => {
+                          setOfferMessage(null);
+                          setDraft({ ...offer });
+                        }}
+                        variant="secondary"
+                      >
+                        Edit
+                      </Button>
+                      <IconButton
+                        icon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+                        label={`Delete ${offer.headline || "offer"}`}
+                        onClick={() => void deleteOffer(offer.id)}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {draft ? (
+              <div className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="m-0 text-lg font-bold">
+                    {offers.some((offer) => offer.id === draft.id)
+                      ? "Edit weekly offer"
+                      : "New weekly offer"}
+                  </h3>
+                  <IconButton
+                    icon={<X className="h-4 w-4" aria-hidden="true" />}
+                    label="Close offer form"
+                    onClick={() => setDraft(null)}
                   />
                 </div>
-                <Checkbox
-                  checked={weeklySale.isActive}
-                  label="Activate this weekly sale"
-                  onChange={(event) =>
-                    setWeeklySale((current) => ({
-                      ...current,
-                      isActive: event.target.checked,
-                    }))
-                  }
-                />
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="grid content-start gap-4">
+                    <Input
+                      helpText="Shown on the homepage and the Weekly Offer page."
+                      label="Headline"
+                      onChange={(event) =>
+                        setDraft((current) =>
+                          current
+                            ? { ...current, headline: event.target.value }
+                            : current,
+                        )
+                      }
+                      placeholder="Lebanese Burger + Free Coke"
+                      value={draft.headline}
+                    />
+                    <Select
+                      label="Buy this product"
+                      onChange={(event) =>
+                        setDraft((current) =>
+                          current
+                            ? {
+                                ...current,
+                                purchaseProductId: event.target.value,
+                              }
+                            : current,
+                        )
+                      }
+                      value={draft.purchaseProductId}
+                    >
+                      <option value="">Choose product</option>
+                      {activeProducts.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input
+                      helpText="What the customer gets free with that purchase."
+                      label="Get this free"
+                      onChange={(event) =>
+                        setDraft((current) =>
+                          current
+                            ? { ...current, freeItemLabel: event.target.value }
+                            : current,
+                        )
+                      }
+                      placeholder="Free Coke"
+                      value={draft.freeItemLabel}
+                    />
+                    <Input
+                      helpText="Optional extra detail for the offer page."
+                      label="Description (optional)"
+                      onChange={(event) =>
+                        setDraft((current) =>
+                          current
+                            ? { ...current, description: event.target.value }
+                            : current,
+                        )
+                      }
+                      value={draft.description ?? ""}
+                    />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Input
+                        label="Offer starts"
+                        onChange={(event) => {
+                          const weekStart = event.target.value;
+                          setDraft((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  weekStart,
+                                  weekEnd: addDays(weekStart, 6),
+                                }
+                              : current,
+                          );
+                        }}
+                        type="date"
+                        value={draft.weekStart}
+                      />
+                      <Input
+                        helpText="Adjust if the offer runs longer than a week."
+                        label="Offer ends"
+                        onChange={(event) =>
+                          setDraft((current) =>
+                            current
+                              ? { ...current, weekEnd: event.target.value }
+                              : current,
+                          )
+                        }
+                        type="date"
+                        value={draft.weekEnd}
+                      />
+                    </div>
+                    <Checkbox
+                      checked={draft.isActive}
+                      label="Activate this offer (must not overlap another active offer)"
+                      onChange={(event) =>
+                        setDraft((current) =>
+                          current
+                            ? { ...current, isActive: event.target.checked }
+                            : current,
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <SaleImageField
+                      alt="Weekly offer carousel banner"
+                      aspect="21/9"
+                      busy={busyKey === "bannerImageUrl"}
+                      help="Use a 21:9 promotional banner."
+                      label="Offer carousel banner"
+                      onFile={(file) =>
+                        void uploadOfferImage("bannerImageUrl", file)
+                      }
+                      url={draft.bannerImageUrl}
+                    />
+                    <SaleImageField
+                      alt="Weekly offer card"
+                      aspect="4/3"
+                      busy={busyKey === "cardImageUrl"}
+                      help="Use a clean 4:3 photo of the deal."
+                      label="Offer card image"
+                      onFile={(file) =>
+                        void uploadOfferImage("cardImageUrl", file)
+                      }
+                      url={draft.cardImageUrl}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button onClick={() => setDraft(null)} variant="secondary">
+                    Cancel
+                  </Button>
+                  <Button
+                    icon={<Save className="h-4 w-4" aria-hidden="true" />}
+                    loading={busyKey === "offer-save"}
+                    onClick={saveDraft}
+                  >
+                    Save offer
+                  </Button>
+                </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <SaleImageField
-                  alt="Weekly sale carousel banner"
-                  aspect="21/9"
-                  busy={busyKey === "bannerImageUrl"}
-                  help="Use a 21:9 promotional banner."
-                  label="Sale carousel banner"
-                  onFile={(file) =>
-                    void uploadSaleImage("bannerImageUrl", file)
-                  }
-                  url={weeklySale.bannerImageUrl}
-                />
-                <SaleImageField
-                  alt="Weekly sale product card"
-                  aspect="4/3"
-                  busy={busyKey === "cardImageUrl"}
-                  help="Use a clean 4:3 product photo."
-                  label="Sale product card image"
-                  onFile={(file) =>
-                    void uploadSaleImage("cardImageUrl", file)
-                  }
-                  url={weeklySale.cardImageUrl}
-                />
+            ) : (
+              <div className="flex justify-end">
+                <Button
+                  icon={<Plus className="h-4 w-4" aria-hidden="true" />}
+                  onClick={() => {
+                    setOfferMessage(null);
+                    setDraft(newOfferDraft());
+                  }}
+                >
+                  New weekly offer
+                </Button>
               </div>
-            </div>
-            <div className="flex justify-end">
-              <Button
-                icon={<Save className="h-4 w-4" aria-hidden="true" />}
-                loading={busyKey === "sale-save"}
-                onClick={saveWeeklySale}
-              >
-                Save weekly sale
-              </Button>
-            </div>
+            )}
           </>
         )}
       </section>
