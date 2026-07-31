@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetailClient } from "@/components/commerce/product-detail-client";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getPublicProductSafe } from "@/lib/api/server";
+import { getCurrentWeeklyOfferSafe, getPublicProductSafe } from "@/lib/api/server";
 import { buildProductJsonLd } from "@/lib/seo/structured-data";
 
 export const dynamic = "force-dynamic";
@@ -53,16 +53,23 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const { product } = await getPublicProductSafe(slug);
+  const [{ product }, weeklyOffer] = await Promise.all([
+    getPublicProductSafe(slug),
+    getCurrentWeeklyOfferSafe(),
+  ]);
 
   if (!product) {
     notFound();
   }
 
+  // Only surface the offer when this product is the one the offer is built on.
+  const offerHeadline =
+    weeklyOffer?.purchaseProductId === product.id ? weeklyOffer.headline : null;
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <JsonLd data={buildProductJsonLd(product, product.category.name)} />
-      <ProductDetailClient product={product} />
+      <ProductDetailClient offerHeadline={offerHeadline} product={product} />
     </main>
   );
 }

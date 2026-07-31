@@ -18,9 +18,14 @@ interface ProductDetailClientProps {
       slug: string;
     };
   };
+  /** Set when this product is the subject of the live weekly offer. */
+  offerHeadline?: string | null;
 }
 
-export function ProductDetailClient({ product }: ProductDetailClientProps) {
+export function ProductDetailClient({
+  product,
+  offerHeadline,
+}: ProductDetailClientProps) {
   const [selectedVariantId, setSelectedVariantId] = useState(
     product.variants[0]?.id ?? "",
   );
@@ -91,8 +96,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             />
           </div>
           <ProductShareButton
-            productName={product.name}
+            offerHeadline={offerHeadline}
             price={selectedVariant?.price ?? product.basePrice}
+            productName={product.name}
           />
         </div>
         <p className="m-0 text-xs leading-5 text-[var(--color-text-muted)]">

@@ -9,10 +9,20 @@ import { formatNairaFromKobo } from "@/lib/formatters";
 interface ProductShareButtonProps {
   productName: string;
   price: number;
+  /** Headline of the live weekly offer, when this product is the offer. */
+  offerHeadline?: string | null;
 }
 
-function buildShareMessage(productName: string, price: number): string {
-  return `I found this yummy ${productName} at Sunflour Bakery for ${formatNairaFromKobo(price)} — check it out!`;
+function buildShareMessage(
+  productName: string,
+  price: number,
+  offerHeadline?: string | null,
+): string {
+  const opening = `I found this yummy ${productName} at Sunflour Bakery for ${formatNairaFromKobo(price)}`;
+
+  return offerHeadline
+    ? `${opening} — and it's this week's offer: ${offerHeadline}! Check it out!`
+    : `${opening} — check it out!`;
 }
 
 /**
@@ -23,13 +33,14 @@ function buildShareMessage(productName: string, price: number): string {
 export function ProductShareButton({
   productName,
   price,
+  offerHeadline,
 }: ProductShareButtonProps) {
   const { notify } = useToast();
   const [copied, setCopied] = useState(false);
 
   async function shareProduct() {
     const url = window.location.href;
-    const message = buildShareMessage(productName, price);
+    const message = buildShareMessage(productName, price, offerHeadline);
 
     if (navigator.share) {
       try {

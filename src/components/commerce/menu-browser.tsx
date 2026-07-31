@@ -90,10 +90,13 @@ function CategoryPill({
 }) {
   return (
     <button
+      aria-pressed={active}
       className={
+        // Minimal-border pills: the selected pill is a solid brand fill, the
+        // rest are quiet tinted chips with no outline.
         active
-          ? "min-h-10 shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
-          : "min-h-10 shrink-0 rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-semibold text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+          ? "min-h-10 shrink-0 rounded-[var(--radius-pill)] border border-transparent bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-standard)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
+          : "min-h-10 shrink-0 rounded-[var(--radius-pill)] border border-transparent bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-muted)] transition duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-standard)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-text)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
       }
       onClick={onClick}
       type="button"
