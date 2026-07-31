@@ -110,7 +110,7 @@ Goal: make Sunflour feel fresh, trusted, local, and easy to order from.
 
 Build:
 
-- Swipeable 21:9 promotion carousel directly below navigation, rotating every two seconds unless reduced motion is requested.
+- Compact swipeable promotion carousel directly below navigation, rotating every two seconds unless reduced motion is requested and showing one, two, or three 21:9 banners as space allows.
 - Hero with warm bakery message.
 - `View Menu` as the primary CTA.
 - WhatsApp as secondary CTA.

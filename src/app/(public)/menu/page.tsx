@@ -48,7 +48,7 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
           </>
         }
       />
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8">
+      <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8">
         <MenuViewTabs value={view} />
         {view === "full" ? (
           <MenuBoard />

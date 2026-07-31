@@ -4,8 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
-import { IconButton } from "@/components/ui/icon-button";
 import type { HomepageCarouselSlide } from "@/types/domain";
 
 interface HomepageCarouselProps {
@@ -18,10 +16,12 @@ const SWIPE_THRESHOLD = 48;
 export function HomepageCarousel({ slides }: HomepageCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [interactionPaused, setInteractionPaused] = useState(false);
-  const [userPaused, setUserPaused] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(1);
   const pointerStartX = useRef<number | null>(null);
   const didSwipe = useRef(false);
+  const maxStartIndex = Math.max(0, slides.length - visibleCount);
+  const displayedIndex = Math.min(activeIndex, maxStartIndex);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -32,26 +32,45 @@ export function HomepageCarousel({ slides }: HomepageCarouselProps) {
   }, []);
 
   useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const tablet = window.matchMedia("(min-width: 640px)");
+    const sync = () => setVisibleCount(desktop.matches ? 3 : tablet.matches ? 2 : 1);
+
+    sync();
+    desktop.addEventListener("change", sync);
+    tablet.addEventListener("change", sync);
+    return () => {
+      desktop.removeEventListener("change", sync);
+      tablet.removeEventListener("change", sync);
+    };
+  }, []);
+
+  useEffect(() => {
     if (
-      slides.length < 2 ||
+      maxStartIndex === 0 ||
       interactionPaused ||
-      userPaused ||
       reduceMotion
     ) {
       return;
     }
     const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slides.length);
+      setActiveIndex((current) =>
+        current >= maxStartIndex ? 0 : current + 1,
+      );
     }, ROTATION_MS);
     return () => window.clearInterval(timer);
-  }, [interactionPaused, reduceMotion, slides.length, userPaused]);
+  }, [interactionPaused, maxStartIndex, reduceMotion]);
 
   if (slides.length === 0) {
     return null;
   }
 
   function show(index: number) {
-    setActiveIndex((index + slides.length) % slides.length);
+    if (index < 0) {
+      setActiveIndex(maxStartIndex);
+      return;
+    }
+    setActiveIndex(index > maxStartIndex ? 0 : index);
   }
 
   function finishSwipe(clientX: number) {
@@ -62,7 +81,7 @@ export function HomepageCarousel({ slides }: HomepageCarouselProps) {
     pointerStartX.current = null;
     if (Math.abs(delta) >= SWIPE_THRESHOLD) {
       didSwipe.current = true;
-      show(activeIndex + (delta < 0 ? 1 : -1));
+      show(displayedIndex + (delta < 0 ? 1 : -1));
     }
   }
 
@@ -75,30 +94,42 @@ export function HomepageCarousel({ slides }: HomepageCarouselProps) {
       onMouseEnter={() => setInteractionPaused(true)}
       onMouseLeave={() => setInteractionPaused(false)}
     >
-      <div className="mx-auto max-w-7xl px-0 sm:px-4 sm:py-4">
+      <div className="mx-auto max-w-7xl px-0 sm:px-4 sm:py-3">
         <div
-          className="relative aspect-[21/9] touch-pan-y overflow-hidden bg-[var(--color-surface-muted)] sm:rounded-[var(--radius-product)]"
+          className="relative aspect-[21/9] touch-pan-y select-none overflow-hidden bg-[var(--color-surface-muted)] sm:aspect-[42/9] sm:rounded-[var(--radius-product)] lg:aspect-[63/9]"
           data-testid="homepage-carousel-frame"
           onPointerDown={(event) => {
             didSwipe.current = false;
             pointerStartX.current = event.clientX;
+            event.currentTarget.setPointerCapture(event.pointerId);
           }}
-          onPointerCancel={() => {
+          onPointerCancel={(event) => {
             pointerStartX.current = null;
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
           }}
-          onPointerUp={(event) => finishSwipe(event.clientX)}
+          onPointerUp={(event) => {
+            finishSwipe(event.clientX);
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          }}
         >
           <div
             className="flex h-full transition-transform duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-standard)]"
             data-testid="homepage-carousel-track"
-            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+            style={{
+              transform: `translateX(-${displayedIndex * (100 / visibleCount)}%)`,
+            }}
           >
             {slides.map((slide, index) => (
               <Link
                 aria-label={`View ${slide.title}`}
-                className="relative block h-full min-w-full"
+                className="relative block h-full basis-full shrink-0 overflow-hidden border-r border-[var(--color-canvas)] last:border-r-0 sm:basis-1/2 lg:basis-1/3"
                 href={slide.href as Route}
                 key={slide.id}
+                onDragStart={(event) => event.preventDefault()}
                 onClick={(event) => {
                   if (didSwipe.current) {
                     event.preventDefault();
@@ -109,65 +140,15 @@ export function HomepageCarousel({ slides }: HomepageCarouselProps) {
                 <Image
                   alt={slide.altText}
                   className="object-cover"
+                  draggable={false}
                   fill
                   priority={index === 0}
-                  sizes="100vw"
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   src={slide.imageUrl}
                 />
               </Link>
             ))}
           </div>
-
-          {slides.length > 1 ? (
-            <>
-              <IconButton
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-[var(--color-surface-floating)]/92 shadow-[var(--shadow-floating)] sm:left-4"
-                icon={<ChevronLeft className="h-5 w-5" aria-hidden="true" />}
-                label="Show previous promotion"
-                onClick={() => show(activeIndex - 1)}
-              />
-              <IconButton
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-[var(--color-surface-floating)]/92 shadow-[var(--shadow-floating)] sm:right-4"
-                icon={<ChevronRight className="h-5 w-5" aria-hidden="true" />}
-                label="Show next promotion"
-                onClick={() => show(activeIndex + 1)}
-              />
-              {!reduceMotion ? (
-                <IconButton
-                  className="absolute right-2 top-2 bg-[var(--color-surface-floating)]/92 shadow-[var(--shadow-floating)] sm:right-4 sm:top-4"
-                  icon={
-                    userPaused ? (
-                      <Play className="h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <Pause className="h-4 w-4" aria-hidden="true" />
-                    )
-                  }
-                  label={
-                    userPaused
-                      ? "Resume carousel rotation"
-                      : "Pause carousel rotation"
-                  }
-                  onClick={() => setUserPaused((current) => !current)}
-                />
-              ) : null}
-              <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-overlay-strong)] px-3 py-2 sm:bottom-4">
-                {slides.map((slide, index) => (
-                  <button
-                    aria-label={`Show ${slide.title}`}
-                    aria-pressed={activeIndex === index}
-                    className={`h-2 rounded-full transition-all ${
-                      activeIndex === index
-                        ? "w-7 bg-[var(--color-accent)]"
-                        : "w-2 bg-white/75"
-                    }`}
-                    key={slide.id}
-                    onClick={() => show(index)}
-                    type="button"
-                  />
-                ))}
-              </div>
-            </>
-          ) : null}
         </div>
       </div>
     </section>

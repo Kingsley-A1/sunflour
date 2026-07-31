@@ -96,7 +96,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-5 px-4 py-8">
+      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-8">
         <div className="grid justify-items-center gap-3 text-center">
           <div>
             <p className="m-0 text-sm font-bold text-[var(--color-primary)]">

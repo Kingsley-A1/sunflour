@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { PageLoadingLine } from "@/components/ui/page-loading-line";
+import { RouteScrollReset } from "@/components/ui/route-scroll-reset";
 import { ToastProvider } from "@/components/ui/toast";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body>
         <Suspense fallback={null}>
           <PageLoadingLine />
+          <RouteScrollReset />
         </Suspense>
         <OfflineBanner />
         <ToastProvider>{children}</ToastProvider>
