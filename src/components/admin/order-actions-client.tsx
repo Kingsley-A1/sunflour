@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { canMarkOrderPaymentSuccessful } from "@/lib/status";
 import type {
   DeliveryMethod,
   OrderStatus,
@@ -91,12 +92,11 @@ export function OrderActionsClient({
     role === "ATTENDANT"
       ? (["PROOF_SENT_ON_WHATSAPP", "UNDER_REVIEW"] satisfies PaymentStatus[])
       : paymentOptions;
-  const canMarkPaymentSuccessful =
-    role !== "ATTENDANT" &&
-    currentPaymentStatus !== "CONFIRMED" &&
-    currentPaymentStatus !== "REJECTED" &&
-    currentStatus !== "CANCELLED" &&
-    currentStatus !== "REJECTED";
+  const canMarkPaymentSuccessful = canMarkOrderPaymentSuccessful(
+    role,
+    currentPaymentStatus,
+    currentStatus,
+  );
 
   async function updateOrderStatus() {
     if (!nextStatus) {

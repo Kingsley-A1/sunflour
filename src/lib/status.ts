@@ -3,6 +3,7 @@ import type {
   PaymentStatus,
   ProductStatus,
   ReviewStatus,
+  UserRole,
 } from "@/types/domain";
 
 export type StatusTone = "neutral" | "success" | "warning" | "danger" | "info";
@@ -11,6 +12,28 @@ export interface StatusMeta {
   label: string;
   tone: StatusTone;
   helper: string;
+}
+
+/**
+ * Whether "Mark payment as successful" (paymentStatus -> CONFIRMED) can be
+ * offered for this order right now. Mirrors the backend's own check in
+ * updateOrderPaymentStatus() (payment-service.ts) — attendants can record
+ * that proof came in, but only moderators/super admins may confirm a
+ * transfer actually cleared. Kept in one place so every surface that offers
+ * this action (order detail, order list) agrees with the API it calls.
+ */
+export function canMarkOrderPaymentSuccessful(
+  role: UserRole,
+  paymentStatus: PaymentStatus,
+  orderStatus: OrderStatus,
+): boolean {
+  return (
+    role !== "ATTENDANT" &&
+    paymentStatus !== "CONFIRMED" &&
+    paymentStatus !== "REJECTED" &&
+    orderStatus !== "CANCELLED" &&
+    orderStatus !== "REJECTED"
+  );
 }
 
 export const orderStatusMeta: Record<OrderStatus, StatusMeta> = {

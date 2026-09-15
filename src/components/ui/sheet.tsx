@@ -45,7 +45,7 @@ export function Sheet({
         aria-labelledby={titleId}
         aria-modal="true"
         className={cn(
-          "ml-auto flex h-full w-full max-w-xl flex-col overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface-floating)] shadow-[var(--shadow-modal)]",
+          "ml-auto flex h-full w-full max-w-xl flex-col overflow-x-hidden overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface-floating)] shadow-[var(--shadow-modal)]",
           panelClassName,
         )}
         onKeyDown={onKeyDown}
@@ -53,8 +53,8 @@ export function Sheet({
         role="dialog"
         tabIndex={-1}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface-floating)] p-4">
-          <h2 className="m-0 text-lg font-bold" id={titleId}>
+        <div className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface-floating)] p-4">
+          <h2 className="m-0 min-w-0 wrap-anywhere text-lg font-bold" id={titleId}>
             {title}
           </h2>
           <IconButton

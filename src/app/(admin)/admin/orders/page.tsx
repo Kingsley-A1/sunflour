@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
+import { MarkOrderPaidButton } from "@/components/admin/mark-order-paid-button";
 import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { StatusPill } from "@/components/ui/status-pill";
 import { requireRole } from "@/server/auth/rbac";
@@ -55,7 +56,7 @@ function buildPageHref(
 }
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
-  await requireRole(ORDER_ADMIN_ROLES);
+  const user = await requireRole(ORDER_ADMIN_ROLES);
   const query = await searchParams;
   const parsedInput = adminOrderListQuerySchema.safeParse({
     status: first(query.status),
@@ -108,6 +109,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               <th className="p-3">Payment</th>
               <th className="p-3">Status</th>
               <th className="p-3">Created</th>
+              <th className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -121,11 +123,19 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                 <td className="p-3"><StatusPill status={order.paymentStatus} /></td>
                 <td className="p-3"><StatusPill status={order.status} /></td>
                 <td className="p-3">{formatDateTime(order.createdAt)}</td>
+                <td className="p-3">
+                  <MarkOrderPaidButton
+                    orderNumber={order.orderNumber}
+                    paymentStatus={order.paymentStatus}
+                    role={user.role}
+                    status={order.status}
+                  />
+                </td>
               </tr>
             ))}
             {orders.length === 0 ? (
               <tr>
-                <td className="p-3 text-[var(--color-text-muted)]" colSpan={6}>No orders match the filters.</td>
+                <td className="p-3 text-[var(--color-text-muted)]" colSpan={7}>No orders match the filters.</td>
               </tr>
             ) : null}
           </tbody>

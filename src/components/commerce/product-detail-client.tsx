@@ -35,18 +35,18 @@ export function ProductDetailClient({
     [product.variants, selectedVariantId],
   );
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
       <ProductImageGallery images={product.images} productName={product.name} />
-      <section className="grid content-start gap-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+      <section className="grid min-w-0 content-start gap-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <div className="grid gap-3">
           <div className="hidden flex-wrap gap-2 sm:flex">
             <Badge tone="neutral">{product.category.name}</Badge>
             <StatusPill status={product.status} />
           </div>
           <div>
-            <h1 className="m-0 text-3xl font-extrabold leading-tight">{product.name}</h1>
+            <h1 className="m-0 wrap-anywhere text-3xl font-extrabold leading-tight">{product.name}</h1>
             {product.description ? (
-              <p className="m-0 mt-3 text-base leading-7 text-[var(--color-text-muted)]">
+              <p className="m-0 mt-3 wrap-anywhere text-base leading-7 text-[var(--color-text-muted)]">
                 {product.description}
               </p>
             ) : null}

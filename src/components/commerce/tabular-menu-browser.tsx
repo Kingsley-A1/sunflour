@@ -241,7 +241,7 @@ function TabularMenuItemDetails({
   product: PublicProduct | null;
 }) {
   return (
-    <div className="grid gap-5">
+    <div className="grid min-w-0 gap-5">
       <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--color-canvas-muted)]">
         <SafeImage
           alt={item.imageAlt}
@@ -277,7 +277,7 @@ function TabularMenuItemDetails({
       ) : null}
 
       {item.details ? (
-        <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
+        <p className="m-0 wrap-anywhere text-sm leading-6 text-[var(--color-text-muted)]">
           {item.details}
         </p>
       ) : null}

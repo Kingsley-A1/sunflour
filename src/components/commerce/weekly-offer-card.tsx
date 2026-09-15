@@ -23,7 +23,7 @@ export function WeeklyOfferCard({ offer, tone = "current" }: WeeklyOfferCardProp
 
   return (
     <article
-      className={`grid overflow-hidden rounded-[var(--radius-product)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] shadow-[var(--shadow-raised)] sm:grid-cols-2 ${
+      className={`grid min-w-0 overflow-hidden rounded-[var(--radius-product)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] shadow-[var(--shadow-raised)] sm:grid-cols-2 ${
         isPast ? "opacity-80" : ""
       }`}
     >
@@ -48,29 +48,29 @@ export function WeeklyOfferCard({ offer, tone = "current" }: WeeklyOfferCardProp
         )}
       </div>
 
-      <div className="grid content-start gap-3 p-5">
+      <div className="grid min-w-0 content-start gap-3 p-5">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-accent-soft)] px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-[var(--color-text)]">
           <Gift className="h-3.5 w-3.5" aria-hidden="true" />
           {toneLabel(tone)}
         </span>
 
-        <h3 className="m-0 text-2xl font-extrabold leading-tight">
+        <h3 className="m-0 wrap-anywhere text-2xl font-extrabold leading-tight">
           {offer.headline}
         </h3>
 
         {offer.purchaseProductName ? (
-          <p className="m-0 text-sm leading-6 text-[var(--color-text)]">
+          <p className="m-0 wrap-anywhere text-sm leading-6 text-[var(--color-text)]">
             Buy <strong>{offer.purchaseProductName}</strong> and get{" "}
             <strong>{offer.freeItemLabel}</strong> free.
           </p>
         ) : (
-          <p className="m-0 text-sm leading-6 text-[var(--color-text)]">
+          <p className="m-0 wrap-anywhere text-sm leading-6 text-[var(--color-text)]">
             Get <strong>{offer.freeItemLabel}</strong> free with this offer.
           </p>
         )}
 
         {offer.description ? (
-          <p className="m-0 text-sm leading-6 text-[var(--color-text-muted)]">
+          <p className="m-0 wrap-anywhere text-sm leading-6 text-[var(--color-text-muted)]">
             {offer.description}
           </p>
         ) : null}

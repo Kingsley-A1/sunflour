@@ -45,7 +45,10 @@ export function CartItemRow({
       </div>
       <div className="grid min-w-0 gap-2">
         <div className="min-w-0">
-          <Link className="font-bold hover:underline" href={`/products/${item.slug}`}>
+          <Link
+            className="wrap-anywhere font-bold hover:underline"
+            href={`/products/${item.slug}`}
+          >
             {item.name}
           </Link>
           {item.variantName ? (

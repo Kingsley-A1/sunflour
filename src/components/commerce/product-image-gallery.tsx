@@ -43,7 +43,7 @@ export function ProductImageGallery({
   }
 
   return (
-    <section aria-label={`${productName} images`} className="grid gap-3">
+    <section aria-label={`${productName} images`} className="grid min-w-0 gap-3">
       <div
         className="relative aspect-[4/3] touch-pan-y overflow-hidden rounded-[var(--radius-product)] bg-[var(--color-surface-muted)]"
         onPointerDown={(event) => {

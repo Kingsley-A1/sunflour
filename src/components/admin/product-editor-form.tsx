@@ -90,6 +90,11 @@ export function ProductEditorForm({
 
   const draftIdRef = useRef<string | null>(draft?.id ?? null);
   const isPersistingDraftRef = useRef(false);
+  // Flips true the instant the product is being created (before any await),
+  // so an autosave already in flight can tell it lost the race and clean up
+  // after itself instead of resurrecting a draft for a product that already
+  // exists. See persistDraft() below.
+  const isFinalizedRef = useRef(false);
 
   function buildDraftData(): ProductDraftData {
     return {
@@ -106,7 +111,7 @@ export function ProductEditorForm({
   }
 
   async function persistDraft(): Promise<boolean> {
-    if (!supportsDrafts || isPersistingDraftRef.current) {
+    if (!supportsDrafts || isPersistingDraftRef.current || isFinalizedRef.current) {
       return false;
     }
 
@@ -123,7 +128,23 @@ export function ProductEditorForm({
         await updateAdminProductDraft(draftIdRef.current, payload);
       } else {
         const created = await createAdminProductDraft(payload);
+
+        // The form was submitted while this create-draft call was still in
+        // flight: discardDraftAfterCreate() already ran and found nothing to
+        // delete (draftIdRef.current was still null). Delete this draft
+        // immediately instead of recording its id, or it is orphaned —
+        // permanently listed under "Draft products" even though the real
+        // product was created and is live.
+        if (isFinalizedRef.current) {
+          await deleteAdminProductDraft(created.id).catch(() => {});
+          return false;
+        }
+
         draftIdRef.current = created.id;
+      }
+
+      if (isFinalizedRef.current) {
+        return false;
       }
 
       setDraftSaveState("saved");
@@ -188,7 +209,11 @@ export function ProductEditorForm({
     try {
       await deleteAdminProductDraft(draftIdRef.current);
     } catch {
-      // A leftover draft is harmless; it can be deleted manually later.
+      // The product was already created successfully, so don't block on
+      // this. persistDraft() prevents the racing-autosave case that used to
+      // orphan drafts routinely; a failure here is now a genuine network/API
+      // edge case, and the leftover draft stays visible (and deletable)
+      // under "Draft products" rather than silently duplicating listings.
     }
 
     draftIdRef.current = null;
@@ -263,6 +288,10 @@ export function ProductEditorForm({
           images,
         });
 
+        // The real product now exists. Lock out any further draft writes —
+        // including one already in flight from the autosave timer — before
+        // cleaning up, so the two can never race (see persistDraft()).
+        isFinalizedRef.current = true;
         await discardDraftAfterCreate();
       }
 
