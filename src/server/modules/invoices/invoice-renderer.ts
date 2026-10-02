@@ -69,6 +69,7 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   UNDER_REVIEW: "Under review",
   CONFIRMED: "Confirmed",
   REJECTED: "Rejected",
+  CANCELLED: "Cancelled",
 };
 
 export function formatPaymentMethodLabel(method: PaymentMethod): string {

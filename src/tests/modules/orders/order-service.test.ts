@@ -9,6 +9,7 @@ import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import {
   assertOrderCanReceivePaymentStatusUpdate,
+  closesUnpaidOrder,
   updateAdminOrderStatus,
   validateOrderStatusTransition,
 } from "@/server/modules/orders/order-service";
@@ -195,5 +196,30 @@ describe("order service", () => {
       code: ERROR_CODES.FORBIDDEN,
     });
     expect(mocks.orderFindUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe("closesUnpaidOrder", () => {
+  it("cancels unpaid, proof-sent and under-review payments on a closed order", () => {
+    for (const payment of [
+      PaymentStatus.UNPAID,
+      PaymentStatus.PROOF_SENT_ON_WHATSAPP,
+      PaymentStatus.UNDER_REVIEW,
+    ]) {
+      expect(closesUnpaidOrder(OrderStatus.CANCELLED, payment)).toBe(true);
+      expect(closesUnpaidOrder(OrderStatus.REJECTED, payment)).toBe(true);
+    }
+  });
+
+  it("keeps confirmed and rejected payments, and ignores open orders", () => {
+    expect(
+      closesUnpaidOrder(OrderStatus.CANCELLED, PaymentStatus.CONFIRMED),
+    ).toBe(false);
+    expect(
+      closesUnpaidOrder(OrderStatus.CANCELLED, PaymentStatus.REJECTED),
+    ).toBe(false);
+    expect(
+      closesUnpaidOrder(OrderStatus.PREPARING, PaymentStatus.UNPAID),
+    ).toBe(false);
   });
 });

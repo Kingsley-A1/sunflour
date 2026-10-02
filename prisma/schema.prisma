@@ -64,6 +64,7 @@ enum PaymentStatus {
   UNDER_REVIEW
   CONFIRMED
   REJECTED
+  CANCELLED
 }
 
 enum PaymentMethod {

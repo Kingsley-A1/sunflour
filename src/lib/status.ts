@@ -85,6 +85,11 @@ export const orderStatusMeta: Record<OrderStatus, StatusMeta> = {
 };
 
 export const paymentStatusMeta: Record<PaymentStatus, StatusMeta> = {
+  CANCELLED: {
+    label: "Cancelled",
+    tone: "neutral",
+    helper: "The order was closed before payment was confirmed.",
+  },
   UNPAID: {
     label: "Unpaid",
     tone: "warning",

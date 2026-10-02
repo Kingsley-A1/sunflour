@@ -15,7 +15,8 @@ export type PaymentStatus =
   | "PROOF_SENT_ON_WHATSAPP"
   | "UNDER_REVIEW"
   | "CONFIRMED"
-  | "REJECTED";
+  | "REJECTED"
+  | "CANCELLED";
 export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
 export type UserRole =
   | "CUSTOMER"

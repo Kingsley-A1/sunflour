@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { Upload } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { SearchBar } from "@/components/commerce/search-bar";
 import {
   getApiErrorMessage,
   updateAdminTabularMenu,
 } from "@/lib/api/client";
 import { uploadSingleAdminImage } from "@/lib/api/product-image-upload";
-import { koboToNairaInput, nairaInputToKobo } from "@/lib/formatters";
+import {
+  formatNairaFromKobo,
+  koboToNairaInput,
+  nairaInputToKobo,
+} from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -34,8 +37,23 @@ export function TabularMenuManagerClient({
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  // Last version stored on the server. Per-item saves are merged into this,
+  // never into the draft, so one product's save cannot publish another
+  // product's half-finished edits.
+  const [saved, setSaved] = useState(initialMenu);
+  // Items currently open for editing. The value is the pre-edit snapshot that
+  // Cancel restores, or null for an item that has never been saved.
+  const [editing, setEditing] = useState<Record<string, TabularMenuItem | null>>({});
+  const [itemStatus, setItemStatus] = useState<Record<string, string>>({});
+  const [itemError, setItemError] = useState<Record<string, string>>({});
+  const [savingItemId, setSavingItemId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isSavingCategories, setIsSavingCategories] = useState(false);
+  const categoriesDirty = useMemo(
+    () => JSON.stringify(draft.categories) !== JSON.stringify(saved.categories),
+    [draft.categories, saved.categories],
+  );
+  const hasOpenItems = Object.keys(editing).length > 0;
   const sortedCategories = useMemo(
     () =>
       [...draft.categories].sort(
@@ -210,12 +228,21 @@ export function TabularMenuManagerClient({
     setMessage(null);
     setError(null);
 
+    setSearchQuery("");
+    setCategoryFilter("all");
+
     setDraft((current) => {
       const defaultCategoryId = current.categories[0]?.id ?? "uncategorized";
       const nextIndex = current.items.length + 1;
       const id = uniqueIdentifier(
         `new-item-${nextIndex}`,
         current.items.map((item) => item.id),
+      );
+
+      setEditing((open) => ({ ...open, [id]: null }));
+      window.setTimeout(
+        () => document.getElementById(`menu-item-${id}`)?.scrollIntoView({ block: "center" }),
+        50,
       );
 
       return {
@@ -245,26 +272,6 @@ export function TabularMenuManagerClient({
         ],
       };
     });
-  }
-
-  function removeItem(itemId: string) {
-    setMessage(null);
-
-    if (draft.items.length <= 1) {
-      setError("Keep at least one tabular menu item.");
-      return;
-    }
-
-    setError(null);
-    setDraft((current) => ({
-      ...current,
-      items: current.items
-        .filter((item) => item.id !== itemId)
-        .map((item, index) => ({
-          ...item,
-          sortOrder: index,
-        })),
-    }));
   }
 
   function addPriceRow(itemId: string) {
@@ -315,51 +322,186 @@ export function TabularMenuManagerClient({
     });
   }
 
-  async function saveMenu() {
-    setIsSaving(true);
+  function startEditing(item: TabularMenuItem) {
+    setMessage(null);
+    setItemStatus((current) => omitKey(current, item.id));
+    setItemError((current) => omitKey(current, item.id));
+    setEditing((current) => ({ ...current, [item.id]: item }));
+  }
+
+  function cancelEditing(itemId: string) {
+    const snapshot = editing[itemId];
+
+    setDraft((current) => ({
+      ...current,
+      items: snapshot
+        ? current.items.map((item) => (item.id === itemId ? snapshot : item))
+        : current.items.filter((item) => item.id !== itemId),
+    }));
+    setEditing((current) => omitKey(current, itemId));
+    setItemError((current) => omitKey(current, itemId));
+  }
+
+  function renameItemId(itemId: string, rawValue: string) {
+    const nextId = uniqueIdentifier(
+      toIdentifier(rawValue || itemId),
+      draft.items.filter((item) => item.id !== itemId).map((item) => item.id),
+    );
+
+    if (nextId === itemId) {
+      return;
+    }
+
+    updateItem(itemId, (item) => ({ ...item, id: nextId }));
+    setEditing((current) => renameKey(current, itemId, nextId));
+    setItemError((current) => renameKey(current, itemId, nextId));
+  }
+
+  async function saveItem(itemId: string) {
+    const item = draft.items.find((candidate) => candidate.id === itemId);
+
+    if (!item) {
+      return;
+    }
+
+    const snapshot = editing[itemId];
+    const normalized = normalizeItem(item);
+    const fail = (text: string) =>
+      setItemError((current) => ({ ...current, [itemId]: text }));
+
+    if (!saved.categories.some((category) => category.id === normalized.categoryId)) {
+      fail("This category has not been saved yet. Save the category changes first.");
+      return;
+    }
+
+    if (
+      saved.items.some(
+        (candidate) => candidate.id === normalized.id && candidate.id !== snapshot?.id,
+      )
+    ) {
+      fail("Another item already uses this ID. Choose a different ID.");
+      return;
+    }
+
+    setSavingItemId(itemId);
+    setItemError((current) => omitKey(current, itemId));
+
+    try {
+      const nextItems =
+        snapshot && saved.items.some((candidate) => candidate.id === snapshot.id)
+          ? saved.items.map((candidate) =>
+              candidate.id === snapshot.id ? normalized : candidate,
+            )
+          : [...saved.items, normalized];
+      const result = await updateAdminTabularMenu({
+        categories: saved.categories,
+        items: nextItems,
+      });
+      const storedItem =
+        result.items.find((candidate) => candidate.id === normalized.id) ?? normalized;
+
+      setSaved(result);
+      setDraft((current) => ({
+        ...current,
+        items: current.items.map((candidate) =>
+          candidate.id === itemId ? storedItem : candidate,
+        ),
+      }));
+      setEditing((current) => omitKey(current, itemId));
+      setItemStatus((current) => ({ ...current, [storedItem.id]: "Saved." }));
+    } catch (saveError) {
+      fail(
+        getApiErrorMessage(
+          saveError,
+          "This item could not be saved. Check the values and try again.",
+        ),
+      );
+    } finally {
+      setSavingItemId(null);
+    }
+  }
+
+  function requestDeleteItem(itemId: string) {
+    if (editing[itemId] === null) {
+      // Never saved, so there is nothing on the server to remove.
+      cancelEditing(itemId);
+      return;
+    }
+
+    setDeleteTargetId(itemId);
+  }
+
+  async function confirmDeleteItem() {
+    const itemId = deleteTargetId;
+    const snapshot = itemId ? editing[itemId] : undefined;
+
+    if (!itemId || !snapshot) {
+      setDeleteTargetId(null);
+      return;
+    }
+
+    if (saved.items.length <= 1) {
+      setItemError((current) => ({
+        ...current,
+        [itemId]: "Keep at least one tabular menu item.",
+      }));
+      setDeleteTargetId(null);
+      return;
+    }
+
+    setSavingItemId(itemId);
+
+    try {
+      const result = await updateAdminTabularMenu({
+        categories: saved.categories,
+        items: saved.items.filter((candidate) => candidate.id !== snapshot.id),
+      });
+
+      setSaved(result);
+      setDraft((current) => ({
+        ...current,
+        items: current.items.filter((candidate) => candidate.id !== itemId),
+      }));
+      setEditing((current) => omitKey(current, itemId));
+      setMessage(`${snapshot.name} was deleted.`);
+    } catch (deleteError) {
+      setItemError((current) => ({
+        ...current,
+        [itemId]: getApiErrorMessage(deleteError, "The item could not be deleted."),
+      }));
+    } finally {
+      setSavingItemId(null);
+      setDeleteTargetId(null);
+    }
+  }
+
+  async function saveCategories() {
+    setIsSavingCategories(true);
     setError(null);
     setMessage(null);
 
     try {
-      const savedMenu = await updateAdminTabularMenu({
+      const result = await updateAdminTabularMenu({
         categories: draft.categories.map((category, index) => ({
           ...category,
           id: toIdentifier(category.id || category.label || `category-${index + 1}`),
           sortOrder: index,
         })),
-        items: draft.items.map((item, itemIndex) => ({
-          ...item,
-          id: toIdentifier(item.id || item.name || `item-${itemIndex + 1}`),
-          categoryId: toIdentifier(item.categoryId),
-          tags: normalizeStringList(item.tags),
-          ingredients: normalizeStringList(item.ingredients),
-          sortOrder: itemIndex,
-          prices: item.prices.map((price, priceIndex) => ({
-            ...price,
-            id: toIdentifier(
-              price.id || `${item.id || "item"}-price-${priceIndex + 1}`,
-            ),
-            label: price.label?.trim() || null,
-            amount: price.amount,
-            sortOrder: priceIndex,
-          })),
-        })),
+        items: draft.items.map(normalizeItem),
       });
 
-      setDraft(savedMenu);
-      setConfirmOpen(false);
-      setMessage(
-        "Tabular menu saved. The public Menu tab now uses the latest approved reference content.",
-      );
-    } catch (menuError) {
+      setSaved(result);
+      setDraft(result);
+      setMessage("Categories saved.");
+    } catch (categoryError) {
       setError(
         getApiErrorMessage(
-          menuError,
-          "The tabular menu could not be saved. Check the edited values and try again.",
+          categoryError,
+          "The categories could not be saved. Check the edited values and try again.",
         ),
       );
     } finally {
-      setIsSaving(false);
+      setIsSavingCategories(false);
     }
   }
 
@@ -422,10 +564,29 @@ export function TabularMenuManagerClient({
             </p>
             <h2 className="m-0 mt-1 text-xl font-bold">Edit labels and order</h2>
           </div>
-          <Button icon={<Plus className="h-4 w-4" />} onClick={addCategory}>
-            Add category
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              icon={<Plus className="h-4 w-4" />}
+              onClick={addCategory}
+              variant="secondary"
+            >
+              Add category
+            </Button>
+            <Button
+              disabled={!categoriesDirty || hasOpenItems}
+              icon={<Save className="h-4 w-4" aria-hidden="true" />}
+              loading={isSavingCategories}
+              onClick={saveCategories}
+            >
+              Save categories
+            </Button>
+          </div>
         </div>
+        {categoriesDirty && hasOpenItems ? (
+          <p className="m-0 text-sm text-[var(--color-text-muted)]">
+            Save or cancel the items you are editing before saving categories.
+          </p>
+        ) : null}
 
         <div className="grid gap-4 xl:grid-cols-2">
           {sortedCategories.map((category) => (
@@ -529,27 +690,50 @@ export function TabularMenuManagerClient({
         </div>
 
         <div className="grid gap-4">
-          {visibleItems.map((item) => (
+          {visibleItems.map((item) => {
+            const isEditing = item.id in editing;
+            const status = itemStatus[item.id];
+
+            return (
             <article
               className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4"
+              id={`menu-item-${item.id}`}
               key={item.id}
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
                   <h3 className="m-0 text-lg font-bold">{item.name}</h3>
                   <p className="m-0 mt-1 text-sm text-[var(--color-text-muted)]">
                     {draft.categories.find((category) => category.id === item.categoryId)
                       ?.label ?? "Unassigned category"}
+                    {" · "}
+                    {summarizePrices(item.prices)}
                   </p>
                 </div>
-                <Button
-                  icon={<Trash2 className="h-4 w-4" />}
-                  onClick={() => removeItem(item.id)}
-                  variant="ghost"
-                >
-                  Remove
-                </Button>
+                {!isEditing ? (
+                  <Button
+                    aria-label={`Edit ${item.name}`}
+                    icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+                    onClick={() => startEditing(item)}
+                    title={`Edit ${item.name}`}
+                    variant="secondary"
+                  >
+                    {""}
+                  </Button>
+                ) : null}
               </div>
+
+              {status && !isEditing ? (
+                <p
+                  className="m-0 text-sm font-semibold text-[var(--color-success)]"
+                  role="status"
+                >
+                  {status}
+                </p>
+              ) : null}
+
+              {isEditing ? (
+              <div className="grid gap-4 transition-[opacity,translate] duration-[var(--motion-duration-base)] starting:-translate-y-2 starting:opacity-0 motion-reduce:transition-none">
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Input
@@ -564,14 +748,12 @@ export function TabularMenuManagerClient({
                 />
                 <Input
                   helpText="Stable reference ID."
+                  defaultValue={item.id}
                   label={`Item ID for ${item.name}`}
-                  onChange={(event) =>
-                    updateItem(item.id, (current) => ({
-                      ...current,
-                      id: toIdentifier(event.target.value),
-                    }))
-                  }
-                  value={item.id}
+                  onBlur={(event) => {
+                    renameItemId(item.id, event.target.value);
+                    event.target.value = toIdentifier(event.target.value || item.id);
+                  }}
                 />
                 <Select
                   label={`Category for ${item.name}`}
@@ -756,8 +938,47 @@ export function TabularMenuManagerClient({
                   ))}
                 </div>
               </div>
+
+              {itemError[item.id] ? (
+                <p
+                  className="m-0 rounded-[var(--radius-sm)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm font-semibold text-[var(--color-danger)]"
+                  role="alert"
+                >
+                  {itemError[item.id]}
+                </p>
+              ) : null}
+
+              <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] pt-4">
+                <Button
+                  icon={<Save className="h-4 w-4" aria-hidden="true" />}
+                  loading={savingItemId === item.id}
+                  onClick={() => saveItem(item.id)}
+                >
+                  Save
+                </Button>
+                <Button
+                  disabled={savingItemId === item.id}
+                  icon={<X className="h-4 w-4" aria-hidden="true" />}
+                  onClick={() => cancelEditing(item.id)}
+                  variant="secondary"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="ml-auto"
+                  disabled={savingItemId === item.id}
+                  icon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+                  onClick={() => requestDeleteItem(item.id)}
+                  variant="danger-outline"
+                >
+                  Delete
+                </Button>
+              </div>
+              </div>
+              ) : null}
             </article>
-          ))}
+            );
+          })}
         </div>
 
         {visibleItems.length === 0 ? (
@@ -768,30 +989,75 @@ export function TabularMenuManagerClient({
         ) : null}
       </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="m-0 text-sm text-[var(--color-text-muted)]">
-          Save after reviewing IDs, categories, and price rows. The public
-          second Menu tab will update after revalidation.
-        </p>
-        <Button onClick={() => setConfirmOpen(true)}>Review and save</Button>
-      </div>
-
       <ConfirmDialog
-        confirmLabel="Save tabular menu"
-        description="This updates the public reference menu only. It does not change live checkout prices, product snapshots, or order totals."
-        loading={isSaving}
-        onCancel={() => setConfirmOpen(false)}
-        onConfirm={saveMenu}
-        open={confirmOpen}
-        title="Confirm tabular menu update"
+        confirmLabel="Delete item"
+        description="This removes the item from the public reference menu. It does not change live checkout prices, product snapshots, or order totals."
+        loading={savingItemId !== null}
+        onCancel={() => setDeleteTargetId(null)}
+        onConfirm={confirmDeleteItem}
+        open={deleteTargetId !== null}
+        title="Delete this menu item?"
       >
         <p className="m-0 text-sm text-[var(--color-text-muted)]">
-          {draft.categories.length} categories, {draft.items.length} items,{" "}
-          {totalPriceRows} price rows
+          {deleteTargetId
+            ? (draft.items.find((item) => item.id === deleteTargetId)?.name ?? "")
+            : ""}
         </p>
       </ConfirmDialog>
     </div>
   );
+}
+
+function omitKey<T>(record: Record<string, T>, key: string): Record<string, T> {
+  const rest = { ...record };
+  delete rest[key];
+  return rest;
+}
+
+function renameKey<T>(
+  record: Record<string, T>,
+  from: string,
+  to: string,
+): Record<string, T> {
+  if (!(from in record)) {
+    return record;
+  }
+
+  const next: Record<string, T> = omitKey(record, from);
+  next[to] = record[from] as T;
+  return next;
+}
+
+function normalizeItem(item: TabularMenuItem): TabularMenuItem {
+  const id = toIdentifier(item.id || item.name || "item");
+
+  return {
+    ...item,
+    id,
+    categoryId: toIdentifier(item.categoryId),
+    tags: normalizeStringList(item.tags),
+    ingredients: normalizeStringList(item.ingredients),
+    prices: item.prices.map((price, priceIndex) => ({
+      ...price,
+      id: toIdentifier(price.id || `${id}-price-${priceIndex + 1}`),
+      label: price.label?.trim() || null,
+      sortOrder: priceIndex,
+    })),
+  };
+}
+
+function summarizePrices(prices: readonly TabularMenuPrice[]): string {
+  if (prices.length === 0) {
+    return "No price";
+  }
+
+  const amounts = prices.map((price) => price.amount);
+  const lowest = Math.min(...amounts);
+  const highest = Math.max(...amounts);
+
+  return lowest === highest
+    ? formatNairaFromKobo(lowest)
+    : `${formatNairaFromKobo(lowest)} – ${formatNairaFromKobo(highest)}`;
 }
 
 function TabularItemImageField({

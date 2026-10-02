@@ -1,8 +1,14 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { DeliveryMethod, OrderStatus, UserRole } from "@/generated/prisma/enums";
+import {
+  DeliveryMethod,
+  OrderStatus,
+  PaymentStatus,
+  UserRole,
+} from "@/generated/prisma/enums";
 import type {
   DeliveryMethod as DeliveryMethodValue,
   OrderStatus as OrderStatusValue,
+  PaymentStatus as PaymentStatusValue,
 } from "@/generated/prisma/enums";
 import type { AuthenticatedUser } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
@@ -261,6 +267,17 @@ function auditActionForOrderStatus(status: OrderStatusValue): string {
   return "ORDER_STATUS_UPDATE";
 }
 
+export function closesUnpaidOrder(
+  toStatus: OrderStatusValue,
+  paymentStatus: PaymentStatusValue,
+): boolean {
+  return (
+    (toStatus === OrderStatus.CANCELLED || toStatus === OrderStatus.REJECTED) &&
+    paymentStatus !== PaymentStatus.CONFIRMED &&
+    paymentStatus !== PaymentStatus.REJECTED
+  );
+}
+
 export function assertOrderCanReceivePaymentStatusUpdate(
   orderStatus: OrderStatusValue,
 ): void {
@@ -372,6 +389,7 @@ export async function updateAdminOrderStatus(
       id: true,
       orderNumber: true,
       status: true,
+      paymentStatus: true,
       deliveryMethod: true,
       customerNameSnapshot: true,
       customerEmailSnapshot: true,
@@ -395,6 +413,12 @@ export async function updateAdminOrderStatus(
       data: {
         status: input.status,
         adminNote: input.adminNote,
+        // A closed order can no longer be paid. Money that was already
+        // confirmed stays CONFIRMED (a refund is handled separately), and a
+        // payment already rejected keeps that more specific label.
+        paymentStatus: closesUnpaidOrder(input.status, order.paymentStatus)
+          ? PaymentStatus.CANCELLED
+          : undefined,
         cancelledAt: input.status === OrderStatus.CANCELLED ? now : undefined,
         deliveredAt: input.status === OrderStatus.DELIVERED ? now : undefined,
       },

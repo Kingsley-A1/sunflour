@@ -94,9 +94,9 @@ export function HomepageCarousel({ slides }: HomepageCarouselProps) {
       onMouseEnter={() => setInteractionPaused(true)}
       onMouseLeave={() => setInteractionPaused(false)}
     >
-      <div className="mx-auto max-w-7xl px-0 sm:px-4 sm:py-3">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
         <div
-          className="relative aspect-[21/9] touch-pan-y select-none overflow-hidden bg-[var(--color-surface-muted)] sm:aspect-[42/9] sm:rounded-[var(--radius-product)] lg:aspect-[63/9]"
+          className="relative aspect-[21/9] touch-pan-y select-none overflow-hidden bg-[var(--color-surface-muted)] sm:aspect-[42/9] lg:aspect-[63/9] rounded-[var(--radius-lg)] border border-[var(--color-border)] shadow-[var(--shadow-raised)]"
           data-testid="homepage-carousel-frame"
           onPointerDown={(event) => {
             didSwipe.current = false;

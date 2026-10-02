@@ -238,6 +238,7 @@ const allowedPaymentTransitions: Record<
   ],
   [PaymentStatus.CONFIRMED]: [],
   [PaymentStatus.REJECTED]: [],
+  [PaymentStatus.CANCELLED]: [],
 };
 
 export function validatePaymentStatusTransition(

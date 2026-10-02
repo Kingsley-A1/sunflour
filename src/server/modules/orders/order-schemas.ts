@@ -23,6 +23,7 @@ const paymentStatusSchema = z.enum([
   PaymentStatus.UNDER_REVIEW,
   PaymentStatus.CONFIRMED,
   PaymentStatus.REJECTED,
+  PaymentStatus.CANCELLED,
 ]);
 
 const customerTypeSchema = z.enum([
