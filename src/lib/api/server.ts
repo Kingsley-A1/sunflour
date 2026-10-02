@@ -15,6 +15,7 @@ import type {
   PublicHomepageMerchandising,
   PublicProduct,
   PublicWeeklyOffer,
+  MenuBoard,
   TabularMenuContent,
 } from "@/types/domain";
 import {
@@ -41,7 +42,10 @@ import {
   getHomepageHeroProducts,
   listAdminHomepageHeroProducts,
 } from "@/server/modules/menu/homepage-hero-service";
-import { getTabularMenuContentSafeForPublic } from "@/server/modules/menu";
+import {
+  getTabularMenuContentSafeForPublic,
+  getVisibleMenuBoardsSafeForPublic,
+} from "@/server/modules/menu";
 
 export async function getPublicMenuSafe(): Promise<{
   menu: PublicMenuResponse | null;
@@ -68,6 +72,10 @@ export async function getPublicCategoryNavigationSafe(): Promise<
   } catch {
     return [];
   }
+}
+
+export async function getPublicMenuBoardsSafe(): Promise<MenuBoard[]> {
+  return getVisibleMenuBoardsSafeForPublic();
 }
 
 export async function getPublicTabularMenuSafe(): Promise<TabularMenuContent> {

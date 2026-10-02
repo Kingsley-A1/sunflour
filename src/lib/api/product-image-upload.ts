@@ -4,7 +4,8 @@ export const MAX_PRODUCT_IMAGES = 8;
 export type AdminImageUploadPurpose =
   | "PRODUCT_IMAGE"
   | "CAROUSEL_BANNER"
-  | "SALE_CARD_IMAGE";
+  | "SALE_CARD_IMAGE"
+  | "MENU_BOARD";
 
 // Generous per-image ceiling. On a slow connection a large request can stall
 // long enough to be dropped; we abort and retry rather than hang forever.
@@ -45,7 +46,11 @@ async function uploadThroughServer(
   file: File,
   purpose: AdminImageUploadPurpose = "PRODUCT_IMAGE",
 ): Promise<UploadedMediaAsset> {
-  const optimized = await compressImage(file);
+  // Menu boards are mostly small print, so keep more resolution and quality.
+  const optimized = await compressImage(
+    file,
+    purpose === "MENU_BOARD" ? { maxDimension: 2000, quality: 0.85 } : undefined,
+  );
   let lastError: Error = new Error("Image upload failed. Try again.");
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {

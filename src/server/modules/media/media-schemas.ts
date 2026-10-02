@@ -18,6 +18,7 @@ export const adminMediaUploadPurposeSchema = z.enum([
   "PRODUCT_IMAGE",
   "CAROUSEL_BANNER",
   "SALE_CARD_IMAGE",
+  "MENU_BOARD",
 ]);
 
 export const presignedUploadRequestSchema = z

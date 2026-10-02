@@ -6,7 +6,7 @@ import {
 } from "@/components/commerce/menu-view-tabs";
 import { PageHero } from "@/components/layout/page-hero";
 import { ErrorState } from "@/components/ui/error-state";
-import { getPublicMenuSafe } from "@/lib/api/server";
+import { getPublicMenuBoardsSafe, getPublicMenuSafe } from "@/lib/api/server";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,10 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
     query
       ? "products"
       : "full";
-  const { menu, error } = await getPublicMenuSafe();
+  const [{ menu, error }, boards] = await Promise.all([
+    getPublicMenuSafe(),
+    getPublicMenuBoardsSafe(),
+  ]);
 
   return (
     <>
@@ -51,7 +54,7 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
       <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8">
         <MenuViewTabs value={view} />
         {view === "full" ? (
-          <MenuBoard />
+          <MenuBoard boards={boards} />
         ) : error || !menu ? (
           <ErrorState
             description={error ?? "Menu data is not available."}

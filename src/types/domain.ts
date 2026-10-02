@@ -191,6 +191,21 @@ export interface TabularMenuContent {
   items: TabularMenuItem[];
 }
 
+export interface MenuBoard {
+  id: string;
+  title: string;
+  imageUrl: string;
+  altText: string;
+  width: number;
+  height: number;
+  visible: boolean;
+}
+
+export interface AdminMenuBoards {
+  boards: MenuBoard[];
+  updatedAt: string | null;
+}
+
 export interface AdminTabularMenuContent extends TabularMenuContent {
   createdAt: string | null;
   updatedAt: string | null;

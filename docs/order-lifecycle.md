@@ -190,8 +190,15 @@ Payment status transitions currently allowed:
 | `UNDER_REVIEW` | `CONFIRMED`, `REJECTED` |
 | `CONFIRMED` | none |
 | `REJECTED` | none |
+| `CANCELLED` | none |
 
 Rejected payment requires a reason.
+
+`CANCELLED` is set automatically, never manually: when an order moves to
+`CANCELLED` or `REJECTED`, any payment that is `UNPAID`, `PROOF_SENT_ON_WHATSAPP`
+or `UNDER_REVIEW` becomes `CANCELLED` in the same transaction, so the invoice no
+longer reads "Unpaid". A `CONFIRMED` payment stays `CONFIRMED` (a refund is handled
+outside the app) and a `REJECTED` payment stays `REJECTED`.
 
 ## Deferred Decisions
 

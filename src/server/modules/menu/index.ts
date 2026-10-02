@@ -53,3 +53,19 @@ export type {
   TabularMenuItemValue,
   TabularMenuPriceValue,
 } from "./tabular-menu-schemas";
+export {
+  getMenuBoardsForAdmin,
+  getVisibleMenuBoardsForPublic,
+  getVisibleMenuBoardsSafeForPublic,
+  MENU_BOARDS_KEY,
+  updateMenuBoards,
+} from "./menu-boards-service";
+export {
+  menuBoardsUpdateSchema,
+  menuBoardsValueSchema,
+} from "./menu-boards-schemas";
+export type {
+  MenuBoardsUpdateInput,
+  MenuBoardsValue,
+  MenuBoardValue,
+} from "./menu-boards-schemas";

@@ -87,6 +87,8 @@ PATCH  /api/v1/admin/categories/[id]
 DELETE /api/v1/admin/categories/[id]
 GET    /api/v1/admin/tabular-menu
 PATCH  /api/v1/admin/tabular-menu
+GET    /api/v1/admin/menu-boards
+PATCH  /api/v1/admin/menu-boards
 GET    /api/v1/admin/homepage/hero-products
 PATCH  /api/v1/admin/homepage/hero-products
 GET    /api/v1/admin/products
@@ -567,6 +569,8 @@ DELETE /api/v1/admin/categories/[id]     SUPER_ADMIN, soft-archives with is_acti
 ```txt
 GET   /api/v1/admin/tabular-menu         MEDIA_MANAGER | SUPER_ADMIN
 PATCH /api/v1/admin/tabular-menu         MEDIA_MANAGER | SUPER_ADMIN
+GET   /api/v1/admin/menu-boards          MEDIA_MANAGER | SUPER_ADMIN
+PATCH /api/v1/admin/menu-boards          MEDIA_MANAGER | SUPER_ADMIN
 ```
 
 Rules:

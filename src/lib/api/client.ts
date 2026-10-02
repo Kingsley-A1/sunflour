@@ -3,7 +3,9 @@ import type {
   AdminDeliveryZone,
   AdminRegistrationCodePanel,
   AdminRegistrationResult,
+  AdminMenuBoards,
   AdminTabularMenuContent,
+  MenuBoard,
   AdminHomepageHeroProduct,
   AdminProductDraft,
   AdminSurchargeRule,
@@ -645,6 +647,20 @@ export async function updateAdminTabularMenu(
   );
 
   return data.tabularMenu;
+}
+
+export async function updateAdminMenuBoards(
+  boards: MenuBoard[],
+): Promise<AdminMenuBoards> {
+  const data = await apiRequest<{ menuBoards: AdminMenuBoards }>(
+    "/api/v1/admin/menu-boards",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ boards }),
+    },
+  );
+
+  return data.menuBoards;
 }
 
 export async function listEmailTemplates(): Promise<EmailTemplate[]> {

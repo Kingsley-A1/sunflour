@@ -26,7 +26,18 @@ async function decodeBitmap(file: File): Promise<ImageBitmap> {
   }
 }
 
-export async function compressImage(file: File): Promise<File> {
+export interface CompressImageOptions {
+  maxDimension?: number;
+  quality?: number;
+}
+
+export async function compressImage(
+  file: File,
+  options: CompressImageOptions = {},
+): Promise<File> {
+  const maxDimension = options.maxDimension ?? MAX_DIMENSION;
+  const quality = options.quality ?? WEBP_QUALITY;
+
   if (!canCompressInBrowser() || !file.type.startsWith("image/")) {
     return file;
   }
@@ -40,7 +51,7 @@ export async function compressImage(file: File): Promise<File> {
 
   try {
     const largestSide = Math.max(bitmap.width, bitmap.height);
-    const scale = largestSide > MAX_DIMENSION ? MAX_DIMENSION / largestSide : 1;
+    const scale = largestSide > maxDimension ? maxDimension / largestSide : 1;
     const width = Math.max(1, Math.round(bitmap.width * scale));
     const height = Math.max(1, Math.round(bitmap.height * scale));
 
@@ -56,7 +67,7 @@ export async function compressImage(file: File): Promise<File> {
     context.drawImage(bitmap, 0, 0, width, height);
 
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((result) => resolve(result), "image/webp", WEBP_QUALITY);
+      canvas.toBlob((result) => resolve(result), "image/webp", quality);
     });
 
     if (!blob || blob.size === 0) {

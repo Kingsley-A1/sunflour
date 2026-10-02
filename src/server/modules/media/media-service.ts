@@ -106,6 +106,7 @@ export function createMediaObjectKey(
     PRODUCT_IMAGE: "product-images",
     CAROUSEL_BANNER: "carousel-banners",
     SALE_CARD_IMAGE: "sale-card-images",
+    MENU_BOARD: "menu-boards",
   };
 
   return `${directoryByPurpose[input.purpose]}/${datePrefix}/${randomUUID()}.${extension}`;

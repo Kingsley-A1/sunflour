@@ -290,6 +290,7 @@ Acceptance:
 | `/admin/products/new` | Create product | SUPER_ADMIN | ProductEditorForm |
 | `/admin/products/[id]` | Edit product | SUPER_ADMIN, limited moderator availability controls if approved | ProductEditorForm |
 | `/admin/homepage` | Promotion carousel and weekly sale manager | MEDIA_MANAGER for carousel, SUPER_ADMIN for weekly sale | HomepageMerchandisingClient |
+| `/admin/menu-boards` | Upload, order and hide the menu images shown on the public Menu page (first visible = main menu) | MEDIA_MANAGER | MenuBoardsManagerClient |
 | `/admin/tabular-menu` | Reference menu content editor | MEDIA_MANAGER | TabularMenuManagerClient |
 | `/admin/categories` | Category manager | SUPER_ADMIN | CategoryEditorForm |
 | `/admin/users` | Admin users and registration code panel | SUPER_ADMIN | AdminRegistrationCodesClient, staff account list |
