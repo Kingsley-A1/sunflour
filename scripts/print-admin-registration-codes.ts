@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./load-env";
 
 import { getAdminRegistrationCodePanel } from "@/server/auth/admin-registration-code-service";
 

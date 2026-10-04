@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../scripts/load-env";
 import { seedAdminAllowlist } from "../src/server/auth/seed-admins";
 import {
   seedCanonicalProductCategories,
