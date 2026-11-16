@@ -6,7 +6,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { MediaAssetStatus } from "@/generated/prisma/enums";
+import { MediaAssetStatus, MediaUploadPurpose } from "@/generated/prisma/enums";
 import { prisma } from "@/server/db/prisma";
 import type { AuthenticatedUser } from "@/server/auth/rbac";
 import { AppError } from "@/server/lib/errors/app-error";
@@ -18,6 +18,7 @@ import type {
 } from "./media-schemas";
 import { getPublicMediaUrl, getR2Config, getR2Endpoint } from "./r2-config";
 import type { R2Config } from "./r2-config";
+import { storageErrorFromUnknown } from "./r2-errors";
 
 const extensionByContentType: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -60,7 +61,19 @@ export interface CompleteUploadDependencies {
   ) => Promise<HeadObjectCommandOutput>;
 }
 
-function createR2Client(config: R2Config): S3Client {
+/**
+ * One place to build the R2 client so every upload path behaves the same.
+ *
+ * - Checksums are only sent when an operation requires them. Recent AWS SDK
+ *   versions attach CRC checksum headers to every PutObject by default, which
+ *   S3-compatible stores such as R2 do not always accept; Cloudflare recommends
+ *   this setting for SDK compatibility.
+ * - Timeouts are bounded so a slow storage endpoint fails with a clear
+ *   storage error well inside the function's time budget instead of the
+ *   platform killing the request (which the browser reports as a dropped
+ *   connection).
+ */
+export function createR2Client(config: R2Config): S3Client {
   return new S3Client({
     region: "auto",
     endpoint: getR2Endpoint(config),
@@ -68,7 +81,97 @@ function createR2Client(config: R2Config): S3Client {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
     },
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
+    maxAttempts: 3,
+    requestHandler: {
+      connectionTimeout: 5_000,
+      requestTimeout: 20_000,
+    },
   });
+}
+
+export interface StoreMediaObjectInput {
+  body: Uint8Array;
+  contentType: string;
+  byteSize: number;
+  fileName: string;
+  purpose: AdminMediaUploadPurpose;
+}
+
+export interface StoreMediaObjectDependencies {
+  config?: R2Config;
+  putObject?: (client: S3Client, command: PutObjectCommand) => Promise<unknown>;
+}
+
+/**
+ * Streams an admin image to R2, then records it as a READY media asset.
+ *
+ * The object is written first: if storage fails nothing is left behind in the
+ * database, and the admin receives a storage-specific error instead of a
+ * generic one. Every media asset row therefore points at an object that exists.
+ */
+export async function storeMediaObject(
+  input: StoreMediaObjectInput,
+  actor: AuthenticatedUser,
+  dependencies: StoreMediaObjectDependencies = {},
+) {
+  const config = dependencies.config ?? getR2Config();
+  const objectKey = createMediaObjectKey({
+    contentType: input.contentType,
+    purpose: input.purpose,
+  });
+  const client = createR2Client(config);
+  const putObject =
+    dependencies.putObject ?? ((r2Client, command) => r2Client.send(command));
+
+  try {
+    await putObject(
+      client,
+      new PutObjectCommand({
+        Bucket: config.bucketName,
+        Key: objectKey,
+        Body: input.body,
+        ContentType: input.contentType,
+        ContentLength: input.byteSize,
+      }),
+    );
+  } catch (error) {
+    throw storageErrorFromUnknown(error);
+  }
+
+  const publicUrl = getPublicMediaUrl(config, objectKey);
+  const mediaAsset = await prisma.mediaAsset.create({
+    data: {
+      bucket: config.bucketName,
+      objectKey,
+      publicUrl,
+      originalFilename: input.fileName,
+      contentType: input.contentType,
+      byteSize: input.byteSize,
+      // The database enum only models product images; the purpose that decides
+      // the storage folder is recorded in the audit log below.
+      uploadPurpose: MediaUploadPurpose.PRODUCT_IMAGE,
+      status: MediaAssetStatus.READY,
+      createdByUserId: actor.id,
+    },
+    select: { id: true, publicUrl: true, status: true },
+  });
+
+  await writeAuditLog({
+    actorUserId: actor.id,
+    action: "MEDIA_UPLOAD_COMPLETED",
+    targetType: "media_asset",
+    targetId: mediaAsset.id,
+    metadata: {
+      objectKey,
+      contentType: input.contentType,
+      byteSize: input.byteSize,
+      purpose: input.purpose,
+    },
+  });
+
+  return mediaAsset;
 }
 
 function notFound(): AppError {

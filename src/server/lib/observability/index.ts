@@ -1,1 +1,1 @@
-export { logApiError, logRateLimit } from "./logger";
+export { logApiError, logLoaderError, logRateLimit } from "./logger";

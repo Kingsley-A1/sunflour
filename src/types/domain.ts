@@ -355,6 +355,13 @@ export interface ProductDraftData {
   isPopular?: boolean;
   variantName?: string;
   variantPrice?: string;
+  /** Images already uploaded to storage; restored when the draft is resumed. */
+  images?: ProductDraftImage[];
+}
+
+export interface ProductDraftImage {
+  mediaAssetId: string;
+  url: string | null;
 }
 
 export interface AdminProductDraft {

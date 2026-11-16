@@ -1,13 +1,14 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Route } from "next";
+import { CheckCircle2 } from "lucide-react";
 import { HomepageHeroProductsClient } from "@/components/admin/homepage-hero-products-client";
 import { ProductAdminClient } from "@/components/admin/product-admin-client";
-import { ProductDraftsList } from "@/components/admin/product-drafts-list";
+import { ProductsViewTabs } from "@/components/admin/products-view-tabs";
 import { ErrorState } from "@/components/ui/error-state";
-import { getAdminCatalogSafe, getAdminProductDraftsSafe } from "@/lib/api/server";
+import { getAdminCatalogSafe } from "@/lib/api/server";
 import { requireRole } from "@/server/auth/rbac";
 import { PRODUCT_ADMIN_ROLES } from "@/server/auth/roles";
-import type { AdminProductDraft } from "@/types/domain";
+import { countProductDraftsForUser } from "@/server/modules/menu";
 
 export const dynamic = "force-dynamic";
 
@@ -16,72 +17,60 @@ export const metadata = {
 };
 
 interface AdminProductsPageProps {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; created?: string }>;
 }
 
 export default async function AdminProductsPage({
   searchParams,
 }: AdminProductsPageProps) {
   const user = await requireRole(PRODUCT_ADMIN_ROLES);
-  const { view } = await searchParams;
+  const { view, created } = await searchParams;
   const isSuperAdmin = user.role === "SUPER_ADMIN";
-  const showDrafts = isSuperAdmin && view === "drafts";
 
-  const [catalog, draftsResult] = await Promise.all([
+  // Old links used a query string for drafts; drafts now have their own page.
+  if (isSuperAdmin && view === "drafts") {
+    redirect("/admin/products/drafts" as Route);
+  }
+
+  const [catalog, draftCount] = await Promise.all([
     getAdminCatalogSafe(),
     isSuperAdmin
-      ? getAdminProductDraftsSafe(user)
-      : Promise.resolve({
-          drafts: [] as AdminProductDraft[],
-          error: null as string | null,
-        }),
+      ? countProductDraftsForUser(user).catch(() => 0)
+      : Promise.resolve(0),
   ]);
   const { products, categories, heroProducts, error } = catalog;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-5">
       <header>
-        <p className="m-0 text-sm font-bold text-[var(--color-primary)]">Catalog</p>
-        <h1 className="m-0 mt-2 text-3xl font-extrabold">Products</h1>
+        <h1 className="m-0 text-2xl font-extrabold sm:text-3xl">Products</h1>
+        <p className="m-0 mt-1 text-sm text-[var(--color-text-muted)]">
+          Everything on the Sunflour menu, with price and availability.
+        </p>
       </header>
-      {isSuperAdmin ? (
-        <nav
-          aria-label="Product views"
-          className="flex gap-2 overflow-x-auto"
+      {created === "1" ? (
+        <p
+          className="m-0 flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-success)] bg-[var(--color-success-soft)] p-3 text-sm font-semibold text-[var(--color-success-text)]"
+          role="status"
         >
-          <Link
-            className={productViewTabClass(!showDrafts)}
-            href={"/admin/products" as Route}
-          >
-            All products ({products.length})
-          </Link>
-          <Link
-            className={productViewTabClass(showDrafts)}
-            href={"/admin/products?view=drafts" as Route}
-          >
-            Draft products ({draftsResult.drafts.length})
-          </Link>
-        </nav>
+          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Product created. Its draft was removed automatically.
+        </p>
       ) : null}
-      {showDrafts ? (
-        <ProductDraftsList drafts={draftsResult.drafts} error={draftsResult.error} />
-      ) : (
-        <>
-          {error ? <ErrorState description={error} title="Catalog unavailable" /> : null}
-          <HomepageHeroProductsClient
-            heroProducts={heroProducts}
-            products={products}
-            role={user.role}
-          />
-          <ProductAdminClient categories={categories} products={products} role={user.role} />
-        </>
-      )}
+      {isSuperAdmin ? (
+        <ProductsViewTabs
+          active="products"
+          draftCount={draftCount}
+          productCount={products.length}
+        />
+      ) : null}
+      {error ? <ErrorState description={error} title="Catalog unavailable" /> : null}
+      <ProductAdminClient categories={categories} products={products} role={user.role} />
+      <HomepageHeroProductsClient
+        heroProducts={heroProducts}
+        products={products}
+        role={user.role}
+      />
     </div>
   );
-}
-
-function productViewTabClass(active: boolean): string {
-  return active
-    ? "min-h-11 shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-on-primary)]"
-    : "min-h-11 shrink-0 rounded-[var(--radius-pill)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]";
 }

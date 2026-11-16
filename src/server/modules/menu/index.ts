@@ -19,6 +19,7 @@ export {
 export { buildCatalogLineItemSnapshot } from "./product-snapshot";
 export {
   countProductDrafts,
+  countProductDraftsForUser,
   createProductDraft,
   deleteProductDraft,
   getProductDraft,

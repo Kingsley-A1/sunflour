@@ -169,14 +169,7 @@ export function ProductAdminClient({
             ))}
           </Select>
         </div>
-        {isSuperAdmin ? (
-          <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
-            href="/admin/products/new"
-          >
-            Create product
-          </Link>
-        ) : (
+        {isSuperAdmin ? null : (
           <p className="m-0 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
             Staff permissions are least-privilege: moderators update
             availability, media managers update product content and images, and

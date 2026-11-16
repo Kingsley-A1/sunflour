@@ -436,6 +436,13 @@ export async function createProduct(
       transaction,
     );
 
+    if (input.draftId) {
+      // Scoped to the actor, so one admin can never delete another's draft.
+      await transaction.productDraft.deleteMany({
+        where: { id: input.draftId, createdByUserId: actor.id },
+      });
+    }
+
     return product;
   });
 }

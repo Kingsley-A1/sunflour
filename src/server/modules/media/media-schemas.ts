@@ -10,6 +10,14 @@ export const ALLOWED_IMAGE_CONTENT_TYPES = [
 
 export const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
 
+/**
+ * Ceiling for images sent through the same-origin upload route. The hosting
+ * platform rejects function request bodies above ~4.5 MB before our code runs
+ * (the browser then sees a dropped connection), so stay safely below it. The
+ * admin UI compresses images well under this before sending.
+ */
+export const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 export const mediaUploadPurposeSchema = z.literal(
   MediaUploadPurpose.PRODUCT_IMAGE,
 );

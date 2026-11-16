@@ -38,6 +38,7 @@ import {
   type ProductDraftRecord,
 } from "@/server/modules/menu";
 import type { AuthenticatedUser } from "@/server/auth/rbac";
+import { logLoaderError } from "@/server/lib/observability";
 import {
   getHomepageHeroProducts,
   listAdminHomepageHeroProducts,
@@ -354,6 +355,16 @@ export async function getAdminCatalogSafe(): Promise<{
     categoriesResult.status === "rejected" ||
     heroProductsResult.status === "rejected";
 
+  for (const [loader, result] of [
+    ["admin.products", productsResult],
+    ["admin.categories", categoriesResult],
+    ["admin.heroProducts", heroProductsResult],
+  ] as const) {
+    if (result.status === "rejected") {
+      logLoaderError(loader, result.reason);
+    }
+  }
+
   return {
     products,
     categories,
@@ -379,7 +390,8 @@ export async function getAdminProductDraftsSafe(
     const drafts = await listProductDrafts(actor);
 
     return { drafts: drafts.map(mapAdminProductDraft), error: null };
-  } catch {
+  } catch (error) {
+    logLoaderError("admin.productDrafts", error);
     return { drafts: [], error: "Draft products could not be loaded." };
   }
 }
@@ -392,7 +404,8 @@ export async function getAdminProductDraftSafe(
     const draft = await getProductDraft(id, actor);
 
     return { draft: mapAdminProductDraft(draft), error: null };
-  } catch {
+  } catch (error) {
+    logLoaderError("admin.productDraft", error);
     return {
       draft: null,
       error: "This draft could not be loaded. It may have been removed.",

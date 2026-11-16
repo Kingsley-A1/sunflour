@@ -8,6 +8,7 @@ import { formatDateTime, formatNairaFromKobo } from "@/lib/formatters";
 import { requireRole } from "@/server/auth/rbac";
 import { ADMIN_ROLES } from "@/server/auth/roles";
 import { getDashboardMetrics } from "@/server/modules/admin";
+import { countProductDraftsForUser } from "@/server/modules/menu";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +18,15 @@ export const metadata = {
 
 export default async function AdminDashboardPage() {
   const user = await requireRole(ADMIN_ROLES);
-  const metrics = await getDashboardMetrics({});
   const canCreateProduct = user.role === "SUPER_ADMIN";
+  const [metrics, ownDraftCount] = await Promise.all([
+    getDashboardMetrics({}),
+    // Drafts are private to their author, so show the number this admin can
+    // actually open on the Drafts page.
+    canCreateProduct
+      ? countProductDraftsForUser(user).catch(() => 0)
+      : Promise.resolve(0),
+  ]);
 
   return (
     <div className="grid gap-6">
@@ -84,12 +92,14 @@ export default async function AdminDashboardPage() {
           label="Total products"
           value={metrics.counts.totalProducts}
         />
-        <MetricCard
-          description="Unfinished product drafts saved for later."
-          href={"/admin/products?view=drafts" as Route}
-          label="Draft products"
-          value={metrics.counts.draftProducts}
-        />
+        {canCreateProduct ? (
+          <MetricCard
+            description="Products you started but have not created yet."
+            href={"/admin/products/drafts" as Route}
+            label="Your drafts"
+            value={ownDraftCount}
+          />
+        ) : null}
         <MetricCard
           description="Guest orders in the selected range."
           href={"/admin/orders" as Route}
