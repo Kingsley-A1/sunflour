@@ -7,6 +7,7 @@ import { AlertCircle, FileText, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { AdminUploadField } from "@/components/admin/admin-upload-field";
+import { ProductVariantsEditor } from "@/components/admin/product-variants-editor";
 import {
   ProductImagesField,
   useProductImageQueue,
@@ -472,6 +473,11 @@ export function ProductEditorForm({
             </Select>
             <Input
               disabled={!isSuperAdmin}
+              helpText={
+                product?.variants.some((variant) => variant.isActive)
+                  ? "This product has sizes, so customers pay the size price below."
+                  : undefined
+              }
               inputMode="decimal"
               label="Price (₦)"
               onChange={(event) => setBasePrice(event.target.value)}
@@ -479,6 +485,14 @@ export function ProductEditorForm({
               value={basePrice}
             />
           </section>
+
+          {product && !isMediaManager ? (
+            <ProductVariantsEditor
+              canEdit={isSuperAdmin}
+              productId={product.id}
+              variants={product.variants}
+            />
+          ) : null}
 
           <section className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
             <h2 className="m-0 text-lg font-bold">Visibility</h2>

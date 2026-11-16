@@ -357,6 +357,32 @@ export async function updateAdminProduct(
   });
 }
 
+export async function createAdminProductVariant(
+  productId: string,
+  input: { name: string; price: number; sortOrder?: number },
+) {
+  return apiRequest(`/api/v1/admin/products/${productId}/variants`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateAdminProductVariant(
+  variantId: string,
+  input: Partial<{ name: string; price: number; isActive: boolean; sortOrder: number }>,
+) {
+  return apiRequest(`/api/v1/admin/variants/${variantId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function archiveAdminProductVariant(variantId: string) {
+  return apiRequest(`/api/v1/admin/variants/${variantId}`, {
+    method: "DELETE",
+  });
+}
+
 export interface ProductDraftInput {
   name?: string;
   data: ProductDraftData;

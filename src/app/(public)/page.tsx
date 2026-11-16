@@ -5,10 +5,14 @@ import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { ProductGrid } from "@/components/commerce/product-grid";
 import { WeeklyOfferCard } from "@/components/commerce/weekly-offer-card";
 import { HomepageCarousel } from "@/components/commerce/homepage-carousel";
+import {
+  CategoryCarousel,
+  type CategoryTile,
+} from "@/components/commerce/category-carousel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ErrorState } from "@/components/ui/error-state";
 import { FeatureCarousel } from "@/components/ui/feature-carousel";
-import { PriceText } from "@/components/ui/price-text";
+import { ProductPrice } from "@/components/commerce/product-price";
 import { SafeImage } from "@/components/ui/safe-image";
 import {
   getCurrentWeeklyOfferSafe,
@@ -18,7 +22,7 @@ import {
 } from "@/lib/api/server";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 import { buildBakeryJsonLd } from "@/lib/seo/structured-data";
-import type { PublicHeroProduct } from "@/types/domain";
+import type { PublicCategory, PublicHeroProduct } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +103,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <CategoryCarousel tiles={buildCategoryTiles(menu?.categories ?? [])} />
 
       {weeklyOffer ? (
         <section className="mx-auto grid max-w-5xl gap-5 px-4 py-8">
@@ -206,7 +212,7 @@ function HeroProductCard({ product }: { product: PublicHeroProduct }) {
           {product.name}
         </Link>
         <p className="m-0 text-sm text-[var(--color-text-muted)]">
-          <PriceText amount={product.basePrice} />
+          <ProductPrice product={product} />
         </p>
         <AddToCartButton
           buttonVariant="secondary"
@@ -224,4 +230,28 @@ function HeroImageFallback({ productName }: { productName: string }) {
       {productName}
     </div>
   );
+}
+
+/**
+ * One tile per category that has something to order. The photo comes from a
+ * featured or popular product first, so each tile leads with its best item.
+ */
+function buildCategoryTiles(categories: PublicCategory[]): CategoryTile[] {
+  return categories
+    .filter((category) => category.products.length > 0)
+    .map((category) => {
+      const withImage = category.products.filter((product) => product.images[0]?.url);
+      const lead =
+        withImage.find((product) => product.isFeatured || product.isPopular) ??
+        withImage[0];
+      const image = lead?.images[0];
+
+      return {
+        slug: category.slug,
+        name: category.name,
+        productCount: category.products.length,
+        imageUrl: image?.url ?? null,
+        imageAlt: image?.altText ?? lead?.name ?? category.name,
+      };
+    });
 }

@@ -369,6 +369,32 @@ describe("checkout service", () => {
     expect(lineItem?.productNameSnapshot).toBe("Chocolate Cake");
   });
 
+  it("refuses to sell an unpriced product at ₦0", () => {
+    expect(() =>
+      resolveCheckoutLineItems(checkoutInput.items, [activeProduct({ basePrice: 0 })]),
+    ).toThrow("Chocolate Cake has no price yet and cannot be ordered.");
+  });
+
+  it("requires a size when the product is priced per size", () => {
+    const sized = activeProduct({
+      basePrice: 0,
+      variants: [
+        { id: "variant_small", name: "Small", price: 800_000, isActive: true },
+        { id: "variant_big", name: "Big", price: 1_500_000, isActive: true },
+      ],
+    });
+
+    expect(() => resolveCheckoutLineItems(checkoutInput.items, [sized])).toThrow(
+      "Choose a size or option for Chocolate Cake.",
+    );
+
+    const [lineItem] = resolveCheckoutLineItems(
+      [{ productId: "product_1", variantId: "variant_big", quantity: 1 }],
+      [sized],
+    );
+    expect(lineItem?.unitPriceSnapshot).toBe(1_500_000);
+  });
+
   it("generates customer-safe unique order numbers", () => {
     const generated = new Set(
       Array.from({ length: 100 }, () => generateOrderNumber(now)),

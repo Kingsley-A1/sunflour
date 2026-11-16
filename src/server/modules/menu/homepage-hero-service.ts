@@ -1,3 +1,4 @@
+import { hasSellablePrice } from "@/lib/product-pricing";
 import {
   MediaAssetStatus,
   OrderStatus,
@@ -99,7 +100,8 @@ function mapPublicHeroProduct(
     description: product.description,
     basePrice: product.basePrice,
     status: product.status,
-    isOrderable: visibility.isOrderable,
+    // An unpriced product stays visible but cannot be added to a cart.
+    isOrderable: visibility.isOrderable && hasSellablePrice(product),
     isFeatured: product.isFeatured,
     isPopular: product.isPopular,
     sortOrder: product.sortOrder,

@@ -1,3 +1,4 @@
+import { hasSellablePrice } from "@/lib/product-pricing";
 import { MediaAssetStatus, MediaUploadPurpose, ProductStatus } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { UserRole } from "@/server/auth/roles";
@@ -122,7 +123,8 @@ function mapPublicProduct(
     description: product.description,
     basePrice: product.basePrice,
     status: product.status,
-    isOrderable: visibility.isOrderable,
+    // An unpriced product stays visible but cannot be added to a cart.
+    isOrderable: visibility.isOrderable && hasSellablePrice(product),
     isFeatured: product.isFeatured,
     isPopular: product.isPopular,
     sortOrder: product.sortOrder,

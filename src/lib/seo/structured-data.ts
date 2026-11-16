@@ -1,3 +1,4 @@
+import { hasSellablePrice, startingPrice } from "@/lib/product-pricing";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import type { PublicContactConfig } from "@/server/config/public-contact";
 import type { PublicProduct } from "@/types/domain";
@@ -68,16 +69,36 @@ export function buildProductJsonLd(
     "@type": "Product",
     name: product.name,
     url: `${baseUrl}/products/${product.slug}`,
-    offers: {
-      "@type": "Offer",
-      price: (product.basePrice / 100).toFixed(2),
-      priceCurrency: "NGN",
-      availability: product.isOrderable
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      url: `${baseUrl}/products/${product.slug}`,
-    },
   };
+
+  const availability = product.isOrderable
+    ? "https://schema.org/InStock"
+    : "https://schema.org/OutOfStock";
+  const sizePrices = product.variants
+    .map((variant) => variant.price)
+    .filter((price) => price > 0);
+
+  // Sized products advertise their price range; unpriced products advertise
+  // no offer at all rather than a misleading ₦0.
+  if (sizePrices.length > 1) {
+    data.offers = {
+      "@type": "AggregateOffer",
+      lowPrice: (Math.min(...sizePrices) / 100).toFixed(2),
+      highPrice: (Math.max(...sizePrices) / 100).toFixed(2),
+      offerCount: sizePrices.length,
+      priceCurrency: "NGN",
+      availability,
+      url: `${baseUrl}/products/${product.slug}`,
+    };
+  } else if (hasSellablePrice(product)) {
+    data.offers = {
+      "@type": "Offer",
+      price: (startingPrice(product) / 100).toFixed(2),
+      priceCurrency: "NGN",
+      availability,
+      url: `${baseUrl}/products/${product.slug}`,
+    };
+  }
 
   if (product.description) {
     data.description = product.description;

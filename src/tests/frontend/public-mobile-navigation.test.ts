@@ -13,6 +13,7 @@ describe("public mobile navigation", () => {
       "Weekly offers",
       "Cart",
       "Checkout",
+      "Track order",
       "Reviews",
       "About",
       "Contact",
