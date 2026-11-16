@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useCart } from "@/features/cart/cart-store";
+import { trackJourney } from "@/lib/analytics/journey";
 import { hasSellablePrice, requiresVariantSelection } from "@/lib/product-pricing";
 import { cn } from "@/lib/utils";
 import type { PublicProduct, PublicProductVariant } from "@/types/domain";
@@ -107,6 +108,12 @@ export function AddToCartButton({
           isOrderable: product.isOrderable,
         });
         notify(`${product.name} added to cart.`, "success");
+        trackJourney("add_to_cart", {
+          productId: product.id,
+          productSlug: product.slug,
+          valueKobo: unitPrice * quantity,
+          label: variant?.name,
+        });
       }}
       variant={buttonVariant}
     >

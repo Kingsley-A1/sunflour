@@ -7,6 +7,7 @@ import type { Route } from "next";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  BarChart3,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -15,6 +16,7 @@ import {
   ExternalLink,
   FileText,
   GalleryHorizontal,
+  Gift,
   Images,
   LayoutDashboard,
   ListOrdered,
@@ -72,6 +74,7 @@ export const adminNavSections: AdminNavSection[] = [
     label: null,
     items: [
       { href: "/admin" as Route, label: "Dashboard", icon: LayoutDashboard, allowedRoles: ALL_STAFF },
+      { href: "/admin/analytics" as Route, label: "Analytics", icon: BarChart3, allowedRoles: ["MODERATOR", "SUPER_ADMIN"] },
     ],
   },
   {
@@ -104,6 +107,7 @@ export const adminNavSections: AdminNavSection[] = [
     label: "Storefront",
     items: [
       { href: "/admin/homepage" as Route, label: "Homepage", icon: GalleryHorizontal, allowedRoles: ["MEDIA_MANAGER", "SUPER_ADMIN"] },
+      { href: "/admin/weekly-offers" as Route, label: "Weekly offers", icon: Gift, allowedRoles: SUPER },
       { href: "/admin/menu-boards" as Route, label: "Menu boards", icon: Images, allowedRoles: ["MEDIA_MANAGER", "SUPER_ADMIN"] },
       { href: "/admin/tabular-menu" as Route, label: "Tabular menu", icon: ListOrdered, allowedRoles: ["MEDIA_MANAGER", "SUPER_ADMIN"] },
     ],

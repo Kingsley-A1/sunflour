@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { ProductImageGallery } from "@/components/commerce/product-image-gallery";
 import { ProductShareButton } from "@/components/commerce/product-share-button";
@@ -9,6 +9,7 @@ import { PriceText } from "@/components/ui/price-text";
 import { ProductPrice } from "@/components/commerce/product-price";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { StatusPill } from "@/components/ui/status-pill";
+import { trackJourney } from "@/lib/analytics/journey";
 import type { PublicProduct, PublicProductVariant } from "@/types/domain";
 
 interface ProductDetailClientProps {
@@ -35,6 +36,14 @@ export function ProductDetailClient({
     () => product.variants.find((variant) => variant.id === selectedVariantId),
     [product.variants, selectedVariantId],
   );
+
+  useEffect(() => {
+    trackJourney("product_view", {
+      productId: product.id,
+      productSlug: product.slug,
+      metadata: offerHeadline ? { weeklyOffer: true } : undefined,
+    });
+  }, [product.id, product.slug, offerHeadline]);
   return (
     <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
       <ProductImageGallery images={product.images} productName={product.name} />

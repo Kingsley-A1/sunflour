@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProductGrid } from "@/components/commerce/product-grid";
 import { SearchBar } from "@/components/commerce/search-bar";
+import { trackJourney } from "@/lib/analytics/journey";
 import type { PublicMenuResponse } from "@/types/domain";
 
 interface MenuBrowserProps {
@@ -53,6 +54,23 @@ export function MenuBrowser({
         .includes(normalizedQuery),
     );
   }, [activeCategory, allProducts, menu.categories, query]);
+
+  // Record a search once the customer pauses typing, with how many items it
+  // found: searches that find nothing show the owner what's missing.
+  const resultCount = products.length;
+  useEffect(() => {
+    const term = query.trim().toLowerCase();
+    if (term.length < 2) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      trackJourney("search", {
+        label: term.slice(0, 80),
+        metadata: { results: resultCount },
+      });
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [query, resultCount]);
 
   return (
     <section className="grid gap-5" aria-label="Menu browser">

@@ -10,6 +10,7 @@ import { HeaderSearch } from "@/components/layout/header-search";
 import { PublicBottomNav } from "@/components/layout/public-bottom-nav";
 import { PublicMobileNavigation } from "@/components/layout/public-mobile-navigation";
 import { PublicWhatsAppFab } from "@/components/layout/public-whatsapp-fab";
+import { JourneyTracker } from "@/lib/analytics/journey-tracker";
 import { getResolvedPublicContactConfig } from "@/server/config/public-contact";
 import type {
   PublicCategoryNavigationItem,
@@ -69,6 +70,7 @@ export async function PublicShell({
 
   return (
     <CartProvider>
+      <JourneyTracker />
       <div className="flex min-h-svh flex-col bg-[var(--color-canvas)] text-[var(--color-text)]">
         <header className="sticky top-0 z-[var(--layer-header)] border-b border-[var(--color-border)] bg-[var(--color-surface)]/92 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">

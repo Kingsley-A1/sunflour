@@ -289,7 +289,9 @@ Acceptance:
 | `/admin/products` | Product list | MODERATOR for availability, SUPER_ADMIN for full edits depending policy | ProductTable |
 | `/admin/products/new` | Create product | SUPER_ADMIN | ProductEditorForm |
 | `/admin/products/[id]` | Edit product | SUPER_ADMIN, limited moderator availability controls if approved | ProductEditorForm |
-| `/admin/homepage` | Promotion carousel and weekly sale manager | MEDIA_MANAGER for carousel, SUPER_ADMIN for weekly sale | HomepageMerchandisingClient |
+| `/admin/homepage` | Promotion carousel manager (links to weekly offers) | MEDIA_MANAGER, SUPER_ADMIN | HomepageMerchandisingClient |
+| `/admin/weekly-offers` | "Buy this, get that free" weekly offer scheduler | SUPER_ADMIN | WeeklyOffersClient |
+| `/admin/analytics` | Storefront analytics: visitors, journey funnel, drop-off, sources, products, searches | MODERATOR, SUPER_ADMIN | AnalyticsReportView |
 | `/admin/menu-boards` | Upload, order and hide the menu images shown on the public Menu page (first visible = main menu) | MEDIA_MANAGER | MenuBoardsManagerClient |
 | `/admin/tabular-menu` | Reference menu content editor | MEDIA_MANAGER | TabularMenuManagerClient |
 | `/admin/categories` | Category manager | SUPER_ADMIN | CategoryEditorForm |
