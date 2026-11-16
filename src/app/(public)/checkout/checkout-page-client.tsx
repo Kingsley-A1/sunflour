@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
@@ -23,6 +23,7 @@ import {
   quoteDelivery,
 } from "@/lib/api/client";
 import { ApiClientError } from "@/types/api";
+import { trackJourney } from "@/lib/analytics/journey";
 import { useCart } from "@/features/cart/cart-store";
 import {
   buildCheckoutAttemptSignature,
@@ -231,6 +232,21 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
 
   const currentStep = result ? 4 : method === "DELIVERY" ? 2 : 1;
 
+  // "Started checkout" fires once per page load, after the stored cart has
+  // hydrated, and only when there is something to check out.
+  const checkoutStartTracked = useRef(false);
+  const hasCartItems = cart.items.length > 0;
+  useEffect(() => {
+    if (!hasCartItems || checkoutStartTracked.current) {
+      return;
+    }
+    checkoutStartTracked.current = true;
+    trackJourney("checkout_start", {
+      valueKobo: cart.displaySubtotal,
+      metadata: { items: cart.itemCount },
+    });
+  }, [cart.displaySubtotal, cart.itemCount, hasCartItems]);
+
   useEffect(() => {
     getDeliveryZones()
       .then(setZones)
@@ -322,8 +338,19 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
     Boolean(item.message),
   );
 
+  function onInvalid(formErrors: Partial<Record<keyof CheckoutFormValues, unknown>>) {
+    const fields = Object.keys(formErrors).sort().join(", ");
+    trackJourney("checkout_error", {
+      label: `Form not complete: ${fields}`.slice(0, 80),
+    });
+  }
+
   async function onSubmit(values: CheckoutFormValues) {
     setSubmitError(null);
+    trackJourney("checkout_submit", {
+      label: values.method,
+      valueKobo: cart.displaySubtotal,
+    });
 
     if (cart.items.length === 0) {
       setSubmitError("Add at least one item before checkout.");
@@ -332,6 +359,7 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
 
     if (values.method === "DELIVERY" && deliveryQuoteBlocking) {
       setSubmitError("Choose a delivery zone and wait for the delivery quote.");
+      trackJourney("checkout_error", { label: "Delivery zone or fee not ready" });
       return;
     }
 
@@ -355,12 +383,23 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
         idempotencyKey,
       );
 
+      trackJourney("order_placed", {
+        orderNumber: checkoutResult.orderNumber,
+        valueKobo: checkoutResult.total,
+        label: values.method,
+      });
       const orderPlacedAt = nowMs();
       setResult(checkoutResult);
       setPlacedAt(orderPlacedAt);
       persistLastOrder(checkoutResult, orderPlacedAt);
       cart.clearCart();
     } catch (error) {
+      trackJourney("checkout_error", {
+        label:
+          error instanceof ApiClientError
+            ? `Server: ${error.code}`.slice(0, 80)
+            : "Network or unknown error",
+      });
       if (error instanceof ApiClientError) {
         applyCheckoutFieldErrors(error.fieldErrors, setFormError);
         setSubmitError(getApiErrorMessage(error, error.message));
@@ -402,7 +441,7 @@ export function CheckoutPageClient({ customerDefaults }: CheckoutPageClientProps
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
-      <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
+      <form className="grid gap-5" onSubmit={handleSubmit(onSubmit, onInvalid)}>
         <CheckoutStepper currentStep={currentStep} />
         {submitError ? (
           <ErrorState description={submitError} title="Checkout could not continue" />

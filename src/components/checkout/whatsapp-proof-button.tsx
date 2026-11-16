@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, MessageCircle } from "lucide-react";
+import { trackJourney } from "@/lib/analytics/journey";
 import { recordOrderProofSent } from "@/lib/api/client";
 
 interface WhatsAppProofButtonProps {
@@ -24,6 +25,9 @@ export function WhatsAppProofButton({
     // The anchor still opens WhatsApp. We record the proof handoff in the
     // background so staff sees the order move to "under review". This never
     // confirms payment — that stays a manual admin action.
+    if (state === "idle") {
+      trackJourney("proof_sent", { orderNumber });
+    }
     if (!canTrack || state === "recording" || state === "recorded") {
       return;
     }

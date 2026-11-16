@@ -30,11 +30,13 @@ export default async function AdminHomepagePage() {
           Homepage merchandising
         </h1>
         <p className="m-0 mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
-          Manage promotional banners and Sunflour&apos;s weekly offers.
+          Pick a product and it goes live in the homepage carousel. Banners
+          are remembered, so you only upload one the first time a product is
+          promoted.
         </p>
       </header>
       {catalog.error ? (
-        <ErrorState description={catalog.error} title="Catalog unavailable" />
+        <ErrorState description={catalog.error} title="Products unavailable" />
       ) : null}
       {merchandisingResult.error || !merchandisingResult.merchandising ? (
         <ErrorState

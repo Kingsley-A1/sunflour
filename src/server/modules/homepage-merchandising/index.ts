@@ -9,6 +9,8 @@ export {
   getHomepageMerchandisingForAdmin,
   getHomepageMerchandisingForPublic,
   getLocalDateKey,
+  mergeBannerLibrary,
+  resolveProductSlides,
   getWeeklyOffersForPublic,
   isOfferLive,
   updateHomepageCarousel,

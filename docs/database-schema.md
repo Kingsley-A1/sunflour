@@ -526,6 +526,17 @@ Email rules:
 - [x] Email preferences exist in schema for authenticated customer controls, but public preference UI remains deferred.
 - [x] Audit metadata for critical mutations uses `before` and `after` where practical; sensitive keys are redacted in the audit list endpoint.
 
+## Site Events (Analytics)
+
+`site_events` stores anonymous storefront journey events for admin Analytics.
+Columns: `visitor_id`, `session_id`, `name`, `path` (no query string),
+`source` (classified at ingest), `referrer_host`, `utm_campaign`,
+`device_type`, `browser`, `os`, optional `product_id`, `product_slug`,
+`order_number`, `value_kobo`, `label`, `metadata`, `occurred_at`.
+No names, phones, emails or IPs. Rows older than 400 days are pruned
+opportunistically during ingest. Indexes: `occurred_at`, `(name, occurred_at)`,
+`(session_id, occurred_at)`, `(product_id, name)`.
+
 ## Deferred Schema Work
 
 ```txt

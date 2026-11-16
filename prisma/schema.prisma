@@ -105,38 +105,38 @@ enum ReviewStatus {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  phone         String?
-  passwordHash  String?   @map("password_hash")
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     DateTime? @map("email_verified")
+  image             String?
+  phone             String?
+  passwordHash      String?   @map("password_hash")
   passwordUpdatedAt DateTime? @map("password_updated_at")
-  failedLoginCount Int     @default(0) @map("failed_login_count")
-  lockedUntil   DateTime? @map("locked_until")
-  role          UserRole  @default(CUSTOMER)
-  lastLoginAt   DateTime? @map("last_login_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  failedLoginCount  Int       @default(0) @map("failed_login_count")
+  lockedUntil       DateTime? @map("locked_until")
+  role              UserRole  @default(CUSTOMER)
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  accounts     Account[]
-  sessions     Session[]
-  adminProfile AdminProfile?
-  customerProfile CustomerProfile?
-  auditLogs    AuditLog[]    @relation("AuditActor")
-  mediaAssets  MediaAsset[]  @relation("MediaAssetCreator")
-  carts        Cart[]
-  orders       Order[]
-  reviews      Review[]      @relation("ReviewAuthor")
-  reviewedReviews Review[]   @relation("ReviewModerator")
-  orderStatusEvents OrderStatusEvent[] @relation("OrderStatusEventActor")
-  paymentSettingsUpdated PaymentSetting[] @relation("PaymentSettingUpdater")
-  paymentConfirmationEvents PaymentConfirmationEvent[] @relation("PaymentConfirmationEventActor")
-  emailTemplatesUpdated EmailTemplate[] @relation("EmailTemplateUpdater")
-  homepageHeroProductsUpdated HomepageHeroProduct[] @relation("HomepageHeroProductUpdater")
-  emailPreference EmailPreference?
-  productDrafts ProductDraft[] @relation("ProductDraftCreator")
+  accounts                    Account[]
+  sessions                    Session[]
+  adminProfile                AdminProfile?
+  customerProfile             CustomerProfile?
+  auditLogs                   AuditLog[]                 @relation("AuditActor")
+  mediaAssets                 MediaAsset[]               @relation("MediaAssetCreator")
+  carts                       Cart[]
+  orders                      Order[]
+  reviews                     Review[]                   @relation("ReviewAuthor")
+  reviewedReviews             Review[]                   @relation("ReviewModerator")
+  orderStatusEvents           OrderStatusEvent[]         @relation("OrderStatusEventActor")
+  paymentSettingsUpdated      PaymentSetting[]           @relation("PaymentSettingUpdater")
+  paymentConfirmationEvents   PaymentConfirmationEvent[] @relation("PaymentConfirmationEventActor")
+  emailTemplatesUpdated       EmailTemplate[]            @relation("EmailTemplateUpdater")
+  homepageHeroProductsUpdated HomepageHeroProduct[]      @relation("HomepageHeroProductUpdater")
+  emailPreference             EmailPreference?
+  productDrafts               ProductDraft[]             @relation("ProductDraftCreator")
 
   @@index([lockedUntil])
   @@map("users")
@@ -224,14 +224,14 @@ model SiteSetting {
 }
 
 model Category {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  slug        String    @unique
+  slug        String   @unique
   description String?
-  sortOrder   Int       @default(0) @map("sort_order")
-  isActive    Boolean   @default(true) @map("is_active")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   products Product[]
 
@@ -254,12 +254,12 @@ model Product {
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")
 
-  category Category         @relation(fields: [categoryId], references: [id])
-  variants ProductVariant[]
-  images   ProductImage[]
-  cartItems CartItem[]
-  orderItems OrderItem[]
-  reviews Review[]
+  category             Category              @relation(fields: [categoryId], references: [id])
+  variants             ProductVariant[]
+  images               ProductImage[]
+  cartItems            CartItem[]
+  orderItems           OrderItem[]
+  reviews              Review[]
   homepageHeroProducts HomepageHeroProduct[]
 
   @@index([categoryId])
@@ -311,8 +311,8 @@ model ProductVariant {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  cartItems CartItem[]
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
   orderItems OrderItem[]
 
   @@index([productId, isActive, sortOrder])
@@ -363,14 +363,14 @@ model MediaAsset {
 }
 
 model DeliveryZone {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  baseFee     Int      @map("base_fee")
-  isActive    Boolean  @default(true) @map("is_active")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  baseFee   Int      @map("base_fee")
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   orders Order[]
 
@@ -425,44 +425,44 @@ model CartItem {
 }
 
 model Order {
-  id                         String         @id @default(cuid())
-  orderNumber                String         @unique @map("order_number")
-  idempotencyKey             String?        @unique @map("idempotency_key")
-  idempotencyRequestHash     String?        @map("idempotency_request_hash")
-  userId                     String?        @map("user_id")
-  customerType               CustomerType   @map("customer_type")
-  customerNameSnapshot       String         @map("customer_name_snapshot")
-  customerPhoneSnapshot      String         @map("customer_phone_snapshot")
-  customerEmailSnapshot      String?        @map("customer_email_snapshot")
-  deliveryMethod             DeliveryMethod @map("delivery_method")
-  deliveryAddressSnapshot    String?        @map("delivery_address_snapshot")
-  deliveryZoneId             String?        @map("delivery_zone_id")
-  deliveryZoneNameSnapshot   String?        @map("delivery_zone_name_snapshot")
-  deliveryBaseFeeSnapshot    Int            @map("delivery_base_fee_snapshot")
-  deliverySurchargeSnapshot  Int            @map("delivery_surcharge_snapshot")
-  deliveryTotalFeeSnapshot   Int            @map("delivery_total_fee_snapshot")
-  subtotal                   Int
-  total                      Int
-  status                     OrderStatus    @default(PENDING_PAYMENT)
-  paymentStatus              PaymentStatus  @default(UNPAID) @map("payment_status")
-  paymentMethod              PaymentMethod  @default(BANK_TRANSFER) @map("payment_method")
-  paymentInstructionSnapshot String         @map("payment_instruction_snapshot")
-  proofWhatsappNumberSnapshot String?       @map("proof_whatsapp_number_snapshot")
-  customerNote               String?        @map("customer_note")
-  adminNote                  String?        @map("admin_note")
-  createdAt                  DateTime       @default(now()) @map("created_at")
-  updatedAt                  DateTime       @updatedAt @map("updated_at")
-  cancelledAt                DateTime?      @map("cancelled_at")
-  deliveredAt                DateTime?      @map("delivered_at")
+  id                          String         @id @default(cuid())
+  orderNumber                 String         @unique @map("order_number")
+  idempotencyKey              String?        @unique @map("idempotency_key")
+  idempotencyRequestHash      String?        @map("idempotency_request_hash")
+  userId                      String?        @map("user_id")
+  customerType                CustomerType   @map("customer_type")
+  customerNameSnapshot        String         @map("customer_name_snapshot")
+  customerPhoneSnapshot       String         @map("customer_phone_snapshot")
+  customerEmailSnapshot       String?        @map("customer_email_snapshot")
+  deliveryMethod              DeliveryMethod @map("delivery_method")
+  deliveryAddressSnapshot     String?        @map("delivery_address_snapshot")
+  deliveryZoneId              String?        @map("delivery_zone_id")
+  deliveryZoneNameSnapshot    String?        @map("delivery_zone_name_snapshot")
+  deliveryBaseFeeSnapshot     Int            @map("delivery_base_fee_snapshot")
+  deliverySurchargeSnapshot   Int            @map("delivery_surcharge_snapshot")
+  deliveryTotalFeeSnapshot    Int            @map("delivery_total_fee_snapshot")
+  subtotal                    Int
+  total                       Int
+  status                      OrderStatus    @default(PENDING_PAYMENT)
+  paymentStatus               PaymentStatus  @default(UNPAID) @map("payment_status")
+  paymentMethod               PaymentMethod  @default(BANK_TRANSFER) @map("payment_method")
+  paymentInstructionSnapshot  String         @map("payment_instruction_snapshot")
+  proofWhatsappNumberSnapshot String?        @map("proof_whatsapp_number_snapshot")
+  customerNote                String?        @map("customer_note")
+  adminNote                   String?        @map("admin_note")
+  createdAt                   DateTime       @default(now()) @map("created_at")
+  updatedAt                   DateTime       @updatedAt @map("updated_at")
+  cancelledAt                 DateTime?      @map("cancelled_at")
+  deliveredAt                 DateTime?      @map("delivered_at")
 
-  user         User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  deliveryZone DeliveryZone?      @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
-  items        OrderItem[]
-  statusEvents OrderStatusEvent[]
+  user                      User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deliveryZone              DeliveryZone?              @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
+  items                     OrderItem[]
+  statusEvents              OrderStatusEvent[]
   paymentConfirmationEvents PaymentConfirmationEvent[]
-  invoice      Invoice?
-  emailOutbox  EmailOutbox[]
-  reviews      Review[]
+  invoice                   Invoice?
+  emailOutbox               EmailOutbox[]
+  reviews                   Review[]
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
@@ -686,4 +686,36 @@ model Review {
   @@index([userId])
   @@index([reviewedByUserId])
   @@map("reviews")
+}
+
+/// First-party, anonymous storefront journey events used by admin Analytics.
+/// No names, phones, emails or IP addresses are stored: a visitor is a random
+/// browser id and a session is a 30-minute activity window.
+model SiteEvent {
+  id           String   @id @default(cuid())
+  occurredAt   DateTime @default(now()) @map("occurred_at")
+  visitorId    String   @map("visitor_id")
+  sessionId    String   @map("session_id")
+  name         String
+  path         String
+  /// Traffic source classified at ingest: direct, whatsapp, instagram, ...
+  source       String
+  referrerHost String?  @map("referrer_host")
+  utmCampaign  String?  @map("utm_campaign")
+  deviceType   String   @map("device_type")
+  browser      String?
+  os           String?
+  productId    String?  @map("product_id")
+  productSlug  String?  @map("product_slug")
+  orderNumber  String?  @map("order_number")
+  /// Money in kobo where the event carries a value (cart add, order placed).
+  valueKobo    Int?     @map("value_kobo")
+  label        String?
+  metadata     Json?
+
+  @@index([occurredAt])
+  @@index([name, occurredAt])
+  @@index([sessionId, occurredAt])
+  @@index([productId, name])
+  @@map("site_events")
 }

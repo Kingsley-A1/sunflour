@@ -400,11 +400,15 @@ export interface HomepageCarouselSlide {
   href: string;
   isActive: boolean;
   sortOrder: number;
+  /** Catalogue product this slide promotes, when it is a product slide. */
+  productId?: string;
 }
 
 export interface HomepageMerchandisingSettings {
   carousel: {
     slides: HomepageCarouselSlide[];
+    /** productId -> previously uploaded wide banner URL. */
+    bannerLibrary?: Record<string, string>;
     createdAt: string | null;
     updatedAt: string | null;
   };

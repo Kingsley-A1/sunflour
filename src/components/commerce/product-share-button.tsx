@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { trackJourney } from "@/lib/analytics/journey";
 import { formatNairaFromKobo } from "@/lib/formatters";
 
 interface ProductShareButtonProps {
@@ -41,6 +42,7 @@ export function ProductShareButton({
   async function shareProduct() {
     const url = window.location.href;
     const message = buildShareMessage(productName, price, offerHeadline);
+    trackJourney("product_share", { label: productName.slice(0, 80) });
 
     if (navigator.share) {
       try {

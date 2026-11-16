@@ -8,6 +8,7 @@ import { ERROR_CODES } from "@/server/lib/errors/codes";
 import { writeAuditLog } from "@/server/modules/audit";
 import type { HomepageCarouselSlide } from "@/types/domain";
 import {
+  MAX_BANNER_LIBRARY_ENTRIES,
   homepageCarouselSettingsSchema,
   weeklyOfferSettingsSchema,
   type HomepageCarouselSettings,
@@ -191,6 +192,97 @@ export function findPastOffers(
     .sort((first, second) => second.weekStart.localeCompare(first.weekStart));
 }
 
+/**
+ * Keeps every product banner ever used so a product can be promoted again
+ * without a new upload. Banners on current slides win over older entries.
+ */
+export function mergeBannerLibrary(
+  previous: Record<string, string> | undefined,
+  incoming: Record<string, string> | undefined,
+  slides: Array<Pick<HomepageCarouselSlide, "productId" | "imageUrl">>,
+): Record<string, string> {
+  const fromSlides: Record<string, string> = {};
+  for (const slide of slides) {
+    if (slide.productId && slide.imageUrl) {
+      fromSlides[slide.productId] = slide.imageUrl;
+    }
+  }
+
+  const merged = { ...previous, ...incoming, ...fromSlides };
+  const keys = Object.keys(merged);
+  if (keys.length <= MAX_BANNER_LIBRARY_ENTRIES) {
+    return merged;
+  }
+
+  // Over the cap: keep current slides' banners, then the most recent others
+  // (object insertion order puts newer entries last).
+  const keep = new Set(Object.keys(fromSlides));
+  const others = keys.filter((key) => !keep.has(key));
+  for (const key of others.slice(-(MAX_BANNER_LIBRARY_ENTRIES - keep.size))) {
+    keep.add(key);
+  }
+  return Object.fromEntries(keys.filter((key) => keep.has(key)).map((key) => [key, merged[key] as string]));
+}
+
+export interface CarouselProductState {
+  id: string;
+  slug: string;
+  status: string;
+  categoryIsActive: boolean;
+}
+
+/**
+ * Product slides follow the catalogue: they link to the product's current
+ * page and disappear while it is hidden, sold out, deleted or in a hidden
+ * category, so the homepage never advertises something customers can't buy.
+ */
+export function resolveProductSlides(
+  slides: HomepageCarouselSlide[],
+  products: CarouselProductState[],
+): HomepageCarouselSlide[] {
+  const byId = new Map(products.map((product) => [product.id, product]));
+  return slides.flatMap((slide) => {
+    if (!slide.productId) {
+      return [slide];
+    }
+    const product = byId.get(slide.productId);
+    if (!product || product.status !== "ACTIVE" || !product.categoryIsActive) {
+      return [];
+    }
+    return [{ ...slide, href: `/products/${product.slug}` }];
+  });
+}
+
+async function loadCarouselProducts(
+  slides: HomepageCarouselSlide[],
+): Promise<CarouselProductState[]> {
+  const ids = [
+    ...new Set(
+      slides
+        .map((slide) => slide.productId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  if (ids.length === 0) {
+    return [];
+  }
+  const products = await prisma.product.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      slug: true,
+      status: true,
+      category: { select: { isActive: true } },
+    },
+  });
+  return products.map((product) => ({
+    id: product.id,
+    slug: product.slug,
+    status: product.status,
+    categoryIsActive: product.category.isActive,
+  }));
+}
+
 async function getSettingsRecords() {
   return prisma.siteSetting.findMany({
     where: {
@@ -292,9 +384,13 @@ export async function getHomepageMerchandisingForPublic(now = new Date()) {
   const offersRecord = records.find((record) => record.key === WEEKLY_OFFERS_KEY);
   const carousel = parseCarousel(carouselRecord?.value);
   const offers = parseWeeklyOffers(offersRecord?.value).offers;
-  const slides = carousel.slides
+  const activeSlides = carousel.slides
     .filter((slide) => slide.isActive)
     .sort((first, second) => first.sortOrder - second.sortOrder);
+  const slides = resolveProductSlides(
+    activeSlides,
+    await loadCarouselProducts(activeSlides).catch(() => []),
+  );
   const current = findCurrentOffer(offers, now);
 
   if (!current) {
@@ -358,10 +454,19 @@ export async function updateHomepageCarousel(
       where: { key: HOMEPAGE_CAROUSEL_KEY },
       select: { value: true },
     });
+    const previous = homepageCarouselSettingsSchema.safeParse(before?.value);
+    const next = {
+      slides: input.carousel.slides,
+      bannerLibrary: mergeBannerLibrary(
+        previous.success ? previous.data.bannerLibrary : undefined,
+        input.carousel.bannerLibrary,
+        input.carousel.slides,
+      ),
+    };
     const setting = await transaction.siteSetting.upsert({
       where: { key: HOMEPAGE_CAROUSEL_KEY },
-      create: { key: HOMEPAGE_CAROUSEL_KEY, value: input.carousel },
-      update: { value: input.carousel },
+      create: { key: HOMEPAGE_CAROUSEL_KEY, value: next },
+      update: { value: next },
       select: { value: true, createdAt: true, updatedAt: true },
     });
 
@@ -372,8 +477,9 @@ export async function updateHomepageCarousel(
         targetType: "site_setting",
         targetId: HOMEPAGE_CAROUSEL_KEY,
         metadata: {
-          before: before?.value ?? null,
-          after: input.carousel,
+          // Slides only: the banner library would bloat every audit entry.
+          before: previous.success ? { slides: previous.data.slides } : null,
+          after: { slides: next.slides },
         },
       },
       transaction,

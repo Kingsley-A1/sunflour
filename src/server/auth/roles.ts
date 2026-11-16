@@ -42,6 +42,12 @@ export const PRODUCT_AVAILABILITY_ROLES = [
   UserRole.SUPER_ADMIN,
 ] as const satisfies readonly AdminRole[];
 
+/** Storefront analytics: business performance, not operational order data. */
+export const ANALYTICS_ROLES = [
+  UserRole.MODERATOR,
+  UserRole.SUPER_ADMIN,
+] as const satisfies readonly AdminRole[];
+
 export const REVIEW_ADMIN_ROLES = [
   UserRole.MODERATOR,
   UserRole.SUPER_ADMIN,

@@ -1234,6 +1234,38 @@ PAYMENT_SETTINGS_UNAVAILABLE
 INTERNAL_ERROR
 ```
 
+## Storefront Analytics
+
+```txt
+POST /api/v1/public/journey      public, rate-limited 90 req/min/IP, 202
+GET  /api/v1/admin/analytics     MODERATOR, SUPER_ADMIN   ?range=today|7d|30d|90d
+```
+
+`POST /api/v1/public/journey` accepts a batch of 1-25 anonymous journey events:
+
+```ts
+{
+  visitorId: string;   // random browser id (localStorage)
+  sessionId: string;   // random visit id, 30 min inactivity timeout
+  sentAt: number;      // client ms; only orders events inside the batch
+  referrer?: string; utmSource?: string; utmCampaign?: string;
+  events: Array<{
+    name: "page_view" | "product_view" | "search" | "add_to_cart"
+        | "checkout_start" | "checkout_submit" | "checkout_error"
+        | "order_placed" | "proof_sent" | "product_share";
+    path: string; at: number;
+    productId?: string; productSlug?: string; orderNumber?: string;
+    valueKobo?: number; label?: string;
+    metadata?: Record<string, string | number | boolean | null>; // max 8 keys
+  }>;
+}
+```
+
+Rules: server time is authoritative (client skew clamped to 10 min); query
+strings are stripped from paths; bots and signed-in staff are ignored; IPs are
+used only for rate limiting and never stored. Order value and payment status
+in reports come from `orders`, never from browser-sent values.
+
 ## Open Product Decisions
 
 - [ ] Launch-blocking owner confirmation: official Sunflour address.
