@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Flame, ShoppingBag } from "lucide-react";
-import { PriceText } from "@/components/ui/price-text";
+import { ProductPrice } from "@/components/commerce/product-price";
 import { SafeImage } from "@/components/ui/safe-image";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import type { PublicProduct } from "@/types/domain";
@@ -67,9 +67,9 @@ export function ProductCard({ product }: ProductCardProps) {
         >
           {product.name}
         </Link>
-        <PriceText
-          amount={product.basePrice}
+        <ProductPrice
           className="text-xl font-extrabold !text-[var(--color-primary)]"
+          product={product}
         />
         <AddToCartButton className="w-full" product={product} />
       </div>

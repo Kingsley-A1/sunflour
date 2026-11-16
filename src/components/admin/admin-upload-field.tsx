@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ImagePlus, Trash2, Upload } from "lucide-react";
+import { Trash2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attachProductImage, getApiErrorMessage } from "@/lib/api/client";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@/lib/api/product-image-upload";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
-import { Input } from "@/components/ui/input";
+import { ImageDropzone } from "@/components/admin/image-dropzone";
 import { SafeImage } from "@/components/ui/safe-image";
 import type { AdminProductImage } from "@/types/domain";
 
@@ -105,7 +105,7 @@ export function AdminUploadField({
       setError(
         getApiErrorMessage(
           uploadError,
-          "Image upload failed. Check the file type, size, and your connection.",
+          "Image upload failed. Retry the upload.",
         ),
       );
     } finally {
@@ -116,10 +116,10 @@ export function AdminUploadField({
   return (
     <section className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div>
-        <h2 className="m-0 text-xl font-bold">Product images</h2>
+        <h2 className="m-0 text-lg font-bold">Photos</h2>
         <p className="m-0 mt-1 text-sm text-[var(--color-text-muted)]">
-          Add up to {MAX_PRODUCT_IMAGES} views at once. The primary image is
-          used on the product card; a weekly sale can temporarily override it.
+          Up to {MAX_PRODUCT_IMAGES} photos. The primary photo is used on the
+          menu card; a weekly offer can temporarily override it.
         </p>
       </div>
 
@@ -162,13 +162,6 @@ export function AdminUploadField({
         </p>
       ) : null}
 
-      <Input
-        accept="image/jpeg,image/png,image/webp,image/avif"
-        label={productId ? "Add images" : "Select images (required)"}
-        multiple
-        onChange={(event) => selectFiles(Array.from(event.target.files ?? []))}
-        type="file"
-      />
 
       {previews.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" aria-label="Selected image previews">
@@ -201,16 +194,16 @@ export function AdminUploadField({
             </article>
           ))}
         </div>
-      ) : (
-        <div className="grid min-h-32 place-items-center rounded-[var(--radius-sm)] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] p-4 text-center">
-          <div>
-            <ImagePlus className="mx-auto h-6 w-6 text-[var(--color-text-muted)]" aria-hidden="true" />
-            <p className="m-0 mt-2 text-sm font-semibold text-[var(--color-text-muted)]">
-              Selected images will preview here.
-            </p>
-          </div>
-        </div>
-      )}
+      ) : null}
+
+      {existingImages.length + selectedFiles.length < MAX_PRODUCT_IMAGES ? (
+        <ImageDropzone
+          compact={existingImages.length > 0 || previews.length > 0}
+          hint="JPEG, PNG, WebP or AVIF. Large photos are compressed automatically."
+          label={previews.length > 0 ? "Choose different photos" : "Add photos"}
+          onFiles={selectFiles}
+        />
+      ) : null}
 
       {productId ? (
         <Button
@@ -220,7 +213,7 @@ export function AdminUploadField({
           onClick={uploadImages}
           variant="secondary"
         >
-          Upload selected images
+          Upload {selectedFiles.length} selected {selectedFiles.length === 1 ? "photo" : "photos"}
         </Button>
       ) : null}
     </section>

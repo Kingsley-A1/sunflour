@@ -4,10 +4,15 @@ import { z } from "zod";
  * In-progress product form state for resumable drafts. Every field is optional
  * because a draft can be saved at any point during product creation. Values are
  * stored as the raw form representation (for example naira strings) so the
- * editor can rehydrate exactly what the admin had typed. Images are not stored
- * here because file selections cannot be serialised; they are re-selected on
- * resume.
+ * editor can rehydrate exactly what the admin had typed. Images are stored as
+ * references to media assets that were already uploaded, so a resumed draft
+ * keeps its photos; ownership is re-checked when the product is created.
  */
+export const productDraftImageSchema = z.object({
+  mediaAssetId: z.string().min(1).max(64),
+  url: z.string().url().max(2048).nullable(),
+});
+
 export const productDraftDataSchema = z.object({
   name: z.string().max(200).optional(),
   slug: z.string().max(200).optional(),
@@ -20,6 +25,7 @@ export const productDraftDataSchema = z.object({
   isPopular: z.boolean().optional(),
   variantName: z.string().max(200).optional(),
   variantPrice: z.string().max(40).optional(),
+  images: z.array(productDraftImageSchema).max(8).optional(),
 });
 
 export const productDraftInputSchema = z

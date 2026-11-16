@@ -3,6 +3,7 @@ import { SUPER_ADMIN_ROLES } from "@/server/auth/roles";
 import { readJsonBody } from "@/server/lib/api/request";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { validateInput } from "@/server/lib/validation/zod";
+import { revalidateCatalogViews } from "@/server/modules/menu/catalog-revalidation";
 import {
   idParamSchema,
   productVariantCreateSchema,
@@ -28,9 +29,10 @@ export async function POST(
       await readJsonBody(request),
     );
 
-    return apiSuccess(await createProductVariant(params.id, input, actor), {
-      status: 201,
-    });
+    const variant = await createProductVariant(params.id, input, actor);
+    revalidateCatalogViews();
+
+    return apiSuccess(variant, { status: 201 });
   } catch (error) {
     return apiError(error);
   }

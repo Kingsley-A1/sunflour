@@ -1,19 +1,15 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { MediaAssetStatus, MediaUploadPurpose } from "@/generated/prisma/enums";
+import { MediaUploadPurpose } from "@/generated/prisma/enums";
 import { requireRole } from "@/server/auth/rbac";
 import { PRODUCT_CONTENT_ROLES } from "@/server/auth/roles";
 import { apiError, apiSuccess } from "@/server/lib/api/response";
 import { AppError } from "@/server/lib/errors/app-error";
 import { ERROR_CODES } from "@/server/lib/errors/codes";
-import { prisma } from "@/server/db/prisma";
-import { writeAuditLog } from "@/server/modules/audit/audit-service";
 import {
   ALLOWED_IMAGE_CONTENT_TYPES,
   adminMediaUploadPurposeSchema,
-  MAX_PRODUCT_IMAGE_BYTES,
+  MAX_SERVER_UPLOAD_BYTES,
 } from "@/server/modules/media/media-schemas";
-import { createMediaObjectKey } from "@/server/modules/media/media-service";
-import { getPublicMediaUrl, getR2Config, getR2Endpoint } from "@/server/modules/media/r2-config";
+import { storeMediaObject } from "@/server/modules/media/media-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,103 +23,72 @@ function isAllowedImageContentType(
   return (ALLOWED_IMAGE_CONTENT_TYPES as readonly string[]).includes(contentType);
 }
 
+function validationError(message: string): AppError {
+  return new AppError({
+    code: ERROR_CODES.VALIDATION_ERROR,
+    publicMessage: message,
+    status: 400,
+  });
+}
+
+async function readUploadForm(request: Request): Promise<FormData> {
+  try {
+    return await request.formData();
+  } catch (error) {
+    // A truncated or malformed multipart body. Say so instead of a generic 500.
+    throw new AppError({
+      code: ERROR_CODES.VALIDATION_ERROR,
+      publicMessage:
+        "The image arrived incomplete. Retry the upload; if it keeps failing, try a smaller image.",
+      status: 400,
+      cause: error,
+    });
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const actor = await requireRole(PRODUCT_CONTENT_ROLES);
-    const formData = await request.formData();
+    const formData = await readUploadForm(request);
     const file = formData.get("file");
     const purposeResult = adminMediaUploadPurposeSchema.safeParse(
       formData.get("purpose") ?? MediaUploadPurpose.PRODUCT_IMAGE,
     );
 
     if (!(file instanceof File)) {
-      throw new AppError({
-        code: ERROR_CODES.VALIDATION_ERROR,
-        publicMessage: "No file provided.",
-        status: 400,
-      });
+      throw validationError("No file provided.");
     }
 
     if (!purposeResult.success) {
-      throw new AppError({
-        code: ERROR_CODES.VALIDATION_ERROR,
-        publicMessage: "Choose a valid image purpose.",
-        status: 400,
-      });
+      throw validationError("Choose a valid image purpose.");
     }
 
-    const { type: contentType, size, name: fileName } = file;
-
-    if (!isAllowedImageContentType(contentType)) {
-      throw new AppError({
-        code: ERROR_CODES.VALIDATION_ERROR,
-        publicMessage: "File type not allowed. Use JPEG, PNG, WebP, or AVIF.",
-        status: 400,
-      });
+    if (!isAllowedImageContentType(file.type)) {
+      throw validationError("File type not allowed. Use JPEG, PNG, WebP, or AVIF.");
     }
 
-    if (size > MAX_PRODUCT_IMAGE_BYTES) {
-      throw new AppError({
-        code: ERROR_CODES.VALIDATION_ERROR,
-        publicMessage: `File too large. Maximum is ${MAX_PRODUCT_IMAGE_BYTES / 1024 / 1024} MB.`,
-        status: 400,
-      });
+    if (file.size < 1) {
+      throw validationError("The image file is empty. Choose it again.");
     }
 
-    const config = getR2Config();
-    const purpose = purposeResult.data;
-    const objectKey = createMediaObjectKey({ contentType, purpose });
+    if (file.size > MAX_SERVER_UPLOAD_BYTES) {
+      throw validationError(
+        `Image too large after compression. Maximum is ${MAX_SERVER_UPLOAD_BYTES / 1024 / 1024} MB.`,
+      );
+    }
 
-    const mediaAsset = await prisma.mediaAsset.create({
-      data: {
-        bucket: config.bucketName,
-        objectKey,
-        publicUrl: null,
-        originalFilename: fileName,
-        contentType,
-        byteSize: size,
-        uploadPurpose: MediaUploadPurpose.PRODUCT_IMAGE,
-        createdByUserId: actor.id,
+    const mediaAsset = await storeMediaObject(
+      {
+        body: new Uint8Array(await file.arrayBuffer()),
+        contentType: file.type,
+        byteSize: file.size,
+        fileName: file.name.slice(0, 180) || "image",
+        purpose: purposeResult.data,
       },
-      select: { id: true, objectKey: true, status: true },
-    });
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const r2 = new S3Client({
-      region: "auto",
-      endpoint: getR2Endpoint(config),
-      credentials: {
-        accessKeyId: config.accessKeyId,
-        secretAccessKey: config.secretAccessKey,
-      },
-    });
-
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: config.bucketName,
-        Key: objectKey,
-        Body: buffer,
-        ContentType: contentType,
-        ContentLength: size,
-      }),
+      actor,
     );
 
-    const publicUrl = getPublicMediaUrl(config, objectKey);
-    const completed = await prisma.mediaAsset.update({
-      where: { id: mediaAsset.id },
-      data: { status: MediaAssetStatus.READY, publicUrl },
-      select: { id: true, publicUrl: true, status: true },
-    });
-
-    await writeAuditLog({
-      actorUserId: actor.id,
-      action: "MEDIA_UPLOAD_COMPLETED",
-      targetType: "media_asset",
-      targetId: mediaAsset.id,
-      metadata: { objectKey, contentType, byteSize: size, purpose },
-    });
-
-    return apiSuccess({ mediaAsset: completed }, { status: 201 });
+    return apiSuccess({ mediaAsset }, { status: 201 });
   } catch (error) {
     return apiError(error);
   }

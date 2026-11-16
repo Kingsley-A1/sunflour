@@ -1,3 +1,6 @@
+import Link from "next/link";
+import type { Route } from "next";
+import { PackageSearch } from "lucide-react";
 import { DownloadInvoiceButton } from "@/components/invoice/download-invoice-button";
 import { PrintButton } from "@/components/invoice/print-button";
 import { OrderSuccessScreen } from "@/components/checkout/order-success-screen";
@@ -47,6 +50,13 @@ export default async function InvoicePage({
             invoiceNumber={invoice.invoiceNumber}
           />
           <PrintButton />
+          <Link
+            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-semibold hover:bg-[var(--color-surface-muted)]"
+            href={`/track-order?order=${encodeURIComponent(orderNumber)}` as Route}
+          >
+            <PackageSearch className="h-4 w-4" aria-hidden="true" />
+            Track this order
+          </Link>
         </div>
       </header>
       <iframe

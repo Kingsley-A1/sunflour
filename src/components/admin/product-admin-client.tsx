@@ -10,6 +10,7 @@ import {
   updateAdminProductStatus,
 } from "@/lib/api/client";
 import { formatNairaFromKobo } from "@/lib/formatters";
+import { hasSellablePrice, startingPrice } from "@/lib/product-pricing";
 import { productStatusMeta } from "@/lib/status";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/dialog";
@@ -169,14 +170,7 @@ export function ProductAdminClient({
             ))}
           </Select>
         </div>
-        {isSuperAdmin ? (
-          <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)]"
-            href="/admin/products/new"
-          >
-            Create product
-          </Link>
-        ) : (
+        {isSuperAdmin ? null : (
           <p className="m-0 max-w-sm text-sm leading-6 text-[var(--color-text-muted)]">
             Staff permissions are least-privilege: moderators update
             availability, media managers update product content and images, and
@@ -220,7 +214,7 @@ export function ProductAdminClient({
                     {product.category.name}
                   </td>
                   <td className="p-3 tabular-nums">
-                    {formatNairaFromKobo(product.basePrice)}
+                    <AdminPriceCell product={product} />
                   </td>
                   <td className="p-3">
                     <StatusPill status={product.status} />
@@ -312,4 +306,29 @@ export function ProductAdminClient({
       />
     </div>
   );
+}
+
+function AdminPriceCell({ product }: { product: AdminProduct }) {
+  const activeVariants = product.variants.filter((variant) => variant.isActive);
+
+  if (!hasSellablePrice(product)) {
+    return (
+      <span className="inline-flex whitespace-nowrap rounded-[var(--radius-pill)] bg-[var(--color-warning-soft)] px-2 py-0.5 text-xs font-bold text-[var(--color-warning-text)]">
+        Needs price
+      </span>
+    );
+  }
+
+  if (activeVariants.length > 1) {
+    return (
+      <span className="grid whitespace-nowrap">
+        <span>From {formatNairaFromKobo(startingPrice(product))}</span>
+        <span className="text-xs text-[var(--color-text-muted)]">
+          {activeVariants.length} sizes
+        </span>
+      </span>
+    );
+  }
+
+  return <>{formatNairaFromKobo(startingPrice(product))}</>;
 }

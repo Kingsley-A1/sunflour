@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HeaderCartButton } from "@/components/layout/header-cart-button";
 import type { Route } from "next";
-import { CreditCard, UserPlus, UserRound } from "lucide-react";
+import { UserPlus, UserRound } from "lucide-react";
 import logoAsset from "../../../public/logo.png";
 import { CartProvider } from "@/features/cart/cart-store";
 import { Footer } from "@/components/layout/footer";
@@ -84,10 +85,10 @@ export async function PublicShell({
                 {contact.businessName}
               </span>
             </Link>
-            <nav className="hidden items-center gap-1 md:flex" aria-label="Public navigation">
+            <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Public navigation">
               {navItems.map((item) => (
                 <Link
-                  className="min-h-11 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+                  className="inline-flex min-h-11 items-center whitespace-nowrap rounded-[var(--radius-sm)] px-2.5 py-2 text-sm font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                   href={item.href}
                   key={item.href}
                 >
@@ -108,14 +109,14 @@ export async function PublicShell({
               ) : (
                 <div className="hidden items-center gap-2 md:flex">
                   <Link
-                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold"
+                    className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold"
                     href="/sign-in"
                   >
                     <UserRound className="h-4 w-4" aria-hidden="true" />
                     Sign in
                   </Link>
                   <Link
-                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold"
+                    className="hidden min-h-11 items-center gap-2 whitespace-nowrap rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold 2xl:inline-flex"
                     href="/register"
                   >
                     <UserPlus className="h-4 w-4" aria-hidden="true" />
@@ -123,13 +124,7 @@ export async function PublicShell({
                   </Link>
                 </div>
               )}
-              <Link
-                className="hidden min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm font-semibold text-[var(--color-on-primary)] md:inline-flex"
-                href="/checkout"
-              >
-                <CreditCard className="h-4 w-4" aria-hidden="true" />
-                Checkout
-              </Link>
+              <HeaderCartButton />
               <PublicMobileNavigation isSignedIn={isSignedIn} />
             </div>
           </div>

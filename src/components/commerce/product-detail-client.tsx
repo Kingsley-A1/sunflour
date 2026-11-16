@@ -6,6 +6,7 @@ import { ProductImageGallery } from "@/components/commerce/product-image-gallery
 import { ProductShareButton } from "@/components/commerce/product-share-button";
 import { Badge } from "@/components/ui/badge";
 import { PriceText } from "@/components/ui/price-text";
+import { ProductPrice } from "@/components/commerce/product-price";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { PublicProduct, PublicProductVariant } from "@/types/domain";
@@ -41,7 +42,8 @@ export function ProductDetailClient({
         <div className="grid gap-3">
           <div className="hidden flex-wrap gap-2 sm:flex">
             <Badge tone="neutral">{product.category.name}</Badge>
-            <StatusPill status={product.status} />
+            {/* Customers only need to know when they cannot order. */}
+            {product.status === "OUT_OF_STOCK" ? <StatusPill status={product.status} /> : null}
           </div>
           <div>
             <h1 className="m-0 wrap-anywhere text-3xl font-extrabold leading-tight">{product.name}</h1>
@@ -53,17 +55,18 @@ export function ProductDetailClient({
           </div>
           <p className="m-0 text-lg">
             <span className="text-[var(--color-text-muted)]">
-              {selectedVariant ? "Selected price " : "Price "}
+              {selectedVariant ? `${selectedVariant.name} ` : "Price "}
             </span>
-            <PriceText
-              amount={selectedVariant?.price ?? product.basePrice}
-              className="text-2xl"
-            />
+            {selectedVariant ? (
+              <PriceText amount={selectedVariant.price} className="text-2xl" />
+            ) : (
+              <ProductPrice className="text-2xl" product={product} />
+            )}
           </p>
         </div>
         {product.variants.length > 0 ? (
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-bold">Choose an option</legend>
+            <legend className="text-sm font-bold">Choose a size</legend>
             <div className="grid gap-2">
               {product.variants.map((variant) => (
                 <label
@@ -102,8 +105,7 @@ export function ProductDetailClient({
           />
         </div>
         <p className="m-0 text-xs leading-5 text-[var(--color-text-muted)]">
-          Displayed prices help you review the item. Checkout recalculates all
-          product, variant, delivery, surcharge, and total values on the server.
+          Delivery fee is calculated at checkout for your area. Pickup is free.
         </p>
       </section>
     </div>

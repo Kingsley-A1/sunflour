@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { ADMIN_ROLES } from "@/server/auth/roles";
 import { requireRole } from "@/server/auth/rbac";
+import { countProductDraftsForUser } from "@/server/modules/menu";
 
 export const dynamic = "force-dynamic";
 
@@ -36,8 +37,18 @@ export default async function AdminLayout({
     );
   }
 
+  const draftCount =
+    user.role === "SUPER_ADMIN"
+      ? await countProductDraftsForUser(user).catch(() => 0)
+      : 0;
+
   return (
-    <AdminShell role={user.role} userEmail={user.email} userName={user.name}>
+    <AdminShell
+      draftCount={draftCount}
+      role={user.role}
+      userEmail={user.email}
+      userName={user.name}
+    >
       {children}
     </AdminShell>
   );

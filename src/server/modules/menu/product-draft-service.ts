@@ -43,6 +43,12 @@ export async function countProductDrafts(): Promise<number> {
   return prisma.productDraft.count();
 }
 
+export async function countProductDraftsForUser(
+  actor: Pick<AuthenticatedUser, "id">,
+): Promise<number> {
+  return prisma.productDraft.count({ where: { createdByUserId: actor.id } });
+}
+
 export async function getProductDraft(
   id: string,
   actor: AuthenticatedUser,

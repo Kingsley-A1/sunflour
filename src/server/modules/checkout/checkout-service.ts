@@ -46,6 +46,7 @@ import {
   queueAdminNewOrderAlertEmailsForOrder,
   queueOrderConfirmationEmailForOrder,
 } from "@/server/modules/email";
+import { requiresVariantSelection } from "@/lib/product-pricing";
 import type { CheckoutCreateInput, CheckoutItemInput } from "./checkout-schemas";
 
 const checkoutProductInclude = {
@@ -187,7 +188,25 @@ export function resolveCheckoutLineItems(
     }
 
     const variant = findVariant(product, item, index);
+
+    // A product priced per size must be ordered with a size; its base price
+    // is not a valid fallback.
+    if (!variant && requiresVariantSelection(product)) {
+      throw checkoutItemUnavailable(
+        `items.${index}.variantId`,
+        `Choose a size or option for ${product.name}.`,
+      );
+    }
+
     const unitPrice = variant?.price ?? product.basePrice;
+
+    // Never let an unpriced item through checkout at ₦0.
+    if (unitPrice <= 0) {
+      throw checkoutItemUnavailable(
+        `items.${index}.productId`,
+        `${product.name} has no price yet and cannot be ordered.`,
+      );
+    }
     const snapshot = buildCatalogLineItemSnapshot({
       productName: product.name,
       variantName: variant?.name,

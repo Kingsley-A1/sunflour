@@ -30,6 +30,7 @@ const exploreLinks: FooterLink[] = [
 const supportLinks: FooterLink[] = [
   { href: "/cart" as Route, label: "Cart" },
   { href: "/checkout" as Route, label: "Checkout" },
+  { href: "/track-order" as Route, label: "Track order" },
   { href: "/account" as Route, label: "Account" },
 ];
 

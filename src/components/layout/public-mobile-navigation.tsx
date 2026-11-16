@@ -13,6 +13,7 @@ import {
   LockKeyhole,
   Menu,
   MessageSquareText,
+  PackageSearch,
   Phone,
   ShoppingCart,
   LogOut,
@@ -37,6 +38,7 @@ export const publicMobileNavItems: PublicMobileNavItem[] = [
   { href: "/weekly-offers" as Route, label: "Weekly offers", icon: Gift },
   { href: "/cart" as Route, label: "Cart", icon: ShoppingCart },
   { href: "/checkout" as Route, label: "Checkout", icon: CreditCard },
+  { href: "/track-order" as Route, label: "Track order", icon: PackageSearch },
   { href: "/reviews" as Route, label: "Reviews", icon: MessageSquareText },
   { href: "/about" as Route, label: "About", icon: Info },
   { href: "/contact" as Route, label: "Contact", icon: Phone },
@@ -61,7 +63,7 @@ export function PublicMobileNavigation({ isSignedIn }: { isSignedIn: boolean }) 
   return (
     <>
       <IconButton
-        className="md:hidden"
+        className="lg:hidden"
         icon={<Menu className="h-5 w-5" aria-hidden="true" />}
         label="Open navigation menu"
         onClick={() => setOpen(true)}

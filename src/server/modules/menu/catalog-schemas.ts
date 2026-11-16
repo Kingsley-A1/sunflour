@@ -77,6 +77,10 @@ export const productCreateSchema = productBaseSchema
       .array(productImageInputSchema)
       .min(1, "Choose at least one product image.")
       .max(8, "Choose no more than 8 product images."),
+    // The draft this product was finished from. It is removed in the same
+    // transaction that creates the product, so a published product can never
+    // leave its draft behind.
+    draftId: z.string().min(1).max(64).optional(),
   })
   .strict()
   .superRefine((input, context) => {

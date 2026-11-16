@@ -35,7 +35,7 @@ export function HeaderSearch() {
 
   return (
     <>
-      <form className="hidden w-64 xl:block" onSubmit={submitSearch} role="search">
+      <form className="hidden w-60 2xl:block" onSubmit={submitSearch} role="search">
         <SearchBar
           label="Search Sunflour menu"
           onChange={setQuery}
@@ -46,7 +46,7 @@ export function HeaderSearch() {
       </form>
 
       <IconButton
-        className="xl:hidden"
+        className="2xl:hidden"
         icon={<Search className="h-5 w-5" aria-hidden="true" />}
         label="Search menu"
         onClick={() => setMobileOpen(true)}
