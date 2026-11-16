@@ -10,7 +10,9 @@ const imageUrlSchema = z
   .min(1, "Choose an image.")
   .max(1_200)
   .refine(
-    (value) => value.startsWith("/") || z.url().safeParse(value).success,
+    (value) =>
+      /^\/(?!\/)/.test(value) ||
+      z.url({ protocol: /^https?$/ }).safeParse(value).success,
     "Use a site path or a valid public image URL.",
   );
 
@@ -30,8 +32,16 @@ export const homepageCarouselSlideSchema = z
     href: internalHrefSchema,
     isActive: z.boolean(),
     sortOrder: z.number().int().min(0).max(10_000),
+    /**
+     * Set when the slide promotes a catalogue product. The public carousel
+     * then links to the product's current page and hides the slide while the
+     * product is hidden or sold out.
+     */
+    productId: z.string().trim().min(1).max(64).optional(),
   })
   .strict();
+
+export const MAX_BANNER_LIBRARY_ENTRIES = 500;
 
 export const homepageCarouselSettingsSchema = z
   .object({
@@ -39,6 +49,18 @@ export const homepageCarouselSettingsSchema = z
       .array(homepageCarouselSlideSchema)
       .min(1, "Add at least one carousel slide.")
       .max(20, "Use no more than 20 carousel slides."),
+    /**
+     * productId -> wide banner URL. Remembers every product banner ever
+     * uploaded, so re-promoting a product never needs a new upload. Maintained
+     * by the server on save; clients may omit it.
+     */
+    bannerLibrary: z
+      .record(z.string().min(1).max(64), imageUrlSchema)
+      .refine(
+        (value) => Object.keys(value).length <= MAX_BANNER_LIBRARY_ENTRIES,
+        "Too many saved banners.",
+      )
+      .optional(),
   })
   .strict()
   .superRefine((input, context) => {

@@ -1,6 +1,9 @@
 import { HomepageMerchandisingClient } from "@/components/admin/homepage-merchandising-client";
 import { ErrorState } from "@/components/ui/error-state";
-import { getAdminHomepageMerchandisingSafe } from "@/lib/api/server";
+import {
+  getAdminCatalogSafe,
+  getAdminHomepageMerchandisingSafe,
+} from "@/lib/api/server";
 import { requireRole } from "@/server/auth/rbac";
 import { PRODUCT_CONTENT_ROLES } from "@/server/auth/roles";
 
@@ -12,7 +15,10 @@ export const metadata = {
 
 export default async function AdminHomepagePage() {
   const user = await requireRole(PRODUCT_CONTENT_ROLES);
-  const merchandisingResult = await getAdminHomepageMerchandisingSafe();
+  const [catalog, merchandisingResult] = await Promise.all([
+    getAdminCatalogSafe(),
+    getAdminHomepageMerchandisingSafe(),
+  ]);
 
   return (
     <div className="grid gap-6">
@@ -24,9 +30,14 @@ export default async function AdminHomepagePage() {
           Homepage merchandising
         </h1>
         <p className="m-0 mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
-          Manage the promotional banners that rotate at the top of the homepage.
+          Pick a product and it goes live in the homepage carousel. Banners
+          are remembered, so you only upload one the first time a product is
+          promoted.
         </p>
       </header>
+      {catalog.error ? (
+        <ErrorState description={catalog.error} title="Products unavailable" />
+      ) : null}
       {merchandisingResult.error || !merchandisingResult.merchandising ? (
         <ErrorState
           description={
@@ -38,6 +49,7 @@ export default async function AdminHomepagePage() {
       ) : (
         <HomepageMerchandisingClient
           initialSettings={merchandisingResult.merchandising}
+          products={catalog.products}
           role={user.role}
         />
       )}
